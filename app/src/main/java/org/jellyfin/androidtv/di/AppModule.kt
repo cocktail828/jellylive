@@ -116,7 +116,7 @@ val appModule = module {
 
 		@OptIn(ExperimentalCoilApi::class)
 		OkHttpNetworkFetcherFactory(
-			callFactory = { okHttpFactory.createClient(httpClientOptions) },
+			callFactory = { org.jellyfin.androidtv.bestv.LibraryImageHttp.client(get(), okHttpFactory, httpClientOptions) },
 			connectivityChecker = ::createCoilConnectivityChecker,
 		)
 	}

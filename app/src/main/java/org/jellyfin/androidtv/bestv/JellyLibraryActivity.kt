@@ -570,6 +570,6 @@ class JellyLibraryActivity : FragmentActivity() {
         val seen=local.getLong("seen_${positionKey(item)}",0)
         return if(seen>0 && seen>=(item.userData?.lastPlayedDate?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli() ?: 0))local.getLong(positionKey(item),server)else server
     }
-    private fun meta(item: BaseItemDto): String = listOfNotNull(item.productionYear?.toString(),item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
+    private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
     private fun time(ms: Long): String {val secs=(ms.coerceAtLeast(0)/1000);return if(secs>=3600) "%d:%02d:%02d".format(secs/3600,secs/60%60,secs%60) else "%02d:%02d".format(secs/60,secs%60)}
 }
