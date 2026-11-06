@@ -262,10 +262,12 @@ class JellyLibraryActivity : FragmentActivity() {
         fresh(if(homePage)"home" else "grid",push);header(title,"${repo.serverName} · 正在加载…")
         load({ Triple(repo.catalog(parent,refresh),if(homePage)repo.views() else emptyList(),try {repo.resume()}catch(_:Exception){emptyList()}) }) { (catalog,views,resumes) ->
             val selected=LibraryBrowse.select(catalog,q)
-            val items=selected.drop(start).take(60)
+            val columns=if(ui.fontScale>1)5 else 6
+            val window=LibraryBrowse.page(selected,start,columns)
+            val items=window.items
             fresh(if(homePage)"home" else "grid",false)
             header(title,"${repo.serverName} · ${selected.size} 项内容")
-            if(homePage)ui.button(page,"⌕ 搜索媒体",770f,69f,158f,38f){search()}
+            ui.button(page,"⌕ 搜索媒体",770f,69f,158f,38f){search()}
             fun reload(query: LibraryBrowse.Query=q,offset: Int=0,force: Boolean=false)=browse(title,parent,query,offset,false,homePage,force)
             val tabs=listOf("全部" to null,"电影" to BaseItemKind.MOVIE,"剧集" to BaseItemKind.SERIES)
             tabs.forEachIndexed {i,(name,kind)->
@@ -273,7 +275,7 @@ class JellyLibraryActivity : FragmentActivity() {
                 ui.button(page,"$name $count",32f+i*146f,105f,134f,33f){reload(q.copy(kind=kind,recent=false))}.apply {isSelected=!q.recent&&q.kind==kind;if(isSelected)background=ui.surface(TvUi.ACCENT,false)}
             }
             ui.button(page,"最近观看",470f,105f,130f,33f){reload(q.copy(kind=null,recent=true,sort=LibraryBrowse.Sort.WATCHED))}.apply {if(q.recent)background=ui.surface(TvUi.ACCENT,false)}
-            ui.button(page,"刷新",818f,105f,110f,33f){reload(offset=start,force=true)}
+            ui.button(page,"刷新",818f,105f,110f,33f){reload(offset=window.start,force=true)}
             val resolutions=catalog.mapNotNull {LibraryBrowse.resolution(it)}.distinct().sortedDescending()
             val regions=catalog.flatMap {LibraryBrowse.regions(it)}.distinct().sorted()
             if(resolutions.isNotEmpty()||regions.isNotEmpty())ui.button(page,listOfNotNull(q.resolution?.let {if(it==2160)"4K" else "${it}p"},q.region).joinToString(" · ").ifEmpty {"更多筛选"},612f,105f,194f,33f){
@@ -298,7 +300,6 @@ class JellyLibraryActivity : FragmentActivity() {
             ui.button(page,"方向",843f,150f,85f,34f){reload(q.copy(ascending=!q.ascending))}
             val scroll=ScrollView(this);val rows=LinearLayout(this);rows.orientation=LinearLayout.VERTICAL;scroll.addView(rows);ui.at(page,scroll,32f,197f,896f,269f)
             if(items.isEmpty())section(rows,if(selected.isEmpty())"当前条件下没有媒体" else "本页没有媒体，请返回上一页")
-            val columns=if(ui.fontScale>1)5 else 6
             val width=if(columns==5)168 else 137
             val height=width*3/2+62
             items.chunked(columns).forEach {group->
@@ -309,10 +310,9 @@ class JellyLibraryActivity : FragmentActivity() {
                 val continuing=resumes.filter {it.userData?.played!=true&&resumeMs(it)>0}.distinctBy {it.seriesId ?: it.id}
                 if(continuing.isNotEmpty()){section(rows,"继续观看");horizontal(rows,continuing,true){play(it,resumeMs(it))}}
             }
-            // Preserve actual filtered totals; the pagination layout follows in its own task.
-            label("${if(selected.isEmpty())0 else start+1}–${start+items.size} / ${selected.size}",32f,468f,420f,20f,12,true)
-            if(start>0)ui.button(page,"上一页",650f,465f,120f,25f){reload(offset=(start-60).coerceAtLeast(0))}
-            if(start+items.size<selected.size)ui.button(page,"下一页",784f,465f,144f,25f){reload(offset=start+60)}
+            val range=label(window.range,390f,466f,180f,22f,12,true);range.gravity=Gravity.CENTER
+            ui.button(page,"‹",340f,466f,38f,22f){reload(offset=window.start-window.size)}.apply {isEnabled=window.previous;isFocusable=window.previous;alpha=if(window.previous)1f else .35f;contentDescription="上一页"}
+            ui.button(page,"›",582f,466f,38f,22f){reload(offset=window.start+window.size)}.apply {isEnabled=window.next;isFocusable=window.next;alpha=if(window.next)1f else .35f;contentDescription="下一页"}
             focus((rows.getChildAt(0) as? ViewGroup)?.getChildAt(0) ?: scroll)
         }
     }

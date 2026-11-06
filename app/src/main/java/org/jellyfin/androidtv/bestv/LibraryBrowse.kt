@@ -10,6 +10,17 @@ object LibraryBrowse {
     enum class State(val label: String) { ALL("全部状态"), UNSEEN("未看"), WATCHING("观看中"), FINISHED("已看") }
     data class Query(val kind: BaseItemKind?=null, val recent: Boolean=false, val state: State=State.ALL,
         val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.ADDED, val ascending: Boolean=false)
+    data class Page(val items: List<BaseItemDto>,val start: Int,val total: Int,val size: Int){
+        val previous get()=start>0
+        val next get()=start+items.size<total
+        val range get()="${if(total==0)0 else start+1}–${start+items.size} / $total"
+    }
+    fun page(items: List<BaseItemDto>,start: Int,size: Int): Page {
+        require(size>0)
+        val last=if(items.isEmpty())0 else (items.size-1)/size*size
+        val offset=(start.coerceAtLeast(0)/size*size).coerceAtMost(last)
+        return Page(items.drop(offset).take(size),offset,items.size,size)
+    }
     fun seen(item: BaseItemDto) = item.userData?.let { it.played==true || (it.playCount ?: 0)>0 || it.lastPlayedDate!=null || (it.playbackPositionTicks ?: 0)>0 }==true
     fun watching(item: BaseItemDto) = item.userData?.played!=true && (item.userData?.playbackPositionTicks ?: 0)>0
     fun resolution(item: BaseItemDto): Int? {

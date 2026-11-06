@@ -36,5 +36,10 @@ fun main(){
  verify("resolution filters actual stream",LibraryBrowse.select(listOf(uhd,hd,unseen),q.copy(resolution=2160))==listOf(uhd))
  verify("region filters explicit production location",LibraryBrowse.select(listOf(uhd,hd),q.copy(region="China"))==listOf(hd))
  verify("absent region has no invented value",LibraryBrowse.regions(unseen).isEmpty())
+ val first=LibraryBrowse.page(all,0,6);verify("first page range and disabled previous",first.range=="1–6 / 86"&&!first.previous&&first.next)
+ val last=LibraryBrowse.page(all,84,6);verify("last page range and disabled next",last.range=="85–86 / 86"&&last.previous&&!last.next)
+ verify("outdated page clamps after filtering",LibraryBrowse.page(all.take(2),84,6).range=="1–2 / 2")
+ verify("empty range never claims item one",LibraryBrowse.page(emptyList(),60,6).range=="0–0 / 0")
+ verify("large text page contains five posters",LibraryBrowse.page(all,0,5).items.size==5)
  println("$checks library browse checks passed")
 }
