@@ -46,7 +46,7 @@ public final class LiveActivity extends Activity {
     private final Map<String,int[]> favoriteScroll=new HashMap<>();
     private ObjectAnimator startupRotation;
     private Player.Listener playbackListener;
-    private String renderedRoute="",resumeCode="",resumeSource="",guideChannel="",guideFullReturn="home";
+    private String renderedRoute="",resumeCode="",resumeSource="",guideChannel="",guideSourceId="",guideFullReturn="home";
     private Runnable previewSwitch;
     private boolean playerSuspended,resumePlayback,homeFocusFromInput;
     private static final long HOME_IDLE_MS=30000, DRAWER_IDLE_MS=10000;
@@ -126,7 +126,7 @@ public final class LiveActivity extends Activity {
     private void finishStartup(Bundle state,String cacheProblem){
         if(state!=null){route=restoreRoute(state.getString("route","home"));group=state.getString("group","全部频道");sourceScope=state.getString("source_scope","");favoritesOnly=state.getBoolean("favorites_only",false);returnFromFull=restoreRoute(state.getString("return_full","home"));searchQuery=state.getString("query","");lastHomeFocus=state.getString("home_focus","channel-list");String saved=state.getString("editor");try{if(saved!=null)editor=new EditorDraft(new JSONObject(saved));}catch(Exception ignored){}if(route.equals("editor")&&editor==null)editor=new EditorDraft();}
         if(state!=null){
-            settingsCategory=state.getString("settings_category","播放设置");guideReturn=state.getString("guide_return","home");guideFullReturn=state.getString("guide_full_return","home");guideChannel=state.getString("guide_channel","");guidePage=state.getInt("guide_page",0);
+            settingsCategory=state.getString("settings_category","播放设置");guideReturn=state.getString("guide_return","home");guideFullReturn=state.getString("guide_full_return","home");guideChannel=state.getString("guide_channel","");guideSourceId=state.getString("guide_source","");guidePage=state.getInt("guide_page",0);
             resumeSource=state.getString("resume_source","");resumeCode=state.getString("resume_code","");resumePlayback=state.getBoolean("resume_playback",false);
             ArrayList<String> savedStack=state.getStringArrayList("back_stack");if(savedStack!=null)backStack.addAll(savedStack);
             restoreStringMap(state,"favorite_focus",favoriteFocus);restoreStringMap(state,"settings_focus",settingsFocus);restoreStringMap(state,"page_focus",focusMemory);
@@ -669,17 +669,23 @@ public final class LiveActivity extends Activity {
     }
     private void updateRows(){if(list==null)return;int first=list.getFirstVisiblePosition();for(int i=0;i<list.getChildCount();i++){View child=list.getChildAt(i);int n=first+i;if(child instanceof FrameLayout&&n<shown.size()){FrameLayout row=(FrameLayout)child;JSONObject c=shown.get(n);if(row.getChildCount()>=4){((TextView)row.getChildAt(2)).setText(programmeText(c));TvIcons.text(((TextView)row.getChildAt(3)),isPlayingChannel(c)?"▷":"");}}}}
     private void openGuide(){openGuideFor(null,route);}
-    private void openGuideFor(JSONObject channel,String origin){rememberFocus();guideReturn=origin;if(origin.equals("full"))guideFullReturn=returnFromFull;guideChannel=channel==null?"":channel.optString("ChannelCode");route="guide";guidePage=0;if(channel!=null){for(int i=0;i<source.channels.size();i++)if(source.channels.get(i).optString("ChannelCode").equals(guideChannel)){guidePage=i/6;focusMemory.put("guide","guide-channel-"+(i%6));break;}}render(channel!=null);}
+    private void openGuideFor(JSONObject channel,String origin){
+        rememberFocus();guideReturn=origin;if(origin.equals("full"))guideFullReturn=returnFromFull;guideChannel=channel==null?"":channel.optString("ChannelCode");guideSourceId=channel==null?"":owner(channel).id;route="guide";guidePage=0;
+        if(channel!=null)for(int i=0;i<owner(channel).channels.size();i++)if(owner(channel).channels.get(i).optString("ChannelCode").equals(guideChannel)){guidePage=i/6;focusMemory.put("guide","guide-channel-"+(i%6));break;}
+        render(channel!=null);
+    }
     private final Runnable guideRefresh=()->{if(!dead&&route.equals("guide")){if(dialog!=null&&dialog.isShowing()||android.os.SystemClock.uptimeMillis()-lastInputAt<200){handler.postDelayed(this.guideRefresh,200);return;}rememberFocus();render(true);}};
     private void refreshGuidePreservingFocus(){handler.removeCallbacks(guideRefresh);handler.postDelayed(guideRefresh,200);}
     private void renderGuide(){
-        ui.header(page,"电视节目单",new SimpleDateFormat("MM 月 dd 日",Locale.CHINA).format(new Date())+" · "+source.name,()->back());if(guideChannel.isEmpty())filteredChannels(false);else shown=new ArrayList<>(source.channels);
+        if(guideChannel.isEmpty())filteredChannels(false);else {LiveSourceStore.Source selected=source;for(LiveSourceStore.Source candidate:store.channelSnapshots())if(candidate.id.equals(guideSourceId)){selected=candidate;break;}shown=new ArrayList<>(selected.channels);for(JSONObject ch:shown)channelOwners.put(ch,selected);}
+        guidePage=Math.min(guidePage,Math.max(0,(shown.size()-1)/6));
+        ui.header(page,"电视节目单",new SimpleDateFormat("MM 月 dd 日",Locale.CHINA).format(new Date())+" · "+(guideChannel.isEmpty()?sourceScopeName():shown.isEmpty()?source.name:owner(shown.get(0)).name),()->back());
         ui.button(page,"上一组",702,72,105,32,()->{if(guidePage>0){guidePage--;render(false);}});ui.button(page,"下一组",819,72,109,32,()->{if((guidePage+1)*6<shown.size()){guidePage++;render(false);}});
         long now=System.currentTimeMillis();Calendar clock=Calendar.getInstance();clock.setTimeInMillis(now);clock.set(Calendar.MINUTE,0);clock.set(Calendar.SECOND,0);clock.set(Calendar.MILLISECOND,0);long start=clock.getTimeInMillis(),end=start+3*3600000L;
         for(int i=0;i<3;i++)ui.text(page,time(start+i*3600000L),14,TvUi.MUTED,191+i*245,96,210,26);
         boolean any=false,pending=false;int count=Math.min(6,shown.size()-guidePage*6);for(int i=0;i<count;i++){JSONObject ch=shown.get(guidePage*6+i);float y=126+i*54;int row=i;Button channel=ui.button(page,ch.optString("ChannelName"),32,y,150,48,()->startFullChannel(ch,"guide"));tag(channel,"guide-channel-"+row);
             List<LiveSourceStore.Program> programs=channelPrograms(ch);for(LiveSourceStore.Program p:programs){if(p.end<=start||p.start>=end)continue;any=true;float x=191+Math.max(0,(p.start-start)/(float)(end-start))*737,w=(Math.min(p.end,end)-Math.max(p.start,start))/(float)(end-start)*737;Button cell=ui.button(page,p.title+"\n"+time(p.start)+"—"+time(p.end),x,y,Math.max(12,w-4),48,()->programDetail(ch,p));cell.setTextSize(TypedValue.COMPLEX_UNIT_PX,12*ui.scale*ui.fontScale);cell.setEllipsize(TextUtils.TruncateAt.END);tag(cell,"guide-program-"+row+"-"+p.start);}
-            String key=source.id+"/"+ch.optString("ChannelCode");if(!schedules.containsKey(key)){ensureEpg(ch);pending|=(epgPending.contains(key)||epgPending.contains(source.id+"/xmltv"));}if(programs.isEmpty())ui.text(page,(epgPending.contains(key)||epgPending.contains(source.id+"/xmltv"))?"节目单加载中…":"暂无节目信息，确认左侧频道仍可观看",12,TvUi.MUTED,200,y,720,48);
+            String key=owner(ch).id+"/"+ch.optString("ChannelCode");if(!schedules.containsKey(key)){ensureEpg(ch);pending|=(epgPending.contains(key)||epgPending.contains(owner(ch).id+"/xmltv"));}if(programs.isEmpty())ui.text(page,(epgPending.contains(key)||epgPending.contains(owner(ch).id+"/xmltv"))?"节目单加载中…":"暂无节目信息，确认左侧频道仍可观看",12,TvUi.MUTED,200,y,720,48);
         }
         if(any){View marker=new View(this);marker.setBackgroundColor(0xffb5a1ff);ui.at(page,marker,191+(now-start)/(float)(end-start)*737,122,1.5f,Math.max(1,count)*54);marker.setFocusable(false);}
         if(count==0)ui.text(page,"没有频道。请先添加或获取直播源。",17,TvUi.MUTED,64,220,810,80);
@@ -699,44 +705,38 @@ public final class LiveActivity extends Activity {
         if(detail.getWindow()!=null){detail.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));detail.getWindow().setLayout(ui.px(400),WindowManager.LayoutParams.WRAP_CONTENT);}watch.requestFocus();
     }
     private void renderSearch(){
-        ui.header(page,"搜索","频道、节目和媒体分别展示；仅查询当前可用来源",()->back());searchInput=ui.input(page,"频道名或节目名",searchQuery,32,100,350,false);tag(searchInput,"search-input");ui.button(page,"搜索",396,100,90,40,()->runSearch());ui.button(page,"清除",496,100,90,40,()->{searchInput.setText("");runSearch();});
+        ui.header(page,"搜索直播","仅查询直播频道和已加载节目单",()->back());searchInput=ui.input(page,"频道名或节目名",searchQuery,32,100,350,false);tag(searchInput,"search-input");ui.button(page,"搜索",396,100,90,40,()->runSearch());ui.button(page,"清除",496,100,90,40,()->{searchInput.setText("");runSearch();});
         String[] keys={"A B C D E F","G H I J K L","M N O P Q R","S T U V W X","Y Z 0 1 2 3","4 5 6 7 8 9"};for(int i=0;i<keys.length;i++){String[] letters=keys[i].split(" ");for(int j=0;j<letters.length;j++){String letter=letters[j];ui.button(page,letter,32+j*58,159+i*39,50,31,()->{searchInput.append(letter);runSearch();});}}
-        ui.button(page,"中文 / 拼音",32,405,130,38,()->{searchInput.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(searchInput,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);});ui.button(page,"退格",178,405,90,38,()->{String q=searchInput.getText().toString();if(!q.isEmpty())searchInput.setText(q.substring(0,q.offsetByCodePoints(q.length(),-1)));runSearch();});ui.button(page,"媒体搜索",284,405,98,38,()->openLibrary(false,null,searchInput.getText().toString()));
+        ui.button(page,"中文 / 拼音",32,405,130,38,()->{searchInput.requestFocus();((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).showSoftInput(searchInput,android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);});ui.button(page,"退格",178,405,90,38,()->{String q=searchInput.getText().toString();if(!q.isEmpty())searchInput.setText(q.substring(0,q.offsetByCodePoints(q.length(),-1)));runSearch();});
         FrameLayout results=new FrameLayout(this);ui.at(page,results,415,158,513,306);tag(results,"search-results");searchInput.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int a,int c,int d){}public void onTextChanged(CharSequence s,int start,int before,int count){searchQuery=s.toString();long gen=++searchGeneration;handler.postDelayed(()->{if(gen==searchGeneration&&route.equals("search"))runSearch();},250);}public void afterTextChanged(Editable e){}});runSearch();ui.footer(page,"确认输入框调用系统输入法 · 查询词和返回位置保留 · 仅搜索真实可用数据");
     }
     private static final class LiveSearchHit {
-        final JSONObject channel;final LiveSourceStore.Program program;
-        LiveSearchHit(JSONObject c,LiveSourceStore.Program p){channel=c;program=p;}
+        final LiveSourceStore.Source source;final JSONObject channel;final LiveSourceStore.Program program;
+        LiveSearchHit(LiveSourceStore.Source s,JSONObject c,LiveSourceStore.Program p){source=s;channel=c;program=p;}
     }
     private void runSearch(){
         if(searchInput==null)return;searchQuery=searchInput.getText().toString();final String q=searchQuery.trim().toLowerCase(Locale.ROOT);final long generation=++searchGeneration;
         FrameLayout results=page.findViewWithTag("search-results");if(results==null)return;results.removeAllViews();ScrollView scroll=new ScrollView(this);LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);scroll.addView(rows);results.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
-        if(q.isEmpty()){rows.addView(ui.text("输入频道、节目或媒体名称开始搜索。",15,TvUi.MUTED));return;}
-        rows.addView(ui.text("正在搜索…",14,TvUi.MUTED));final LiveSourceStore.Source snapshot=source;final ConcurrentMap<String,List<LiveSourceStore.Program>> programs=schedules;
+        if(q.isEmpty()){rows.addView(ui.text("输入频道或节目名称开始搜索。",15,TvUi.MUTED));return;}
+        rows.addView(ui.text("正在搜索…",14,TvUi.MUTED));final List<LiveSourceStore.Source> snapshots=store.channelSnapshots();final String scope=sourceScope;final boolean favorites=favoritesOnly;final ConcurrentMap<String,List<LiveSourceStore.Program>> programs=schedules;
         diskWorker.execute(()->{
             List<LiveSearchHit> channelHits=new ArrayList<>(),programHits=new ArrayList<>();
-            for(JSONObject ch:snapshot.channels){
-                if(channelHits.size()<12&&ch.optString("ChannelName").toLowerCase(Locale.ROOT).contains(q))channelHits.add(new LiveSearchHit(ch,null));
-                List<LiveSourceStore.Program> epg=programs.get(snapshot.id+"/"+ch.optString("ChannelCode"));if(epg!=null&&programHits.size()<12)for(LiveSourceStore.Program p:epg)if(p.title.toLowerCase(Locale.ROOT).contains(q)){programHits.add(new LiveSearchHit(ch,p));if(programHits.size()==12)break;}
-                if(channelHits.size()==12&&programHits.size()==12)break;
+            for(LiveSourceStore.Source snapshot:snapshots)for(JSONObject ch:snapshot.channels){
+                if(!LiveFilter.includes(scope,favorites,snapshot.id,snapshot.enabled,store.favorite(snapshot.id,ch.optString("ChannelCode"))))continue;
+                if(channelHits.size()<12&&ch.optString("ChannelName").toLowerCase(Locale.ROOT).contains(q))channelHits.add(new LiveSearchHit(snapshot,ch,null));
+                List<LiveSourceStore.Program> epg=programs.get(snapshot.id+"/"+ch.optString("ChannelCode"));if(epg!=null&&programHits.size()<12)for(LiveSourceStore.Program p:epg)if(p.title.toLowerCase(Locale.ROOT).contains(q)){programHits.add(new LiveSearchHit(snapshot,ch,p));if(programHits.size()==12)break;}
             }
             onUi(()->{
-                if(generation!=searchGeneration||!route.equals("search")||!snapshot.id.equals(source.id))return;
+                if(generation!=searchGeneration||!route.equals("search")||!scope.equals(sourceScope)||favorites!=favoritesOnly)return;
+                for(LiveSearchHit hit:channelHits)channelOwners.put(hit.channel,hit.source);for(LiveSearchHit hit:programHits)channelOwners.put(hit.channel,hit.source);
                 rows.removeAllViews();addSearchSection(rows,"频道",channelHits);addSearchSection(rows,"节目（已加载节目单）",programHits);
-                rows.addView(ui.text("媒体",17,TvUi.INK),new LinearLayout.LayoutParams(-1,ui.px(34)));
-                if(!JellyLiveBridge.isConnected()){Button connect=ui.button("连接媒体库以搜索电影和剧集",()->openLibrary(true,null,searchQuery));rows.addView(connect,new LinearLayout.LayoutParams(-1,ui.px(40)));return;}
-                TextView loading=ui.text("正在搜索当前 Jellyfin…",13,TvUi.MUTED);rows.addView(loading);
-                JellyLiveBridge.searchMedia(searchQuery,new JellyLiveBridge.Callback<List<JSONObject>>(){
-                    public void success(List<JSONObject> media){if(dead||generation!=searchGeneration||!route.equals("search"))return;rows.removeView(loading);if(media.isEmpty())rows.addView(ui.text("没有找到匹配的媒体。",13,TvUi.MUTED));for(JSONObject item:media){Button b=ui.button(item.optString("name"),()->openLibrary(false,item.optString("id"),null));rows.addView(b,new LinearLayout.LayoutParams(-1,ui.px(42)));}}
-                    public void failure(String error){if(!dead&&generation==searchGeneration&&route.equals("search"))loading.setText("媒体暂时无法搜索，直播仍可使用。");}
-                });
             });
         });
     }
     private void addSearchSection(LinearLayout rows,String heading,List<LiveSearchHit> hits){
         rows.addView(ui.text(heading+(hits.size()==12?" · 前 12 条":" · "+hits.size()),17,TvUi.INK),new LinearLayout.LayoutParams(-1,ui.px(34)));
         if(hits.isEmpty()){rows.addView(ui.text("没有匹配结果，可修改或清除查询词。",12,TvUi.MUTED));return;}
-        for(LiveSearchHit hit:hits){String title=hit.program==null?hit.channel.optString("ChannelName"):hit.program.title+"  "+time(hit.program.start);Button b=ui.button(title,()->{if(hit.program==null)startFullChannel(hit.channel,"search");else programDetail(hit.channel,hit.program);});rows.addView(b,new LinearLayout.LayoutParams(-1,ui.px(42)));}
+        for(LiveSearchHit hit:hits){String title=hit.program==null?hit.channel.optString("ChannelName")+" · "+hit.source.name:hit.program.title+" · "+hit.channel.optString("ChannelName")+"  "+time(hit.program.start);Button b=ui.button(title,()->{if(hit.program==null)startFullChannel(hit.channel,"search");else programDetail(hit.channel,hit.program);});rows.addView(b,new LinearLayout.LayoutParams(-1,ui.px(42)));}
     }
     private JSONObject actualPlayingChannel(){
         if(player==null||player.getCurrentMediaItem()==null||!player.getCurrentMediaItem().mediaId.equals(playingSource+":"+playingCode))return null;
@@ -806,7 +806,7 @@ public final class LiveActivity extends Activity {
     }
     @Override protected void onPause(){cancelFavoriteGesture();resumed=false;suspendPlayback();handler.removeCallbacks(homeIdle);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(hideControls);super.onPause();handler.removeCallbacks(minuteTick);}
     @Override protected void onSaveInstanceState(Bundle state){rememberFocus();super.onSaveInstanceState(state);state.putString("route",route);state.putString("group",group);state.putString("source_scope",sourceScope);state.putBoolean("favorites_only",favoritesOnly);state.putString("return_full",returnFromFull);state.putString("query",searchQuery);state.putString("home_focus",lastHomeFocus);if(editor!=null)try{state.putString("editor",editor.json().toString());}catch(Exception ignored){}
-        state.putString("settings_category",settingsCategory);state.putString("guide_return",guideReturn);state.putString("guide_full_return",guideFullReturn);state.putString("guide_channel",guideChannel);state.putInt("guide_page",guidePage);state.putStringArrayList("back_stack",new ArrayList<>(backStack));
+        state.putString("settings_category",settingsCategory);state.putString("guide_return",guideReturn);state.putString("guide_full_return",guideFullReturn);state.putString("guide_channel",guideChannel);state.putString("guide_source",guideSourceId);state.putInt("guide_page",guidePage);state.putStringArrayList("back_stack",new ArrayList<>(backStack));
         state.putString("resume_source",resumeSource);state.putString("resume_code",resumeCode);state.putBoolean("resume_playback",resumePlayback);
         state.putString("favorite_focus",new JSONObject(favoriteFocus).toString());state.putString("settings_focus",new JSONObject(settingsFocus).toString());state.putString("page_focus",new JSONObject(focusMemory).toString());
         try{JSONObject positions=new JSONObject();for(Map.Entry<String,int[]> entry:favoriteScroll.entrySet())positions.put(entry.getKey(),new JSONArray().put(entry.getValue()[0]).put(entry.getValue()[1]));state.putString("favorite_scroll",positions.toString());}catch(Exception ignored){}

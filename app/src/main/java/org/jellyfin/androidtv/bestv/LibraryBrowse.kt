@@ -32,6 +32,11 @@ object LibraryBrowse {
     }
     fun regions(item: BaseItemDto)=item.productionLocations.orEmpty().map {it.trim()}.filter {it.isNotEmpty()}.distinct()
     fun top(item: BaseItemDto) = item.type in listOf(BaseItemKind.MOVIE,BaseItemKind.SERIES,BaseItemKind.VIDEO)
+    fun search(items: List<BaseItemDto>,query: String,kind: BaseItemKind?=null): List<BaseItemDto> {
+        val text=query.trim();if(text.isEmpty())return emptyList()
+        return items.filter {top(it)&&(kind==null||it.type==kind)&&
+            (it.name.orEmpty().contains(text,true)||it.originalTitle.orEmpty().contains(text,true))}
+    }
     fun select(all: List<BaseItemDto>, q: Query): List<BaseItemDto> {
         val candidates=if(q.recent) all.filter { seen(it) && it.type in listOf(BaseItemKind.MOVIE,BaseItemKind.EPISODE,BaseItemKind.VIDEO) }
             .sortedByDescending { it.userData?.lastPlayedDate }.distinctBy { it.seriesId ?: it.id }
