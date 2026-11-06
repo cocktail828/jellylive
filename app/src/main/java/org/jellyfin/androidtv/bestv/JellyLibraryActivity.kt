@@ -63,6 +63,12 @@ class JellyLibraryActivity : FragmentActivity() {
     private var seek: SeekBar? = null
     private var clock: TextView? = null
     private var pause: Button? = null
+    private var playerBack: Button? = null
+    private var episodeAction: Button? = null
+    private var nextAction: Button? = null
+    private var lastPlayerAction: View? = null
+    private var overlay = MediaOverlay()
+    private var consumedPlayerConfirm=false
     private var reportStarted = false
     private var lastReport = 0L
     private var lastPersist = 0L
@@ -71,14 +77,16 @@ class JellyLibraryActivity : FragmentActivity() {
     private var searchJob: Job? = null
     private var bootstrap: LibraryBootstrap? = null
     private var bootstrapFailure = false
-    private val hideControls = Runnable { if (player?.isPlaying == true) controls?.visibility = View.GONE }
+    private val hideControls = Runnable { if(overlay.expire(android.os.SystemClock.uptimeMillis()))applyControlsVisibility() }
     private val updatePlayer = object : Runnable {
         override fun run() {
             val p = player ?: return
             val duration = p.duration.takeIf { it > 0 } ?: ((stream?.runTimeTicks ?: 0) / 10000)
-            if (seek?.isPressed != true) seek?.progress = if (duration > 0) (p.currentPosition * 10000 / duration).toInt() else 0
-            clock?.text = "${time(p.currentPosition)} / ${time(duration)}"
-            pause?.let { TvIcons.text(it, if (p.isPlaying) "Ⅱ  暂停" else "▷  播放") }
+            val shownPosition=overlay.target ?: p.currentPosition
+            seek?.visibility=if(canSeek())View.VISIBLE else View.GONE
+            seek?.progress=if(duration>0)(shownPosition*10000/duration).toInt() else 0
+            clock?.text="${time(shownPosition)} / ${if(duration>0)time(duration) else "--:--"}"
+            pause?.let {TvIcons.text(it,if(p.playWhenReady&&p.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
             playingItem?.let { item ->
                 if(System.currentTimeMillis()-lastPersist>=5000){rememberPosition(item,p.currentPosition);lastPersist=System.currentTimeMillis()}
                 if (reportStarted && System.currentTimeMillis() - lastReport > 15000) {
@@ -444,11 +452,16 @@ class JellyLibraryActivity : FragmentActivity() {
     }
 
     private fun play(item: BaseItemDto,position: Long) {
-        fresh("player");playingItem=item;stream=null;reportStarted=false;lastPersist=0
+        fresh("player");overlay=MediaOverlay();consumedPlayerConfirm=false;playingItem=item;stream=null;reportStarted=false;lastPersist=0
         val video=PlayerView(this);video.useController=false;video.isFocusable=false;videoSurface=video;ui.at(page,video,0f,0f,960f,540f)
         val loading=label("正在获取播放地址…",32f,80f,850f,48f,18)
         makeControls(item)
+        page.isFocusableInTouchMode=true;page.requestFocus()
+        video.setOnClickListener {if(overlay.visible)hidePlayerControls()else showControls()}
         val stamp=generation
+        if(item.type==BaseItemKind.EPISODE&&item.seriesId!=null)lifecycleScope.launch {
+            try {val episodes=repo.episodes(item.seriesId!!);if(stamp==generation){seriesEpisodes=episodes;updateEpisodeActions(item)}}catch(_:CancellationException){}catch(_:Exception){}
+        }
         lifecycleScope.launch {
             try {
                 val profile=withContext(Dispatchers.IO) {createDeviceProfile(this@JellyLibraryActivity,preferences,repo.servers.currentServer.value?.serverVersion ?: ServerVersion(10,10,0))}
@@ -458,7 +471,7 @@ class JellyLibraryActivity : FragmentActivity() {
                     override fun onResponse(response: StreamInfo) {
                         if(stamp!=generation)return
                         val url=response.mediaUrl
-                        if(url.isNullOrBlank()) {loading.text="服务器未提供可播放的媒体流，请返回后重试。";return}
+                        if(url.isNullOrBlank()) {loading.text="服务器未提供可播放的媒体流，可在更多中重试。";overlay.blocked=true;showControls();return}
                         stream=response
                         val render=DefaultRenderersFactory(this@JellyLibraryActivity).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
                         val exo=ExoPlayer.Builder(this@JellyLibraryActivity,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(LibraryMediaHttp.client(repo.api,mediaHttpFactory)))).build()
@@ -468,10 +481,12 @@ class JellyLibraryActivity : FragmentActivity() {
                         val audio=display.getString("preferred_audio","auto");val subtitle=display.getString("preferred_subtitle","off")
                         exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audio?.takeUnless {it=="auto"}).setPreferredTextLanguage(subtitle?.takeUnless {it=="off"}).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitle=="off").build()
                         exo.addListener(object: Player.Listener {
-                            override fun onPlayerError(error: PlaybackException) {loading.visibility=View.VISIBLE;loading.text="播放失败，请检查格式、网络或服务器转码设置。";showControls()}
+                            override fun onPlayerError(error: PlaybackException) {overlay.blocked=true;loading.visibility=View.VISIBLE;loading.text="播放失败，可在更多中重试，或返回检查格式、网络与转码设置。";showControls()}
+                            override fun onPlayWhenReadyChanged(playWhenReady: Boolean,reason: Int){overlay.paused=!playWhenReady;armPlayerIdle()}
+                            override fun onTimelineChanged(timeline: Timeline,reason: Int){seek?.visibility=if(canSeek())View.VISIBLE else View.GONE}
                             override fun onPlaybackStateChanged(state: Int) {
                                 if(state==Player.STATE_READY){loading.visibility=View.GONE;if(!reportStarted){reportStarted=true;reporting.reportStart(this@JellyLibraryActivity,null,item,response,exo.currentPosition*10000,!exo.playWhenReady);lastReport=System.currentTimeMillis()}}
-                                if(state==Player.STATE_ENDED)showControls()
+                                if(state==Player.STATE_ENDED){overlay.blocked=true;showControls()}
                             }
                         })
                         val subtitles=response.mediaSource?.mediaStreams.orEmpty().filter { it.type==MediaStreamType.SUBTITLE && it.isExternal==true && !it.deliveryUrl.isNullOrBlank() }.mapNotNull { media ->
@@ -481,36 +496,94 @@ class JellyLibraryActivity : FragmentActivity() {
                         }
                         exo.setMediaItem(MediaItem.Builder().setUri(url).setSubtitleConfigurations(subtitles).build());exo.seekTo(position);exo.prepare();exo.playWhenReady=true
                         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        handler.post(updatePlayer);showControls()
+                        handler.post(updatePlayer)
                     }
                     override fun onError(exception: Exception) {if(stamp==generation){loading.text="无法获取播放地址，请返回重试。";showControls()}}
                 })
-            } catch(e: CancellationException){throw e} catch(_: Exception){if(stamp==generation)loading.text="播放器初始化失败，请返回重试。"}
+            } catch(e: CancellationException){throw e} catch(_: Exception){if(stamp==generation){loading.text="播放器初始化失败，可在更多中重试。";overlay.blocked=true;showControls()}}
         }
     }
     private fun makeControls(item: BaseItemDto) {
-        val panel=FrameLayout(this);panel.background=ui.surface(0xef10172b.toInt(),false);controls=panel;ui.at(page,panel,32f,374f,896f,134f)
+        // Hide before attaching, including the central action and back button.
+        val panel=FrameLayout(this);panel.visibility=View.GONE;panel.background=ui.surface(0xef10172b.toInt(),false);controls=panel;ui.at(page,panel,32f,374f,896f,134f)
         ui.title(panel,item.name ?: "媒体播放",20f,10f,645f,32f)
         clock=ui.text(panel,"00:00 / --:--",14,TvUi.MUTED,684f,10f,195f,32f)
-        val progress=SeekBar(this);seek=progress;progress.max=10000;progress.keyProgressIncrement=100
+        val progress=SeekBar(this);seek=progress;progress.id=View.generateViewId();progress.max=10000;progress.visibility=View.GONE
         ui.at(panel,progress,14f,47f,866f,23f)
         progress.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(bar: SeekBar?,p: Int,fromUser: Boolean){if(fromUser){player?.let {if(it.duration>0)it.seekTo(it.duration*p/10000)};showControls(false)}}
-            override fun onStartTrackingTouch(bar: SeekBar?){handler.removeCallbacks(hideControls)}
-            override fun onStopTrackingTouch(bar: SeekBar?){showControls(false)}
+            override fun onProgressChanged(bar: SeekBar?,value: Int,fromUser: Boolean){if(fromUser&&canSeek()){beginSeek();player?.let {overlay.preview(it.duration*value/10000,it.duration)};updateSeekClock()}}
+            override fun onStartTrackingTouch(bar: SeekBar?){beginSeek()}
+            override fun onStopTrackingTouch(bar: SeekBar?){commitSeek()}
         })
-        progress.setOnKeyListener {_,key,event ->if(event.action==KeyEvent.ACTION_DOWN && (key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){player?.let {it.seekTo((it.currentPosition+if(key==KeyEvent.KEYCODE_DPAD_RIGHT)10000 else -10000).coerceAtLeast(0))};showControls(false);true}else false}
-        pause=ui.button(panel,"▷ 播放",20f,77f,110f,39f) {player?.let {if(it.isPlaying)it.pause()else it.play()};showControls(false)}
-        ui.button(panel,"音轨",145f,77f,100f,39f) {tracks(C.TRACK_TYPE_AUDIO)}
-        ui.button(panel,"字幕",260f,77f,100f,39f) {tracks(C.TRACK_TYPE_TEXT)}
-        if(item.type==BaseItemKind.EPISODE)ui.button(panel,"选集",375f,77f,100f,39f) {
-            val list=seriesEpisodes
-            if(list.isNotEmpty())choose("选集",list.map {"第 ${it.indexNumber ?: "?"} 集 · ${it.name.orEmpty()}"},list.indexOfFirst {it.id==item.id}) {i ->stopPlayer();backToSaved();play(list[i],resumeMs(list[i]))}
-            else item.seriesId?.let {id ->lifecycleScope.launch {try {val episodes=repo.episodes(id);seriesEpisodes=episodes;choose("选集",episodes.map {"第 ${it.indexNumber ?: "?"} 集"},-1){i->stopPlayer();backToSaved();play(episodes[i],resumeMs(episodes[i]))}}catch(_:Exception){Toast.makeText(this@JellyLibraryActivity,"暂时无法加载剧集",Toast.LENGTH_SHORT).show()}}}
+        progress.setOnTouchListener {_,event->if(event.action==MotionEvent.ACTION_CANCEL)cancelSeek();false}
+        pause=ui.button("Ⅱ"){togglePlayback()}.apply {
+            visibility=View.GONE;setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,26f*ui.scale);contentDescription="暂停或继续播放"
+            background=android.graphics.drawable.StateListDrawable().apply {
+                fun circle(color: Int)=android.graphics.drawable.GradientDrawable().apply {shape=android.graphics.drawable.GradientDrawable.OVAL;setColor(color);setStroke(ui.px(2f),Color.WHITE)}
+                addState(intArrayOf(android.R.attr.state_focused),circle(TvUi.ACCENT));addState(intArrayOf(),circle(0x9910172b.toInt()))
+            }
+        };ui.at(page,pause!!,444f,234f,72f,72f)
+        playerBack=ui.button("‹ 返回"){back()}.apply{visibility=View.GONE};ui.at(page,playerBack!!,32f,28f,110f,38f)
+        val audio=ui.button(panel,"音轨",20f,77f,100f,39f){tracks(C.TRACK_TYPE_AUDIO)}
+        val subtitle=ui.button(panel,"字幕",135f,77f,100f,39f){tracks(C.TRACK_TYPE_TEXT)}
+        episodeAction=ui.button(panel,"选集",250f,77f,100f,39f){selectEpisode(item)}.apply{visibility=View.GONE}
+        nextAction=ui.button(panel,"下一集",365f,77f,100f,39f){nextEpisodeItem(item)?.let {replacePlayback(it,resumeMs(it))}}.apply{visibility=View.GONE}
+        val more=ui.button(panel,"更多",480f,77f,100f,39f){
+            choose("播放操作",listOf(if(player?.playerError!=null)"重试播放" else "从头播放","画面比例"),-1){
+                if(it==0)replacePlayback(item,0) else choose("画面比例",listOf("保持比例","填充画面"),if(videoSurface?.resizeMode==androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM)1 else 0){index->videoSurface?.resizeMode=if(index==1)androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM else androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT}
+            }
         }
-        ui.text(panel,"左右调整进度 · 返回隐藏",12,TvUi.MUTED,616f,83f,260f,28f)
-        focus(pause!!)
+        listOf(audio,subtitle,episodeAction!!,nextAction!!,more).forEach {button->button.nextFocusUpId=progress.id;button.setOnFocusChangeListener {_,focused->if(focused){lastPlayerAction=button;armPlayerIdle()}}}
+        lastPlayerAction=audio;progress.nextFocusDownId=audio.id;progress.nextFocusUpId=pause!!.id;pause!!.nextFocusDownId=progress.id;pause!!.nextFocusUpId=playerBack!!.id;playerBack!!.nextFocusDownId=pause!!.id
+        ui.text(panel,"拖动或左右预览 · 确定跳转 · 返回取消",12,TvUi.MUTED,602f,83f,278f,28f)
+        updateEpisodeActions(item)
     }
+    private fun nextEpisodeItem(item: BaseItemDto): BaseItemDto? {
+        if(item.type!=BaseItemKind.EPISODE)return null
+        val episodes=seriesEpisodes.filter {it.seriesId==item.seriesId}
+        val index=episodes.indexOfFirst {it.id==item.id}
+        return if(index>=0)episodes.getOrNull(index+1)else null
+    }
+    private fun updateEpisodeActions(item: BaseItemDto){
+        episodeAction?.visibility=if(item.type==BaseItemKind.EPISODE&&seriesEpisodes.any {it.id==item.id})View.VISIBLE else View.GONE
+        nextAction?.visibility=if(nextEpisodeItem(item)!=null)View.VISIBLE else View.GONE
+    }
+    private fun selectEpisode(item: BaseItemDto){
+        val episodes=seriesEpisodes.filter {it.seriesId==item.seriesId};if(episodes.isEmpty())return
+        choose("选集",episodes.map {"第 ${it.indexNumber ?: "?"} 集 · ${it.name.orEmpty()}"},episodes.indexOfFirst {it.id==item.id}){replacePlayback(episodes[it],resumeMs(episodes[it]))}
+    }
+    private fun replacePlayback(item: BaseItemDto,position: Long){stopPlayer();backToSaved();play(item,position)}
+    private fun canSeek()=player?.let {it.duration>0&&it.isCurrentMediaItemSeekable}==true
+    private fun beginSeek(){
+        val p=player ?: return;if(!canSeek())return
+        overlay.begin(p.currentPosition,p.playWhenReady);p.pause();applyControlsVisibility();armPlayerIdle()
+    }
+    private fun stepSeek(forward: Boolean,longPress: Boolean){
+        val p=player ?: return;if(!canSeek()){showControls();return}
+        beginSeek();overlay.preview((overlay.target ?: p.currentPosition)+(if(forward)1 else -1)*(if(longPress)30_000L else 10_000L),p.duration)
+        seek?.requestFocus();updateSeekClock()
+    }
+    private fun updateSeekClock(){val p=player ?: return;val target=overlay.target ?: return;seek?.progress=if(p.duration>0)(target*10000/p.duration).toInt()else 0;clock?.text="${time(target)} / ${time(p.duration)}"}
+    private fun commitSeek(){val result=overlay.commit() ?: return;player?.let {it.seekTo(result.position);it.playWhenReady=result.resume};overlay.paused=!result.resume;showControls(false);seek?.requestFocus()}
+    private fun cancelSeek(){val resume=overlay.cancel() ?: return;player?.playWhenReady=resume;overlay.paused=!resume;showControls(false);seek?.requestFocus()}
+    private fun playRequested(){player?.let {if(it.playbackState==Player.STATE_ENDED){it.seekTo(0);overlay.blocked=false};it.play()}}
+    private fun togglePlayback(){player?.let {p->
+        if(p.playbackState==Player.STATE_ENDED)playRequested()else if(p.playWhenReady)p.pause()else p.play()
+        overlay.paused=!p.playWhenReady;showControls()
+    }}
+    private fun armPlayerIdle(){
+        handler.removeCallbacks(hideControls);overlay.interact(android.os.SystemClock.uptimeMillis())
+        overlay.remaining(android.os.SystemClock.uptimeMillis())?.let {handler.postDelayed(hideControls,it)}
+    }
+    private fun applyControlsVisibility(){
+        controls?.visibility=if(overlay.visible)View.VISIBLE else View.GONE
+        pause?.visibility=if(overlay.visible&&!overlay.seeking&&!overlay.dialog)View.VISIBLE else View.GONE
+        playerBack?.visibility=if(overlay.visible)View.VISIBLE else View.GONE
+        pause?.let {TvIcons.text(it,if(player?.playWhenReady==true&&player?.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
+        videoSurface?.subtitleView?.setBottomPaddingFraction(if(overlay.visible)0.32f else 0.08f)
+        if(!overlay.visible)page.requestFocus()
+    }
+    private fun hidePlayerControls(){overlay.hide();handler.removeCallbacks(hideControls);applyControlsVisibility()}
     private fun tracks(type: Int) {
         val p=player ?: return
         data class Choice(val group: Tracks.Group,val index: Int,val label: String)
@@ -525,19 +598,19 @@ class JellyLibraryActivity : FragmentActivity() {
             p.trackSelectionParameters=builder.build();showControls(false)
         }
     }
-    private fun showControls(focusButton: Boolean=true) {controls?.visibility=View.VISIBLE;if(focusButton)pause?.requestFocus();handler.removeCallbacks(hideControls);if(player?.isPlaying==true)handler.postDelayed(hideControls,6000)}
+    private fun showControls(focusButton: Boolean=true) {overlay.show(android.os.SystemClock.uptimeMillis());applyControlsVisibility();if(focusButton&&!overlay.seeking)pause?.requestFocus();armPlayerIdle()}
     private fun stopPlayer() {
         handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls)
         val p=player
         if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted)stream?.let {reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
-        player=null;stream=null;playingItem=null;controls=null;seek=null;clock=null;pause=null;reportStarted=false
+        player=null;stream=null;playingItem=null;controls=null;seek=null;clock=null;pause=null;playerBack=null;episodeAction=null;nextAction=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
     private fun choose(title: String,labels: List<String>,selected: Int,chosen: (Int)->Unit) {
         val previous=currentFocus
-        handler.removeCallbacks(hideControls)
+        handler.removeCallbacks(hideControls);if(pageName=="player"){overlay.dialog=true;applyControlsVisibility()}
         val d=AlertDialog.Builder(this).setTitle(title).setSingleChoiceItems(labels.toTypedArray(),selected){dlg,index ->dlg.dismiss();chosen(index)}.setNegativeButton("取消",null).create()
-        dialog=d;d.setOnDismissListener {dialog=null;previous?.takeIf {it.isAttachedToWindow}?.requestFocus()};d.show()
+        dialog=d;d.setOnDismissListener {if(dialog===d){dialog=null;if(pageName=="player"){overlay.dialog=false;applyControlsVisibility();armPlayerIdle()};previous?.takeIf {it.isAttachedToWindow&&it.visibility==View.VISIBLE}?.requestFocus()}};d.show()
         d.listView?.setSelector(ui.focusBackground(TvUi.TILE));d.window?.setBackgroundDrawable(ui.surface(TvUi.PANEL,false))
     }
     private fun backToSaved() {
@@ -548,23 +621,38 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun back() {
         if(dialog!=null){dialog?.dismiss();return}
-        if(pageName=="player") {if(controls?.visibility==View.VISIBLE){controls?.visibility=View.GONE;return};stopPlayer();backToSaved();return}
+        if(pageName=="player") {if(overlay.seeking){cancelSeek();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
         if(history.isEmpty())finish()else backToSaved()
     }
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if(event.action==KeyEvent.ACTION_DOWN)interaction++
-        if(pageName=="player" && event.action==KeyEvent.ACTION_DOWN && dialog==null) {
-            when(event.keyCode) {
-                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_MEDIA_PAUSE,KeyEvent.KEYCODE_MEDIA_PLAY ->{player?.let {if(it.isPlaying)it.pause()else it.play()};showControls();return true}
-                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,KeyEvent.KEYCODE_MEDIA_REWIND ->{player?.let {it.seekTo((it.currentPosition+if(event.keyCode==KeyEvent.KEYCODE_MEDIA_FAST_FORWARD)30000 else -10000).coerceAtLeast(0))};showControls();return true}
-                KeyEvent.KEYCODE_DPAD_UP,KeyEvent.KEYCODE_DPAD_DOWN,KeyEvent.KEYCODE_DPAD_LEFT,KeyEvent.KEYCODE_DPAD_RIGHT,KeyEvent.KEYCODE_DPAD_CENTER,KeyEvent.KEYCODE_ENTER ->if(controls?.visibility!=View.VISIBLE){showControls();return true}
+        if(pageName=="player"&&dialog==null){
+            val key=event.keyCode
+            val confirm=key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER||key==KeyEvent.KEYCODE_NUMPAD_ENTER
+            if(confirm&&event.action==KeyEvent.ACTION_UP&&consumedPlayerConfirm){consumedPlayerConfirm=false;return true}
+            if(event.action==KeyEvent.ACTION_DOWN){
+                armPlayerIdle()
+                if(confirm&&(overlay.seeking||!overlay.visible||currentFocus===pause)){
+                    consumedPlayerConfirm=true;if(event.repeatCount==0){if(overlay.seeking)commitSeek()else togglePlayback()};return true
+                }
+                when(key){
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_MEDIA_PAUSE,KeyEvent.KEYCODE_MEDIA_PLAY->{if(event.repeatCount==0){when(key){KeyEvent.KEYCODE_MEDIA_PLAY->playRequested();KeyEvent.KEYCODE_MEDIA_PAUSE->player?.pause();else->togglePlayback()};overlay.paused=player?.playWhenReady!=true;showControls()};return true}
+                    KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,KeyEvent.KEYCODE_MEDIA_REWIND->{stepSeek(key==KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,event.repeatCount>0);return true}
+                    KeyEvent.KEYCODE_DPAD_LEFT,KeyEvent.KEYCODE_DPAD_RIGHT->if(!overlay.visible||currentFocus===pause||currentFocus===seek){stepSeek(key==KeyEvent.KEYCODE_DPAD_RIGHT,event.repeatCount>0);return true}
+                    KeyEvent.KEYCODE_DPAD_UP,KeyEvent.KEYCODE_DPAD_DOWN->{
+                        if(!overlay.visible){showControls();return true}
+                        if(currentFocus===seek){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(!overlay.seeking)lastPlayerAction?.requestFocus()}else if(!overlay.seeking)pause?.requestFocus();return true}
+                        if(currentFocus===lastPlayerAction&&key==KeyEvent.KEYCODE_DPAD_UP&&!canSeek()){pause?.requestFocus();return true}
+                        if(currentFocus===pause&&key==KeyEvent.KEYCODE_DPAD_DOWN){if(canSeek())seek?.requestFocus()else lastPlayerAction?.requestFocus();return true}
+                    }
+                }
             }
         }
         return super.dispatchKeyEvent(event)
     }
     override fun onStart(){super.onStart();if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)}}
     override fun onStop(){
-        player?.pause();handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls)
+        overlay.cancel();overlay.paused=true;player?.pause();handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls)
         val p=player;val item=playingItem;val info=stream
         if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(info!=null && reportStarted)reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
         super.onStop()

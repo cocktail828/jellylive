@@ -13,6 +13,7 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
  for check_jar in $(find /cache/caches/modules-2/files-2.1 -name "*.jar"); do check_cp=$check_cp:$check_jar; done
  javac -proc:none -cp "$check_cp" -d /tmp /src/scripts/checks/LibraryImageCheck.java
  java -cp "/tmp:$check_cp" LibraryImageCheck
- java -cp "$check_lib/*" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -jvm-target 17 -classpath "$check_cp" -d /tmp/browse-check /src/scripts/checks/LibraryBrowseCheck.kt
+ java -cp "$check_lib/*" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -jvm-target 17 -classpath "$check_cp" -d /tmp/browse-check /src/scripts/checks/LibraryBrowseCheck.kt /src/scripts/checks/MediaOverlayCheck.kt
  java -cp "/tmp/browse-check:$check_cp" org.jellyfin.androidtv.bestv.LibraryBrowseCheckKt
+ java -cp "/tmp/browse-check:$check_cp" org.jellyfin.androidtv.bestv.MediaOverlayCheckKt
  '
