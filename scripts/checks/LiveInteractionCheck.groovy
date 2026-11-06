@@ -47,18 +47,40 @@ class FakeDialog {
     boolean isShowing(){showing}
     void dismiss(){showing=false;dismissed=true}
 }
+class View {
+    boolean focused=false
+    void requestFocus(){focused=true}
+}
+class FakeList extends View {
+    int selected=-1
+    int getSelectedItemPosition(){selected}
+    void setSelection(int value){selected=value}
+}
+class FakeSource {
+    String id='builtin'
+    boolean builtin(){id=='builtin'}
+}
+class FakeStore { String saved=''; String last(String id){saved} }
+class FakePrefs { String legacy=''; String getString(String key,String fallback){legacy ?: fallback} }
 class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back'].collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview'].collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false
-    String route='home',returnFromFull='home',guideReturn='home',guideFullReturn='home',requestedCode='a',liveErrorTitle='',lastHomeFocus='preview'
+    String route='home',returnFromFull='home',guideReturn='home',guideFullReturn='home',requestedCode='a',liveErrorTitle='',lastHomeFocus='channel-list',playingSource='',playingCode='',resumeSource='',resumeCode=''
     int playGeneration=5
     long lastInputAt=0
     static final long HOME_IDLE_MS=30000,DRAWER_IDLE_MS=10000
-    def source=[id:'builtin']
+    boolean homeFocusFromInput=true
+    def source=new FakeSource()
+    def store=new FakeStore()
+    def prefs=new FakePrefs()
+    def list=new FakeList()
+    def previewButton=new View()
+    def errorPanel=null,groupButton=null
+    List<Channel> shown=[]
     def editor=[busy:false]
     def player=new FakePlayer()
     def handler=new FakeHandler()
@@ -68,6 +90,7 @@ class InteractionHost {
     Runnable previewSwitch
     Runnable hideControls={hideControls()} as Runnable
 ''' + 'Runnable hideIdleDrawer='+initializer('hideIdleDrawer')+'\nRunnable homeIdle='+initializer('homeIdle')+'\n'+methods+'''
+    View firstFocusable(View view){view}
     void resetControlsTimer(){handler.removeCallbacks(hideControls);if(resumed&&controlsVisible&&(dialog==null||!dialog.isShowing()))handler.postDelayed(hideControls,5000)}
     void hideControls(){controlsVisible=false;events.add('hide-controls')}
     void hideDrawer(){drawerVisible=false;events.add('hide-drawer')}
@@ -172,6 +195,53 @@ check('background_cancels_idle_overlay_actions') {
     def h=fresh();h.route='full';h.drawerVisible=true;h.controlsVisible=true;h.resetIdleTimers()
     h.resumed=false;h.resetIdleTimers();h.handler.advance(60000);assert h.events.empty
 }
+// Use the production focus methods to verify startup without Android rendering.
+def focusHost={
+    def h=fresh();h.requestedCode='';h.shown=['a','b','c'].collect{channel(it)};h
+}
+check('home_default_focuses_playing_channel_before_requested_or_history') {
+    def h=focusHost();h.playingSource='builtin';h.playingCode='b';h.requestedCode='c';h.store.saved='a'
+    h.focusHomeDefault();assert h.list.focused && h.list.selected==1 && !h.previewButton.focused
+}
+check('home_default_focuses_pending_startup_channel') {
+    def h=focusHost();h.requestedCode='c';h.store.saved='b'
+    h.focusHomeDefault();assert h.list.focused && h.list.selected==2
+}
+check('home_default_focuses_saved_channel_without_playback') {
+    def h=focusHost();h.store.saved='b'
+    h.focusHomeDefault();assert h.list.selected==1
+}
+check('home_default_prefers_restored_channel_for_current_source') {
+    def h=focusHost();h.resumeSource='builtin';h.resumeCode='c';h.store.saved='b'
+    h.focusHomeDefault();assert h.list.selected==2
+}
+check('home_default_supports_legacy_last_channel') {
+    def h=focusHost();h.prefs.legacy='c'
+    h.focusHomeDefault();assert h.list.selected==2
+}
+check('home_default_ignores_other_source_playback_and_falls_back_if_missing') {
+    def h=focusHost();h.playingSource='other';h.playingCode='c';h.store.saved='missing'
+    h.focusHomeDefault();assert h.list.selected==0
+}
+check('home_default_keeps_channels_reachable_when_playback_has_error') {
+    def h=focusHost();h.store.saved='b';h.errorPanel=loader.loadClass('View').newInstance()
+    h.focusHomeDefault();assert h.list.focused && h.list.selected==1 && !h.errorPanel.focused
+}
+check('home_default_with_no_channels_focuses_recovery') {
+    def h=focusHost();h.shown=[];h.errorPanel=loader.loadClass('View').newInstance()
+    h.focusHomeDefault();assert h.errorPanel.focused && !h.list.focused
+}
+check('returning_to_list_preserves_selected_channel') {
+    def h=focusHost();h.list.selected=2;h.store.saved='b'
+    h.focusList(false);assert h.list.selected==2
+}
+check('programmatic_home_focus_does_not_trigger_preview_or_override_autoplay') {
+    def h=focusHost();h.schedulePreview(channel('a'));h.focusHomeDefault();h.schedulePreview(channel('a'))
+    h.handler.advance(200);assert h.events.empty && h.previewSwitch==null
+    h.homeFocusFromInput=true;h.schedulePreview(channel('b'));h.handler.advance(150)
+    assert h.events==['play:b']
+}
+
 def output=[javaSyntaxParsed:true,scope:'Production method bodies executed in Groovy with fake platform/clock; not Android compilation or TV execution',checks:results.size(),results:results]
 // Print results; no local/private reports are added to the repository.
 println(JsonOutput.toJson(output))
