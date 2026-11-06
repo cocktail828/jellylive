@@ -21,7 +21,7 @@ public class LibraryImageCheck {
   a.createContext("/",e->{if(e.getRequestURI().getPath().equals("/redirect")){e.getResponseHeaders().add("Location",other+"/image");e.sendResponseHeaders(302,-1);}else if(e.getRequestURI().getPath().equals("/local")){e.getResponseHeaders().add("Location",origin+"/image");e.sendResponseHeaders(302,-1);}else{received.set(e.getRequestHeaders().getFirst("Authorization"));legacyHeader.set(e.getRequestHeaders().getFirst("X-Emby-Authorization"));e.sendResponseHeaders(204,-1);}e.close();});
   b.createContext("/",e->{received.set(e.getRequestHeaders().getFirst("Authorization"));legacyHeader.set(e.getRequestHeaders().getFirst("X-Emby-Authorization"));e.sendResponseHeaders(204,-1);e.close();});a.start();b.start();
   LegacyAuthorizationCompatibility legacy=new LegacyAuthorizationCompatibility();
-  OkHttpClient base=new OkHttpClient.Builder().addInterceptor(legacy).addInterceptor(new FnMediaCompatibility()).addNetworkInterceptor(legacy.getNetworkHeaders()).build();
+  OkHttpClient base=new OkHttpClient.Builder().addInterceptor(legacy).addNetworkInterceptor(legacy.getNetworkHeaders()).build();
   try {
    HttpClientOptions options=null;for(var ctor:HttpClientOptions.class.getDeclaredConstructors())if(ctor.getParameterCount()==7){ctor.setAccessible(true);options=(HttpClientOptions)ctor.newInstance(false,0L,0L,0L,null,31,null);break;}
    OkHttpFactory factory=new OkHttpFactory(base);ClientInfo info=new ClientInfo("JellyLive","test");DeviceInfo device=new DeviceInfo("fixture","Fixture");

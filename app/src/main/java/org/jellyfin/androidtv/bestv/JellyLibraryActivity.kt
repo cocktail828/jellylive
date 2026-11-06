@@ -248,57 +248,91 @@ class JellyLibraryActivity : FragmentActivity() {
         focus(address)
     }
 
-    private fun home(push: Boolean=true) {
-        if(!repo.connected) {disconnected(push);return}
-        fresh("home",push);header("我的媒体库","${repo.serverName} · 正在加载…")
-        load({
-            val views=repo.views()
-            val resumes=try { repo.resume() } catch (_: Exception) { emptyList() }
-            views to resumes
-        }) { (views,resumes) ->
-            if(views.isEmpty()) { empty();return@load }
-            fresh("home",false);header("我的媒体库","${repo.serverName} · 已连接")
-            ui.button(page,"⌕ 搜索媒体",770f,69f,158f,38f) { search() }
-            val scroll=ScrollView(this);scroll.isFillViewport=false;scroll.clipToPadding=false
-            val body=LinearLayout(this);body.orientation=LinearLayout.VERTICAL;scroll.addView(body)
-            ui.at(page,scroll,32f,100f,896f,369f)
-            if(resumes.isNotEmpty()) {
-                section(body,"继续观看")
-                horizontal(body,resumes.take(12),true) { play(it,resumeMs(it)) }
+    private fun home(push: Boolean=true) = browse("我的媒体库",push=push,homePage=true)
+    private fun browse(title: String,parent: UUID?=null,q: LibraryBrowse.Query=LibraryBrowse.Query(),start: Int=0,push: Boolean=true,homePage: Boolean=false,refresh: Boolean=false) {
+        if(!repo.connected){disconnected(push);return}
+        fresh(if(homePage)"home" else "grid",push);header(title,"${repo.serverName} · 正在加载…")
+        load({ Triple(repo.catalog(parent,refresh),if(homePage)repo.views() else emptyList(),try {repo.resume()}catch(_:Exception){emptyList()}) }) { (catalog,views,resumes) ->
+            val selected=LibraryBrowse.select(catalog,q)
+            val items=selected.drop(start).take(60)
+            fresh(if(homePage)"home" else "grid",false)
+            header(title,"${repo.serverName} · ${selected.size} 项内容")
+            if(homePage)ui.button(page,"⌕ 搜索媒体",770f,69f,158f,38f){search()}
+            fun reload(query: LibraryBrowse.Query=q,offset: Int=0,force: Boolean=false)=browse(title,parent,query,offset,false,homePage,force)
+            val tabs=listOf("全部" to null,"电影" to BaseItemKind.MOVIE,"剧集" to BaseItemKind.SERIES)
+            tabs.forEachIndexed {i,(name,kind)->
+                val count=catalog.count {LibraryBrowse.top(it)&&(kind==null||it.type==kind)}
+                ui.button(page,"$name $count",32f+i*146f,105f,134f,33f){reload(q.copy(kind=kind,recent=false))}.apply {isSelected=!q.recent&&q.kind==kind;if(isSelected)background=ui.surface(TvUi.ACCENT,false)}
             }
-            section(body,"探索媒体库")
-            val row=LinearLayout(this);row.orientation=LinearLayout.HORIZONTAL
-            val options=listOf(Triple("电影",BaseItemKind.MOVIE,null),Triple("剧集",BaseItemKind.SERIES,null),Triple("最近添加",null,null))
-            options.forEach { (name,kind,_) ->
-                val button=tile(name,"浏览全部内容",300,130,null) { grid(name,kind=kind) }
-                row.addView(button,LinearLayout.LayoutParams(ui.px(287f),ui.px(130f)).apply { marginEnd=ui.px(14f) })
-            };body.addView(row)
-            section(body,"我的分类")
-            views.chunked(3).forEach { group ->
-                val r=LinearLayout(this)
-                group.forEach { item -> r.addView(tile(item.name ?: "媒体库","浏览分类内容",287,120,item) {grid(item.name ?: "媒体库",item.id)},LinearLayout.LayoutParams(ui.px(287f),ui.px(120f)).apply {marginEnd=ui.px(14f);bottomMargin=ui.px(12f)}) }
-                body.addView(r)
+            ui.button(page,"最近观看",470f,105f,130f,33f){reload(q.copy(kind=null,recent=true,sort=LibraryBrowse.Sort.WATCHED))}.apply {if(q.recent)background=ui.surface(TvUi.ACCENT,false)}
+            ui.button(page,"刷新",818f,105f,110f,33f){reload(offset=start,force=true)}
+            val resolutions=catalog.mapNotNull {LibraryBrowse.resolution(it)}.distinct().sortedDescending()
+            val regions=catalog.flatMap {LibraryBrowse.regions(it)}.distinct().sorted()
+            if(resolutions.isNotEmpty()||regions.isNotEmpty())ui.button(page,listOfNotNull(q.resolution?.let {if(it==2160)"4K" else "${it}p"},q.region).joinToString(" · ").ifEmpty {"更多筛选"},612f,105f,194f,33f){
+                val options=buildList {if(resolutions.isNotEmpty())add("分辨率");if(regions.isNotEmpty())add("地区")}
+                choose("更多筛选",options,-1){index->
+                    if(options[index]=="分辨率")choose("分辨率",listOf("全部分辨率")+resolutions.map {if(it==2160)"4K" else "${it}p"},resolutions.indexOf(q.resolution)+1){reload(q.copy(resolution=resolutions.getOrNull(it-1)))}
+                    else choose("地区",listOf("全部地区")+regions,regions.indexOf(q.region)+1){reload(q.copy(region=regions.getOrNull(it-1)))}
+                }
             }
-            focus(body.getChildAt(1)?.let { (it as? ViewGroup)?.getChildAt(0) } ?: scroll)
+
+            ui.button(page,if(parent==null)"媒体分类" else title,32f,150f,143f,34f){
+                if(views.isNotEmpty())choose("媒体分类",listOf("全部媒体")+views.map {it.name ?: "未命名分类"},0){if(it==0)home(false)else grid(views[it-1].name ?: "媒体分类",views[it-1].id)}
+                else choose("媒体分类",listOf("全部媒体"),0){home(false)}
+            }
+            ui.button(page,q.state.label,187f,150f,126f,34f){choose("观看状态",LibraryBrowse.State.entries.map {it.label},q.state.ordinal){reload(q.copy(state=LibraryBrowse.State.entries[it]))}}
+            val genres=catalog.filter {LibraryBrowse.top(it)&&(q.kind==null||it.type==q.kind)}.flatMap {it.genres.orEmpty()}.distinct().sorted()
+            if(genres.isNotEmpty())ui.button(page,q.genre ?: "全部类型",325f,150f,140f,34f){choose("类型",listOf("全部类型")+genres,genres.indexOf(q.genre)+1){reload(q.copy(genre=genres.getOrNull(it-1)))}}
+            val years=catalog.mapNotNull {LibraryMetadata.year(it)}.distinct().sortedDescending()
+            if(years.isNotEmpty())ui.button(page,q.year?.toString() ?: "全部年份",477f,150f,120f,34f){choose("年份",listOf("全部年份")+years.map {it.toString()},years.indexOf(q.year)+1){reload(q.copy(year=years.getOrNull(it-1)))}}
+            val sortLabel=q.sort.label+if(q.ascending)" · 升序" else " · 降序"
+            ui.button(page,sortLabel,609f,150f,222f,34f){choose("排序",LibraryBrowse.Sort.entries.map {it.label},q.sort.ordinal){reload(q.copy(sort=LibraryBrowse.Sort.entries[it],ascending=LibraryBrowse.Sort.entries[it]==LibraryBrowse.Sort.NAME))}}
+            ui.button(page,"方向",843f,150f,85f,34f){reload(q.copy(ascending=!q.ascending))}
+            val scroll=ScrollView(this);val rows=LinearLayout(this);rows.orientation=LinearLayout.VERTICAL;scroll.addView(rows);ui.at(page,scroll,32f,197f,896f,269f)
+            if(items.isEmpty())section(rows,if(selected.isEmpty())"当前条件下没有媒体" else "本页没有媒体，请返回上一页")
+            val columns=if(ui.fontScale>1)5 else 6
+            val width=if(columns==5)168 else 137
+            val height=width*3/2+62
+            items.chunked(columns).forEach {group->
+                val row=LinearLayout(this)
+                group.forEach {item->row.addView(tile(cardTitle(item),cardMeta(item),width,height,item,poster=catalog.firstOrNull {it.id==item.seriesId}){if(item.type==BaseItemKind.EPISODE&&item.seriesId!=null)detailById(item.seriesId!!)else detail(item)},LinearLayout.LayoutParams(ui.px(width.toFloat()),ui.px(height.toFloat())).apply{marginEnd=ui.px(14f);bottomMargin=ui.px(16f)})};rows.addView(row)
+            }
+            if(homePage&&!q.recent&&start==0){
+                val continuing=resumes.filter {it.userData?.played!=true&&resumeMs(it)>0}.distinctBy {it.seriesId ?: it.id}
+                if(continuing.isNotEmpty()){section(rows,"继续观看");horizontal(rows,continuing,true){play(it,resumeMs(it))}}
+            }
+            // Preserve actual filtered totals; the pagination layout follows in its own task.
+            label("${if(selected.isEmpty())0 else start+1}–${start+items.size} / ${selected.size}",32f,468f,420f,20f,12,true)
+            if(start>0)ui.button(page,"上一页",650f,465f,120f,25f){reload(offset=(start-60).coerceAtLeast(0))}
+            if(start+items.size<selected.size)ui.button(page,"下一页",784f,465f,144f,25f){reload(offset=start+60)}
+            focus((rows.getChildAt(0) as? ViewGroup)?.getChildAt(0) ?: scroll)
         }
     }
+    private fun cardTitle(item: BaseItemDto)=if(item.type==BaseItemKind.EPISODE)item.seriesName ?: item.name ?: "未命名剧集" else item.name ?: "未命名媒体"
+    private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"}).joinToString(" · ")
     private fun section(body: LinearLayout, title: String) { body.addView(ui.text(title,17,TvUi.INK),LinearLayout.LayoutParams(-1,ui.px(35f)).apply {topMargin=ui.px(7f);bottomMargin=ui.px(6f)}) }
     private fun horizontal(body: LinearLayout, items: List<BaseItemDto>, progress: Boolean=false, click: (BaseItemDto)->Unit) {
         val sc=HorizontalScrollView(this);sc.isHorizontalScrollBarEnabled=false
         val row=LinearLayout(this)
-        items.forEach {item -> row.addView(tile(item.name ?: "未命名媒体", if(progress) "继续播放 · ${time(resumeMs(item))}" else meta(item),287,132,item,progress) {click(item)},LinearLayout.LayoutParams(ui.px(287f),ui.px(132f)).apply {marginEnd=ui.px(14f)})}
-        sc.addView(row);body.addView(sc,LinearLayout.LayoutParams(-1,ui.px(140f)))
+        items.forEach {item -> row.addView(tile(cardTitle(item), if(progress) if(item.type==BaseItemKind.EPISODE) "第 ${item.indexNumber ?: 1} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}" else meta(item),287,209,item,progress) {click(item)},LinearLayout.LayoutParams(ui.px(287f),ui.px(209f)).apply {marginEnd=ui.px(14f)})}
+        sc.addView(row);body.addView(sc,LinearLayout.LayoutParams(-1,ui.px(217f)))
     }
-    private fun tile(name: String, sub: String, w: Int, h: Int, item: BaseItemDto?, progress: Boolean=false, click: ()->Unit): FrameLayout {
+    private fun tile(name: String, sub: String, w: Int, h: Int, item: BaseItemDto?, progress: Boolean=false, poster: BaseItemDto?=null, click: ()->Unit): FrameLayout {
         val box=FrameLayout(this);box.id=View.generateViewId();box.isFocusable=true;box.isFocusableInTouchMode=true;box.isClickable=true;box.background=ui.focusBackground(TvUi.PANEL);box.setPadding(ui.px(2f),ui.px(2f),ui.px(2f),ui.px(2f));box.clipToOutline=true
-        val artH=h-48
-        if(item!=null) art(box,item,0f,0f,w.toFloat(),artH.toFloat(),true)
-        else { val v=ui.text("▱",36,0xff8275bd.toInt());v.gravity=Gravity.CENTER;ui.at(box,v,0f,0f,w.toFloat(),artH.toFloat()) }
-        ui.text(box,name,16,TvUi.INK,10f,artH+5f,w-20f,22f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
-        ui.text(box,sub,12,TvUi.MUTED,10f,artH+26f,w-20f,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(progress && item!=null) {
-            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=if((item.runTimeTicks ?: 0)>0) (resumeMs(item)*10000*1000/(item.runTimeTicks!!)).toInt().coerceIn(0,1000) else 0
-            ui.at(box,p,8f,h-7f,w-16f,3f)
+        val compact=w>h&&!progress
+        val landscape=progress||(item?.type==BaseItemKind.EPISODE&&poster==null)
+        val artH=if(compact)h-12 else if(landscape)(w*9/16).coerceAtMost(h-48)else w*3/2
+        val artW=if(compact)if(landscape)artH*16/9 else artH*2/3 else w
+        val textX=if(compact)artW+16f else 8f
+        val textWidth=w-textX-8f
+        if(item!=null) art(box,poster ?: item,0f,if(compact)6f else 0f,artW.toFloat(),artH.toFloat(),landscape)
+        else {val v=ui.text("▱",36,0xff8275bd.toInt());v.gravity=Gravity.CENTER;ui.at(box,v,0f,0f,w.toFloat(),artH.toFloat())}
+        ui.text(box,name,14,TvUi.INK,textX,if(compact)12f else artH+4f,textWidth,if(landscape&&!compact)22f else 34f).apply {maxLines=if(landscape&&!compact)1 else 2;ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
+        ui.text(box,sub,11,TvUi.MUTED,textX,if(compact)h-32f else artH+if(landscape)27f else 40f,textWidth,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(item?.userData?.played==true)ui.text(box,"已看",10,TvUi.INK,w-43f,7f,36f,18f).apply{gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
+        else if(item!=null&&resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){
+            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=(resumeMs(item)*10000*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000)
+            ui.at(box,p,4f,artH-4f,artW-8f,3f)
         }
         box.setOnFocusChangeListener { _, focused ->
             box.foreground=if(focused) android.graphics.drawable.GradientDrawable().apply {setColor(Color.TRANSPARENT);cornerRadius=ui.px(8f).toFloat();setStroke(ui.px(2f),Color.WHITE)} else null
@@ -310,35 +344,8 @@ class JellyLibraryActivity : FragmentActivity() {
         image.load(url=repo.image(item,backdrop),placeholder=ColorDrawable(0xff20283d.toInt()),aspectRatio=if(backdrop) 16.0/9 else 2.0/3)
         if(repo.image(item,backdrop)==null) ui.text(parent,"暂无封面",12,TvUi.MUTED,x+10,y+h/2-10,w-20,20f).gravity=Gravity.CENTER
     }
-    private fun grid(title: String,parent: UUID?=null,kind: BaseItemKind?=null,start: Int=0,alphabetical: Boolean=false,genre: String?=null,push: Boolean=true) {
-        fresh("grid",push);header(title,"正在加载媒体…")
-        load({repo.items(parent,kind,start,alphabetical=alphabetical,genre=genre)}) { result ->
-            fresh("grid",false);header(title,"${result.totalRecordCount} 项内容${if(genre!=null) " · $genre" else ""}")
-            ui.button(page,"类型：${genre ?: "全部"}",590f,69f,150f,38f) {
-                val genres=result.items.flatMap {it.genres.orEmpty()}.distinct().sorted()
-                choose("类型",listOf("全部")+genres,if(genre==null) 0 else genres.indexOf(genre)+1) {grid(title,parent,kind,0,alphabetical,if(it==0)null else genres[it-1],false)}
-            }
-            ui.button(page,"排序：${if(alphabetical) "名称" else "最近添加"}",755f,69f,173f,38f) {
-                choose("排序",listOf("最近添加","名称"),if(alphabetical)1 else 0) {grid(title,parent,kind,0,it==1,genre,false)}
-            }
-            if(result.items.isEmpty()) {
-                label("这里暂时没有媒体内容",40f,200f,750f,45f,21)
-                ui.button(page,"刷新",40f,270f,160f,40f) {grid(title,parent,kind,start,alphabetical,genre,false)}
-                return@load
-            }
-            val scroll=ScrollView(this);val rows=LinearLayout(this);rows.orientation=LinearLayout.VERTICAL;scroll.addView(rows);ui.at(page,scroll,32f,134f,896f,290f)
-            result.items.chunked(6).forEach { group ->
-                val row=LinearLayout(this)
-                group.forEach { item ->
-                    row.addView(tile(item.name ?: "未命名媒体",meta(item),137,270,item) {detail(item)},LinearLayout.LayoutParams(ui.px(137f),ui.px(270f)).apply {marginEnd=ui.px(14f);bottomMargin=ui.px(16f)})
-                };rows.addView(row)
-            }
-            label("${start+1}–${start+result.items.size} / ${result.totalRecordCount}",32f,435f,480f,24f,13,true)
-            if(start>0)ui.button(page,"上一页",650f,432f,120f,34f) {grid(title,parent,kind,(start-60).coerceAtLeast(0),alphabetical,genre,false)}
-            if(start+result.items.size<result.totalRecordCount)ui.button(page,"下一页",784f,432f,144f,34f) {grid(title,parent,kind,start+60,alphabetical,genre,false)}
-            focus((rows.getChildAt(0) as ViewGroup).getChildAt(0))
-        }
-    }
+    private fun grid(title: String,parent: UUID?=null,kind: BaseItemKind?=null,start: Int=0,alphabetical: Boolean=false,genre: String?=null,push: Boolean=true) =
+        browse(title,parent,LibraryBrowse.Query(kind=kind,genre=genre,sort=if(alphabetical)LibraryBrowse.Sort.NAME else LibraryBrowse.Sort.ADDED,ascending=alphabetical),start,push)
     private fun launchDestination() {
         val requested=intent.getStringExtra("item_id")?.trim().orEmpty()
         if(requested.isNotEmpty()) {
@@ -391,10 +398,10 @@ class JellyLibraryActivity : FragmentActivity() {
             ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",32f,294f,174f,38f) {
                 if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(item,false,seasons[it].id)}
             }
-            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,32f,350f,896f,116f)
+            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,32f,337f,896f,149f)
             episodes.forEach { episode ->
                 val status=if(episode.userData?.played==true) "已观看" else if(resumeMs(episode)>0) "继续 ${time(resumeMs(episode))}" else episode.name.orEmpty()
-                row.addView(tile("第 ${episode.indexNumber ?: "?"} 集",status,213,112,episode,true) {play(episode,resumeMs(episode))},LinearLayout.LayoutParams(ui.px(213f),ui.px(112f)).apply {marginEnd=ui.px(14f)})
+                row.addView(tile("第 ${episode.indexNumber ?: "?"} 集",status,180,149,episode,true) {play(episode,resumeMs(episode))},LinearLayout.LayoutParams(ui.px(180f),ui.px(149f)).apply {marginEnd=ui.px(14f)})
             }
             if(episodes.isEmpty())label("本季暂无可播放剧集",270f,297f,500f,30f,14,true)
             if(first.isEnabled)focus(first)
@@ -570,6 +577,6 @@ class JellyLibraryActivity : FragmentActivity() {
         val seen=local.getLong("seen_${positionKey(item)}",0)
         return if(seen>0 && seen>=(item.userData?.lastPlayedDate?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli() ?: 0))local.getLong(positionKey(item),server)else server
     }
-    private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
+    private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"},LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
     private fun time(ms: Long): String {val secs=(ms.coerceAtLeast(0)/1000);return if(secs>=3600) "%d:%02d:%02d".format(secs/3600,secs/60%60,secs%60) else "%02d:%02d".format(secs/60,secs%60)}
 }
