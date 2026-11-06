@@ -16,6 +16,7 @@ def method = { String name ->
 }
 def initializer = { String name -> type.getFieldByName(name).get().variables[0].initializer.get().toString() }
 def loader = new GroovyClassLoader(getClass().classLoader)
+loader.parseClass(new File('app/src/main/java/org/jellyfin/androidtv/bestv/LiveFilter.java').text.replace('package org.jellyfin.androidtv.bestv;', ''))
 def clock = loader.parseClass('package android.os; class SystemClock { static long now=0; static long uptimeMillis(){now} }')
 loader.parseClass('''
 class FakeHandler {
@@ -55,6 +56,7 @@ class FakeList extends View {
     int selected=-1
     int getSelectedItemPosition(){selected}
     void setSelection(int value){selected=value}
+    void setSelectionFromTop(int value,int top){selected=value}
 }
 class FakeSource {
     String id='builtin'
@@ -73,7 +75,8 @@ class InteractionHost {
     int playGeneration=5
     long lastInputAt=0
     static final long HOME_IDLE_MS=30000,DRAWER_IDLE_MS=10000
-    boolean homeFocusFromInput=true
+    boolean homeFocusFromInput=true,suppressPreviewSelection=false
+    Map channelFocus=[:],channelScroll=[:]
     def source=new FakeSource()
     def store=new FakeStore()
     def prefs=new FakePrefs()
@@ -98,6 +101,9 @@ class InteractionHost {
     void rememberFocus(){events.add('remember-focus')}
     void exitDialog(){events.add('exit-confirm')}
     void toast(String value){events.add('toast')}
+    def owner(Channel channel){source}
+    String channelKey(Channel channel){LiveFilter.key(source.id,channel.code)}
+    String filterKey(){"home/all/false"}
     Channel findChannel(String code){new Channel(code:code)}
     void play(Channel channel,boolean fresh){events.add('play:'+channel.code)}
 }
@@ -240,6 +246,25 @@ check('programmatic_home_focus_does_not_trigger_preview_or_override_autoplay') {
     h.handler.advance(200);assert h.events.empty && h.previewSwitch==null
     h.homeFocusFromInput=true;h.schedulePreview(channel('b'));h.handler.advance(150)
     assert h.events==['play:b']
+}
+
+check('saved_filter_focus_is_source_scoped') {
+    def h=focusHost();h.channelFocus['home/all/false']='builtin/c';h.playingSource='builtin';h.playingCode='a';h.focusList(true);assert h.list.selected==2
+}
+check('filter_rebuild_never_tunes_programmatic_first_row') {
+    def h=fresh();h.suppressPreviewSelection=true;h.schedulePreview(channel('a'));h.handler.advance(200);assert h.events.empty
+}
+check('source_filter_and_favorite_intersection') {
+    def policy=loader.loadClass('LiveFilter')
+    assert policy.includes('',false,'thirdparty',true,false)
+    assert !policy.includes('',false,'disabled',false,true)
+    assert policy.includes('builtin',true,'builtin',true,true)
+    assert !policy.includes('builtin',true,'thirdparty',true,true)
+    assert !policy.includes('builtin',true,'builtin',true,false)
+}
+check('duplicate_codes_use_source_identity') {
+    def policy=loader.loadClass('LiveFilter');assert policy.key('builtin','1')!=policy.key('other','1')
+    assert policy.focus(['builtin/1','other/1'],null,'other/1')==1
 }
 
 def output=[javaSyntaxParsed:true,scope:'Production method bodies executed in Groovy with fake platform/clock; not Android compilation or TV execution',checks:results.size(),results:results]

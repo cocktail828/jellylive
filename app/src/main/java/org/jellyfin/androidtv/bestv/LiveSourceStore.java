@@ -68,6 +68,8 @@ public final class LiveSourceStore {
         if(!sources.containsKey(BUILTIN))sources.put(BUILTIN,new Source(BUILTIN,"内置直播源","","",true));
         Source current=sources.get(active);if(current==null||!current.enabled)active=firstEnabled();publish();
     }
+    /** Channel snapshots share read-only published lists; writers replace them atomically. */
+    public List<Source> channelSnapshots(){List<Source> result=new ArrayList<>();for(Source s:readable.sources.values()){Source d=descriptor(s);d.channels=Collections.unmodifiableList(s.channels);result.add(d);}return result;}
     public List<Source> all()throws Exception{List<Source> a=new ArrayList<>();for(Source s:readable.sources.values())a.add(s.copy());return a;}
     public Source get(String id)throws Exception{Source s=readable.sources.get(id);return s==null?null:s.copy();}
     public Source current()throws Exception{ReadState r=readable;Source s=r.sources.get(r.active);return s==null?null:s.copy();}
