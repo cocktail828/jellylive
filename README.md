@@ -1,6 +1,6 @@
 # JellyLive
 
-面向 Android TV 的直播和媒体库客户端，当前版本 **v0.1.1**。基于 Jellyfin Android TV 0.19.10 修改，保留上游 GPL-2.0 许可证和版权声明，原项目说明见 [docs/upstream/README.md](docs/upstream/README.md)。
+面向 Android TV 的直播和媒体库客户端，当前版本 **v0.1.2**。基于 Jellyfin Android TV 0.19.10 修改，保留上游 GPL-2.0 许可证和版权声明，原项目说明见 [docs/upstream/README.md](docs/upstream/README.md)。
 
 支持直播频道、收藏、节目单、遥控器操作、全屏侧栏及闲置自动收起；媒体库沿用 Jellyfin SDK，支持手动连接和切换服务器。
 
