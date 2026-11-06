@@ -21,6 +21,30 @@ android {
 		versionCode = getVersionCode(project.getVersionName())
 	}
 
+    // Opt-in local build inputs, mounted read-only by scripts/build-container.sh.
+    providers.gradleProperty("jellylive.bootstrapDir").orNull?.let { path ->
+        val directory = file(path)
+        val names = setOf("bestv-bootstrap.json", "jellyfin-bootstrap.json")
+        val inputs = directory.listFiles()?.toList().orEmpty()
+        require(directory.isDirectory && inputs.isNotEmpty() && inputs.all { it.isFile && it.name in names }) {
+            "Bootstrap directory must contain only the supported local JSON files."
+        }
+        inputs.forEach { input ->
+            val limit = if (input.name == "jellyfin-bootstrap.json") 64 * 1024L else 1024 * 1024L
+            require(input.length() in 1..limit) { "Invalid local bootstrap file size: ${input.name}" }
+            val value = try { groovy.json.JsonSlurper().parse(input) as? Map<*, *> }
+                catch (_: Exception) { null }
+            require(!value.isNullOrEmpty()) { "Invalid local bootstrap JSON: ${input.name}" }
+            if (input.name == "jellyfin-bootstrap.json") {
+                require(value["address"] is String && (value["address"] as String).isNotBlank() &&
+                    value["username"] is String && (value["username"] as String).isNotBlank() && value["password"] is String) {
+                    "Library bootstrap requires address, username and password strings."
+                }
+            }
+        }
+        sourceSets.getByName("main").assets.srcDir(directory)
+    }
+
 	buildFeatures {
 		buildConfig = true
 		viewBinding = true
