@@ -69,6 +69,14 @@ public final class LiveActivity extends Activity {
     private boolean resumed,started,recoveryUsed,controlsVisible,drawerVisible,confirmFromVideo,syncingJellyfin,openingChannel;
     private volatile boolean dead;
     private AlertDialog dialog;
+    private final LiveConfirmGesture favoriteGesture=new LiveConfirmGesture();
+    private View confirmAnchor;
+    private boolean confirmShowsInfo;
+    private TextView favoriteFeedback;
+    private final Runnable removeFavoriteFeedback=()->{if(favoriteFeedback!=null){TvUi.detach(favoriteFeedback);favoriteFeedback=null;}};
+    private final Runnable holdFavorite=()->{
+        if(favoriteGesture.poll(android.os.SystemClock.uptimeMillis(),playingSource,playingCode,route.equals("full")&&!drawerVisible&&(dialog==null||!dialog.isShowing())&&getWindow().getDecorView().hasWindowFocus()))savePlayingFavorite();
+    };
     private final Map<String,String> focusMemory=new HashMap<>();
     private final Map<String,int[]> listMemory=new HashMap<>();
     private final Deque<String> backStack=new ArrayDeque<>();
@@ -197,6 +205,7 @@ public final class LiveActivity extends Activity {
         rememberFocus();route=backStack.isEmpty()?"home":backStack.pop();render(true);
     }
     private void render(boolean restore){
+        cancelFavoriteGesture();
         boolean enteringHome=route.equals("home")&&!renderedRoute.equals("home");renderedRoute=route;
         screenGeneration++;cancelPreviewSwitch();handler.removeCallbacks(hideControls);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(homeIdle);controlsVisible=false;drawerVisible=false;
         if(page!=null)TvUi.detach(page);page=ui.canvas();if(isLiveRoute())page.setBackgroundColor(Color.TRANSPARENT);FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(ui.px(960),ui.px(540),Gravity.CENTER);root.addView(page,p);
@@ -289,7 +298,7 @@ public final class LiveActivity extends Activity {
     private void restoreLastChannel(){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");JSONObject c=findChannel(code);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);if(c!=null)play(c,true);}
     private void play(JSONObject ch,boolean fresh){
         if(ch==null||!resumed||!isLiveRoute())return;
-        cancelPreviewSwitch();LiveSourceStore.Source targetSource=owner(ch);
+        cancelFavoriteGesture();cancelPreviewSwitch();LiveSourceStore.Source targetSource=owner(ch);
         if(!targetSource.id.equals(source.id)){source=targetSource;requestedCode="";failedChannels.clear();final String selectedId=source.id;diskTask(()->store.activate(selectedId),()->{});}
         String code=ch.optString("ChannelCode");final String id=source.id;final boolean builtin=source.builtin();final int gen=++playGeneration;final BestvApi activeApi=api;
         requestedCode=code;resumeSource=id;resumeCode=code;playerSuspended=false;resumePlayback=true;
@@ -379,10 +388,10 @@ public final class LiveActivity extends Activity {
         if(controls==null)return;JSONObject ch=currentChannel();LiveSourceStore.Program now=nowProgram(ch);TextView name=controls.findViewWithTag("control-name"),program=controls.findViewWithTag("control-program"),time=controls.findViewWithTag("control-time");if(name!=null)name.setText(ch==null?"暂无频道":ch.optString("ChannelNo")+"  "+ch.optString("ChannelName"));if(program!=null)program.setText(now==null?"暂无节目信息":now.title);if(time!=null)time.setText(now==null?"独立直播 · 不提供时移或回看":time(now.start)+"—"+time(now.end)+nextProgram(ch));
     }
     private void resetControlsTimer(){handler.removeCallbacks(hideControls);if(resumed&&controlsVisible&&(dialog==null||!dialog.isShowing()))handler.postDelayed(hideControls,5000);}
-    private void hideControls(){controlsVisible=false;handler.removeCallbacks(hideControls);if(controls!=null){TvUi.detach(controls);controls=null;}if(route.equals("full")&&videoFrame!=null&&!drawerVisible)videoFrame.requestFocus();}
+    private void hideControls(){cancelFavoriteGesture();controlsVisible=false;handler.removeCallbacks(hideControls);if(controls!=null){TvUi.detach(controls);controls=null;}if(route.equals("full")&&videoFrame!=null&&!drawerVisible)videoFrame.requestFocus();}
     private void showDrawer(){
         if(!route.equals("full")||drawerVisible)return;
-        hideControls();drawerVisible=true;drawer=new FrameLayout(this);drawer.setBackgroundColor(0xf9111629);ui.at(page,drawer,560,0,400,540);
+        cancelFavoriteGesture();hideControls();drawerVisible=true;drawer=new FrameLayout(this);drawer.setBackgroundColor(0xf9111629);ui.at(page,drawer,560,0,400,540);
         groupButton=ui.button(drawer,sourceScopeName()+"  ⌄",16,26,246,42,()->chooseGroup());tag(groupButton,"drawer-group");
         favoriteFilterButton(drawer,274,26,94,42);
         filteredChannels(false);list=makeChannelList(576,80,352,344,true);TvUi.detach(list);ui.at(drawer,list,16,80,352,344);tag(list,"drawer-list");ui.text(drawer,"确认切台 · 返回关闭 · 左键收起",13,TvUi.MUTED,16,486,352,30);
@@ -654,6 +663,7 @@ public final class LiveActivity extends Activity {
         showActions(type==C.TRACK_TYPE_AUDIO?"音轨":"字幕",names.toArray(new String[0]),n->{TrackSelectionParameters.Builder b=player.getTrackSelectionParameters().buildUpon().clearOverridesOfType(type).setTrackTypeDisabled(type,type==C.TRACK_TYPE_TEXT&&n==0);if(n>0)b.addOverride(overrides.get(n-1));player.setTrackSelectionParameters(b.build());});
     }
     private void showActions(String title,String[] names,java.util.function.IntConsumer action){
+        cancelFavoriteGesture();
         View anchor=getCurrentFocus();if(dialog!=null&&dialog.isShowing())dialog.dismiss();dialog=new AlertDialog.Builder(this).setTitle(title).setItems(names,(d,n)->action.accept(n)).setNegativeButton("取消",null).create();dialog.setOnKeyListener((d,key,event)->isLiveRoute()&&key==KeyEvent.KEYCODE_MENU);dialog.setOnDismissListener(d->{if(anchor!=null&&anchor.isAttachedToWindow())anchor.requestFocus();lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();});handler.removeCallbacks(hideControls);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(homeIdle);dialog.show();
     }
     private void exitDialog(){View anchor=getCurrentFocus();dialog=new AlertDialog.Builder(this).setTitle("退出 JellyLive？").setNegativeButton("继续观看",null).setPositiveButton("退出",(d,w)->finish()).create();dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_NEGATIVE).requestFocus());dialog.setOnDismissListener(d->{if(anchor!=null)anchor.requestFocus();lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();});handler.removeCallbacks(homeIdle);dialog.show();}
@@ -746,21 +756,47 @@ public final class LiveActivity extends Activity {
         if(hits.isEmpty()){rows.addView(ui.text("没有匹配结果，可修改或清除查询词。",12,TvUi.MUTED));return;}
         for(LiveSearchHit hit:hits){String title=hit.program==null?hit.channel.optString("ChannelName"):hit.program.title+"  "+time(hit.program.start);Button b=ui.button(title,()->{if(hit.program==null)startFullChannel(hit.channel,"search");else programDetail(hit.channel,hit.program);});rows.addView(b,new LinearLayout.LayoutParams(-1,ui.px(42)));}
     }
+    private JSONObject actualPlayingChannel(){
+        if(player==null||player.getCurrentMediaItem()==null||!player.getCurrentMediaItem().mediaId.equals(playingSource+":"+playingCode))return null;
+        for(LiveSourceStore.Source s:store.channelSnapshots())if(s.id.equals(playingSource))for(JSONObject channel:s.channels)if(channel.optString("ChannelCode").equals(playingCode))return channel;
+        return null;
+    }
+    private void cancelFavoriteGesture(){handler.removeCallbacks(holdFavorite);favoriteGesture.cancel();if(confirmAnchor!=null)confirmAnchor.setPressed(false);confirmAnchor=null;confirmFromVideo=false;}
+    private void savePlayingFavorite(){
+        JSONObject channel=actualPlayingChannel();if(channel==null)return;
+        final String id=favoriteGesture.source,code=favoriteGesture.channel,name=channel.optString("ChannelName");
+        if(!id.equals(playingSource)||!code.equals(playingCode))return;
+        diskWorker.execute(()->{try{store.toggleFavorite(id,code);boolean saved=store.favorite(id,code);onUi(()->favoriteResult((saved?"已收藏 · ":"已取消收藏 · ")+name));}catch(Exception e){onUi(()->favoriteResult("收藏未保存，请重试"));}});
+    }
+    private void favoriteResult(String text){
+        handler.removeCallbacks(removeFavoriteFeedback);removeFavoriteFeedback.run();favoriteFeedback=ui.text(text,12,TvUi.INK);favoriteFeedback.setGravity(Gravity.CENTER);favoriteFeedback.setPadding(ui.px(16),ui.px(9),ui.px(16),ui.px(9));favoriteFeedback.setMaxWidth(ui.px(800));favoriteFeedback.setBackground(ui.surface(0xe6171c32,false));favoriteFeedback.setFocusable(false);
+        FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);p.bottomMargin=ui.px(controlsVisible?136:32);root.addView(favoriteFeedback,p);favoriteFeedback.announceForAccessibility(text);handler.postDelayed(removeFavoriteFeedback,2000);
+    }
     private boolean confirm(int key){return key==KeyEvent.KEYCODE_DPAD_CENTER||key==KeyEvent.KEYCODE_ENTER||key==KeyEvent.KEYCODE_NUMPAD_ENTER;}
     @Override public boolean dispatchKeyEvent(KeyEvent event){
-        if(event.getKeyCode()==KeyEvent.KEYCODE_MENU&&isLiveRoute())return true;
+        if(event.getKeyCode()==KeyEvent.KEYCODE_MENU&&isLiveRoute()){if(event.getAction()==KeyEvent.ACTION_DOWN)cancelFavoriteGesture();return true;}
         if(event.getAction()==KeyEvent.ACTION_DOWN||event.getAction()==KeyEvent.ACTION_UP){homeFocusFromInput=true;lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();}
         if((player==null||source==null||store==null)&&event.getKeyCode()!=KeyEvent.KEYCODE_BACK)return true;
+        int key=event.getKeyCode();
+        if(confirm(key)&&event.getAction()==KeyEvent.ACTION_UP&&favoriteGesture.consumesRelease()){
+            handler.removeCallbacks(holdFavorite);View anchor=confirmAnchor;if(anchor!=null)anchor.setPressed(false);confirmAnchor=null;
+            LiveConfirmGesture.Release release=favoriteGesture.release(event.isCanceled());
+            if(release==LiveConfirmGesture.Release.SHORT&&route.equals("full")&&!drawerVisible&&(dialog==null||!dialog.isShowing())){if(confirmShowsInfo)showControls();else if(anchor!=null&&anchor.isAttachedToWindow())anchor.performClick();}
+            return true;
+        }
+        if(event.getAction()==KeyEvent.ACTION_DOWN&&!confirm(key))cancelFavoriteGesture();
         if(dialog!=null&&dialog.isShowing())return super.dispatchKeyEvent(event);
-        int key=event.getKeyCode();if(controlsVisible&&event.getAction()==KeyEvent.ACTION_DOWN)resetControlsTimer();
+        if(controlsVisible&&event.getAction()==KeyEvent.ACTION_DOWN)resetControlsTimer();
         if(event.getAction()==KeyEvent.ACTION_DOWN){
             if(errorPanel!=null&&key==KeyEvent.KEYCODE_DPAD_RIGHT&&!drawerVisible){if(route.equals("home")){focusList(true);return true;}if(route.equals("full")){showDrawer();return true;}}
             if(route.equals("settings")&&key==KeyEvent.KEYCODE_DPAD_LEFT&&settingsPanel!=null&&settingsPanel.hasFocus()){rememberSettingsFocus();settingsTabs.get(settingsCategoryIndex()).requestFocus();return true;}
             if(route.equals("settings")&&key==KeyEvent.KEYCODE_DPAD_RIGHT&&settingsCategoryIndex()<settingsTabs.size()&&settingsTabs.get(settingsCategoryIndex()).hasFocus()){focusSettingsPanel();return true;}
         }
-        if(route.equals("full")&&!drawerVisible&&!controlsVisible&&errorPanel==null&&confirm(key)){
-            if(event.getAction()==KeyEvent.ACTION_DOWN){if(event.getRepeatCount()==0)confirmFromVideo=true;return true;}
-            if(event.getAction()==KeyEvent.ACTION_UP){boolean show=confirmFromVideo;confirmFromVideo=false;if(show&&!event.isCanceled())showControls();return true;}
+        if(route.equals("full")&&!drawerVisible&&errorPanel==null&&confirm(key)){
+            if(event.getAction()==KeyEvent.ACTION_DOWN){
+                if(event.getRepeatCount()==0){confirmShowsInfo=!controlsVisible;confirmAnchor=getCurrentFocus();if(confirmAnchor!=null)confirmAnchor.setPressed(true);favoriteGesture.begin(playingSource,actualPlayingChannel()==null?"":playingCode,android.os.SystemClock.uptimeMillis(),ViewConfiguration.getLongPressTimeout());handler.postDelayed(holdFavorite,ViewConfiguration.getLongPressTimeout());}
+                return true;
+            }
         }
         return super.dispatchKeyEvent(event);
     }
@@ -772,7 +808,7 @@ public final class LiveActivity extends Activity {
         return super.onKeyDown(key,e);
     }
     @Override public void onBackPressed(){back();}
-    @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&root!=null)immersive();}
+    @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&root!=null)immersive();if(!focus)cancelFavoriteGesture();}
     @Override protected void onResume(){
         super.onResume();resumed=true;if(player==null||store==null)return;resumeReady();
     }
@@ -786,7 +822,7 @@ public final class LiveActivity extends Activity {
         lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();
         handler.removeCallbacks(minuteTick);handler.postDelayed(minuteTick,60000);
     }
-    @Override protected void onPause(){resumed=false;suspendPlayback();handler.removeCallbacks(homeIdle);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(hideControls);super.onPause();handler.removeCallbacks(minuteTick);}
+    @Override protected void onPause(){cancelFavoriteGesture();resumed=false;suspendPlayback();handler.removeCallbacks(homeIdle);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(hideControls);super.onPause();handler.removeCallbacks(minuteTick);}
     @Override protected void onSaveInstanceState(Bundle state){rememberFocus();super.onSaveInstanceState(state);state.putString("route",route);state.putString("group",group);state.putString("source_scope",sourceScope);state.putBoolean("favorites_only",favoritesOnly);state.putString("return_full",returnFromFull);state.putString("query",searchQuery);state.putString("home_focus",lastHomeFocus);if(editor!=null)try{state.putString("editor",editor.json().toString());}catch(Exception ignored){}
         state.putString("settings_category",settingsCategory);state.putString("guide_return",guideReturn);state.putString("guide_full_return",guideFullReturn);state.putString("guide_channel",guideChannel);state.putInt("guide_page",guidePage);state.putStringArrayList("back_stack",new ArrayList<>(backStack));
         state.putString("resume_source",resumeSource);state.putString("resume_code",resumeCode);state.putBoolean("resume_playback",resumePlayback);

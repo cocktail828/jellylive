@@ -11,6 +11,8 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
     check_lib=$(find /cache/wrapper/dists -type d -path "*/gradle-9.1.0/lib" -print -quit)
     test -n "$check_lib" || { echo "Run the container build first to populate the Gradle cache." >&2; exit 1; }
     java -cp "$check_lib/*" groovy.ui.GroovyMain scripts/checks/LiveInteractionCheck.groovy
+    javac -proc:none -d /tmp/live-gesture-check app/src/main/java/org/jellyfin/androidtv/bestv/LiveConfirmGesture.java scripts/checks/LiveConfirmGestureCheck.java
+    java -cp /tmp/live-gesture-check LiveConfirmGestureCheck
     java -cp "$check_lib/*" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -jvm-target 17 \
       -classpath "$check_lib/kotlin-stdlib-2.2.0.jar" -d /tmp/library-bootstrap-check \
       app/src/main/java/org/jellyfin/androidtv/bestv/LibraryBootstrap.kt scripts/checks/LibraryBootstrapCheck.kt
