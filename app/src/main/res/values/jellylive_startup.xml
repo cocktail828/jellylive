@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.JellyLive.Startup" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/jellylive_startup_background</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:colorAccent">#B9A7FF</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
