@@ -377,12 +377,12 @@ public final class LiveActivity extends Activity {
         if(!route.equals("full")||drawerVisible)return;if(controlsVisible){hideControls();return;}controlsVisible=true;renderControls();
     }
     private void renderControls(){
-        if(controls!=null)TvUi.detach(controls);controls=new FrameLayout(this);controls.setBackground(ui.surface(0xf5101629,false));ui.at(page,controls,32,384,896,124);
-        JSONObject ch=currentChannel();String name=ch==null?"暂无频道":ch.optString("ChannelNo")+"  "+ch.optString("ChannelName");ui.text(controls,"正在直播",12,0xffb6a8ff,16,10,120,22);tag(ui.title(controls,name,16,40,220,30),"control-name");
-        LiveSourceStore.Program now=nowProgram(ch);tag(ui.text(controls,now==null?"暂无节目信息":now.title,16,TvUi.INK,240,40,380,30),"control-program");
-        tag(ui.text(controls,now==null?"独立直播 · 不提供时移或回看":time(now.start)+"—"+time(now.end)+nextProgram(ch),13,TvUi.MUTED,16,88,590,24),"control-time");
-        if(now!=null){View track=new View(this);track.setBackgroundColor(0xff3c465c);ui.at(controls,track,16,80,590,3);View fill=new View(this);fill.setBackgroundColor(0xffafa0ff);float portion=Math.max(0,Math.min(1,(System.currentTimeMillis()-now.start)/(float)(now.end-now.start)));ui.at(controls,fill,16,80,590*portion,3);}
-        Button channels=ui.button(controls,"频道列表",643,49,105,38,()->showDrawer());tag(channels,"full-channels");Button settings=ui.button(controls,"播放设置",760,49,118,38,()->playbackSettings());
+        if(controls!=null)TvUi.detach(controls);controls=new FrameLayout(this);controls.setBackground(ui.surface(0xf5101629,false));ui.at(page,controls,32,420,896,88);
+        JSONObject ch=currentChannel();String name=ch==null?"暂无频道":ch.optString("ChannelNo")+"  "+ch.optString("ChannelName");tag(ui.title(controls,name,16,12,220,30),"control-name");
+        LiveSourceStore.Program now=nowProgram(ch);tag(ui.text(controls,now==null?"暂无节目信息":now.title,16,TvUi.INK,240,12,380,30),"control-program");
+        tag(ui.text(controls,now==null?"独立直播 · 不提供时移或回看":time(now.start)+"—"+time(now.end)+nextProgram(ch),13,TvUi.MUTED,16,52,590,24),"control-time");
+        if(now!=null){View track=new View(this);track.setBackgroundColor(0xff3c465c);ui.at(controls,track,16,46,590,3);View fill=new View(this);fill.setBackgroundColor(0xffafa0ff);float portion=Math.max(0,Math.min(1,(System.currentTimeMillis()-now.start)/(float)(now.end-now.start)));ui.at(controls,fill,16,46,590*portion,3);}
+        Button channels=ui.button(controls,"频道列表",643,25,105,38,()->showDrawer());tag(channels,"full-channels");Button settings=ui.button(controls,"播放设置",760,25,118,38,()->playbackSettings());
         channels.requestFocus();resetControlsTimer();
     }
     private void updateControlLabels(){
