@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Original vector scenery from ui-design/scripts/build_designs.py; GPL-2.0. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="550dp" android:height="310dp"
+    android:viewportWidth="1100" android:viewportHeight="620">
+    <path android:fillColor="#153c42" android:pathData="M0,0H1100V620H0Z" />
+    <path android:fillColor="#c5b390" android:fillAlpha="0.15"
+        android:pathData="M470,190A290,170 0,1 0,1050,190A290,170 0,1 0,470,190Z" />
+    <path android:fillColor="#c5b390"
+        android:pathData="M698,190A62,62 0,1 0,822,190A62,62 0,1 0,698,190Z" />
+    <path android:fillColor="#2b605e"
+        android:pathData="M0,365L160,205L230,270L420,90L680,360L810,245L1100,350V620H0Z" />
+    <path android:fillColor="#c4d4dd" android:fillAlpha="0.7"
+        android:pathData="M277,244L420,90L546,220L455,186L423,146L375,207L345,190Z" />
+    <path android:fillColor="#112d38"
+        android:pathData="M0,450L220,315L435,455L660,275L885,437L1100,330V620H0Z" />
+    <path android:fillColor="#93b3bb" android:fillAlpha="0.6"
+        android:pathData="M620,401Q500,455 650,480Q820,530 500,620H850Q970,530 745,477Q580,448 660,421Z" />
+    <path android:fillColor="#091624"
+        android:pathData="M0,570L180,460L400,620H0ZM850,620L1000,470L1100,520V620Z" />
+    <path android:fillColor="@android:color/transparent" android:strokeColor="#dae1e7"
+        android:strokeWidth="2" android:strokeAlpha="0.6"
+        android:pathData="M125,142l12,-5l11,5M160,125l9,-4l9,4" />
+</vector>

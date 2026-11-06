@@ -48,6 +48,8 @@ class JellyLibraryActivity : FragmentActivity() {
     private data class SavedPage(val view: FrameLayout, val name: String, val focus: Int, val session: String)
     private val history = ArrayDeque<SavedPage>()
     private var task: Job? = null
+    private var homeResumeJob: Job? = null
+    private var gridRenderJob: Job? = null
     private var generation = 0
     private var interaction = 0
     private var dialog: AlertDialog? = null
@@ -161,7 +163,7 @@ class JellyLibraryActivity : FragmentActivity() {
         }
     }
     private fun fresh(name: String, push: Boolean=true): FrameLayout {
-        task?.cancel(); searchJob?.cancel(); generation++
+        task?.cancel(); searchJob?.cancel();gridRenderJob?.cancel(); generation++
         if (push && ::page.isInitialized) history.addLast(SavedPage(page,pageName,currentFocus?.id ?: View.NO_ID,pageSessionKey))
         pageName = name;pageSessionKey=repo.sessionKey; page = ui.canvas(); setContentView(page)
         return page
@@ -262,65 +264,132 @@ class JellyLibraryActivity : FragmentActivity() {
         focus(address)
     }
 
-    private fun home(push: Boolean=true) = browse("我的媒体库",push=push,homePage=true)
-    private fun browse(title: String,parent: UUID?=null,q: LibraryBrowse.Query=LibraryBrowse.Query(),start: Int=0,push: Boolean=true,homePage: Boolean=false,refresh: Boolean=false) {
+    private fun <T: View> place(parent: FrameLayout,view: T,box: LibraryPageLayout.Box): T =
+        ui.at(parent,view,box.x,box.y,box.width,box.height)
+    private fun pageText(parent: FrameLayout,text: String,size: Int,color: Int,box: LibraryPageLayout.Box)=place(parent,ui.text(text,size,color),box)
+    private fun focusCard(box: FrameLayout,action: ()->Unit): FrameLayout {
+        box.id=View.generateViewId();box.isFocusable=true;box.isFocusableInTouchMode=true;box.isClickable=true
+        box.background=ui.surface(TvUi.PANEL,false);box.clipToOutline=true
+        box.setOnFocusChangeListener {_,focused->box.foreground=if(focused)android.graphics.drawable.GradientDrawable().apply {setColor(Color.TRANSPARENT);cornerRadius=ui.px(8f).toFloat();setStroke(ui.px(2f),Color.WHITE)}else null}
+        box.setOnClickListener {action()};return box
+    }
+    /** Gallery 15: navigation cards and resume playback, with no category poster grid. */
+    private fun home(push: Boolean=true) {
         if(!repo.connected){disconnected(push);return}
-        fresh(if(homePage)"home" else "grid",push);header(title,"${repo.serverName} · 正在加载…")
-        load({ Triple(repo.catalog(parent,refresh),if(homePage)repo.views() else emptyList(),try {repo.resume()}catch(_:Exception){emptyList()}) }) { (catalog,views,resumes) ->
-            val selected=LibraryBrowse.select(catalog,q)
-            val columns=if(ui.fontScale>1)5 else 6
-            val window=LibraryBrowse.page(selected,start,columns)
-            val items=window.items
-            fresh(if(homePage)"home" else "grid",false)
-            header(title,"${repo.serverName} · ${selected.size} 项内容")
-            ui.button(page,"⌕ 搜索媒体",770f,69f,158f,38f){search(parent=parent,kind=q.kind)}
-            fun reload(query: LibraryBrowse.Query=q,offset: Int=0,force: Boolean=false)=browse(title,parent,query,offset,false,homePage,force)
-            val tabs=listOf("全部" to null,"电影" to BaseItemKind.MOVIE,"剧集" to BaseItemKind.SERIES)
-            tabs.forEachIndexed {i,(name,kind)->
-                val count=catalog.count {LibraryBrowse.top(it)&&(kind==null||it.type==kind)}
-                ui.button(page,"$name $count",32f+i*146f,105f,134f,33f){reload(q.copy(kind=kind,recent=false))}.apply {isSelected=!q.recent&&q.kind==kind;if(isSelected)background=ui.surface(TvUi.ACCENT,false)}
+        fresh("home",push);header("我的媒体库","${repo.serverName} · 已连接")
+        val host=page;val session=repo.sessionKey;val initialInteraction=interaction
+        val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
+        val resumeTitle=pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
+        val status=pageText(host,"正在加载继续观看…",14,TvUi.MUTED,LibraryPageLayout.HOME_RESUME_ROW)
+        val explore=pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
+        val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
+        val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
+            val card=homeCard(entry.title,"浏览全部内容",illustrations[index]){renderGrid(entry.title,null,entry.query())}
+            card.tag="library-entry-${entry.name.lowercase()}";place(host,card,LibraryPageLayout.homeEntry(index))
+        }
+        entries.forEachIndexed {index,card->card.nextFocusLeftId=entries.getOrNull(index-1)?.id ?: card.id;card.nextFocusRightId=entries.getOrNull(index+1)?.id ?: card.id;card.nextFocusUpId=search.id;card.nextFocusDownId=card.id}
+        search.nextFocusDownId=entries.first().id;focus(entries.first(),initialInteraction)
+        homeResumeJob?.cancel()
+        homeResumeJob=lifecycleScope.launch {
+            val resumes=try {withTimeout(8000){repo.resume()}.filter {it.userData?.played!=true&&resumeMs(it)>0}.distinctBy {it.seriesId ?: it.id}}
+                catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
+                catch(_:Exception){null}
+            if(session!=repo.sessionKey)return@launch
+            if(resumes==null){status.text="继续观看暂不可用，仍可浏览下方分类。";return@launch}
+            host.removeView(status)
+            if(resumes.isEmpty()){
+                host.removeView(resumeTitle)
+                fun move(view: View,box: LibraryPageLayout.Box){view.layoutParams=(view.layoutParams as FrameLayout.LayoutParams).apply {leftMargin=ui.px(box.x);topMargin=ui.px(box.y)}}
+                move(explore,LibraryPageLayout.homeExploreLabel(false));entries.forEachIndexed {i,view->move(view,LibraryPageLayout.homeEntry(i,false))}
+            }else{
+                val scroller=HorizontalScrollView(this@JellyLibraryActivity);scroller.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this@JellyLibraryActivity);scroller.addView(row)
+                val cards=resumes.map {item->homeCard(cardTitle(item),if(item.type==BaseItemKind.EPISODE)"第 ${item.indexNumber ?: "?"} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}",item=item){play(item,resumeMs(item))}.also {row.addView(it,LinearLayout.LayoutParams(ui.px(287f),ui.px(130f)).apply {marginEnd=ui.px(14f)})}}
+                place(host,scroller,LibraryPageLayout.HOME_RESUME_ROW)
+                cards.forEachIndexed {i,card->card.nextFocusUpId=search.id;card.nextFocusDownId=entries[i.coerceAtMost(entries.lastIndex)].id}
+                entries.forEachIndexed {i,card->card.nextFocusUpId=cards[i.coerceAtMost(cards.lastIndex)].id}
+                search.nextFocusDownId=cards.first().id
+                if(page===host)focus(cards.first(),initialInteraction)
             }
-            ui.button(page,"最近观看",470f,105f,130f,33f){reload(q.copy(kind=null,recent=true,sort=LibraryBrowse.Sort.WATCHED))}.apply {if(q.recent)background=ui.surface(TvUi.ACCENT,false)}
-            ui.button(page,"刷新",818f,105f,110f,33f){reload(offset=window.start,force=true)}
-            val resolutions=catalog.mapNotNull {LibraryBrowse.resolution(it)}.distinct().sortedDescending()
-            val regions=catalog.flatMap {LibraryBrowse.regions(it)}.distinct().sorted()
-            if(resolutions.isNotEmpty()||regions.isNotEmpty())ui.button(page,listOfNotNull(q.resolution?.let {if(it==2160)"4K" else "${it}p"},q.region).joinToString(" · ").ifEmpty {"更多筛选"},612f,105f,194f,33f){
-                val options=buildList {if(resolutions.isNotEmpty())add("分辨率");if(regions.isNotEmpty())add("地区")}
-                choose("更多筛选",options,-1){index->
-                    if(options[index]=="分辨率")choose("分辨率",listOf("全部分辨率")+resolutions.map {if(it==2160)"4K" else "${it}p"},resolutions.indexOf(q.resolution)+1){reload(q.copy(resolution=resolutions.getOrNull(it-1)))}
-                    else choose("地区",listOf("全部地区")+regions,regions.indexOf(q.region)+1){reload(q.copy(region=regions.getOrNull(it-1)))}
+        }
+    }
+    private fun homeCard(name: String,subtitle: String,illustration: Int?=null,item: BaseItemDto?=null,click: ()->Unit): FrameLayout {
+        val card=focusCard(FrameLayout(this),click)
+        if(item!=null)art(card,item,0f,0f,287f,LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT,true)
+        else ui.at(card,ImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP;setImageResource(requireNotNull(illustration))},0f,0f,287f,LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT)
+        ui.at(card,View(this).apply {setBackgroundColor(0xff10182a.toInt())},0f,LibraryPageLayout.HOME_CARD_INFO_TOP,287f,50f)
+        pageText(card,name,16,TvUi.INK,LibraryPageLayout.HOME_CARD_TITLE).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(card,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(card,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
+        card.contentDescription="$name，$subtitle";return card
+    }
+    private fun filterCount(query: LibraryBrowse.Query)=listOf(query.state!=LibraryBrowse.State.ALL,query.genre!=null,query.year!=null,query.resolution!=null,query.region!=null).count {it}
+    private fun browseDialog(create: ()->AlertDialog){
+        val anchor=currentFocus;val popup=create();dialog=popup
+        popup.setOnDismissListener {if(dialog===popup)dialog=null;anchor?.takeIf {it.isAttachedToWindow&&it.isShown}?.requestFocus()}
+    }
+    /** Gallery 16: one category, one toolbar, one row of posters and centered pagination. */
+    private fun renderGrid(title: String,parent: UUID?,initialQuery: LibraryBrowse.Query,start: Int=0,push: Boolean=true) {
+        if(!repo.connected){disconnected(push);return}
+        fresh("grid",push);header(title,"正在加载媒体…");val session=repo.sessionKey
+        load({repo.catalog(parent)}) {catalog->
+            if(session!=repo.sessionKey){home(false);return@load}
+            fresh("grid",false);val host=page;val large=ui.fontScale>1
+            val back=ui.header(host,title,"",{back()});ui.footer(host,"方向键浏览 · 确认箭头翻页 · 返回媒体库")
+            val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,84f,65f,690f,23f)
+            var query=initialQuery;var offset=start;val updates=LibraryGridUpdates()
+            val posterHost=FrameLayout(this);ui.at(host,posterHost,0f,0f,960f,489f);posterHost.isFocusable=false
+            val search=place(host,ui.button("⌕ 搜索媒体"){search(parent=parent,kind=query.kind)},LibraryPageLayout.GRID_SEARCH).apply {tag="grid-search"}
+            val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_FILTER).apply {tag="grid-filter"}
+            val sort=place(host,ui.button("排序：最近添加"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_SORT).apply {tag="grid-sort"}
+            search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=back.id
+            var selectedColumn=0;var preferred: String?=null
+            fun update(){
+                if(page!==host||session!=repo.sessionKey)return
+                gridRenderJob?.cancel();val request=updates.begin(query,offset) ?: return
+                val requestedQuery=request.query;val requestedOffset=request.offset
+                gridRenderJob=lifecycleScope.launch {
+                    val result=withContext(Dispatchers.Default){LibraryBrowse.page(LibraryBrowse.select(catalog,requestedQuery),requestedOffset,LibraryPageLayout.columns(large))}
+                    if(page!==host||session!=repo.sessionKey)return@launch
+                    val firstRender=!updates.hasResult;if(!updates.accept(request,result.start))return@launch
+                    val previousFocus=currentFocus;posterHost.removeAllViews();offset=result.start
+                    val count=filterCount(requestedQuery)
+                    subtitle.text="${if(requestedQuery.kind==BaseItemKind.MOVIE)"全部电影" else if(requestedQuery.kind==BaseItemKind.SERIES)"全部剧集" else "全部媒体"} · ${result.total} ${if(requestedQuery.kind==BaseItemKind.MOVIE)"部" else "项"}${if(count>0)" · 已筛选" else ""}"
+                    TvIcons.text(filter,if(count==0)"类型：全部" else if(count==1&&requestedQuery.genre!=null)"类型：${requestedQuery.genre}" else "筛选：${count}项")
+                    val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"年份升序" else "年份降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序"}
+                    TvIcons.text(sort,"排序：$order")
+                    val cards=result.items.mapIndexed {index,item->
+                        val card=posterCard(item,large){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
+                        card.setOnFocusChangeListener {view,focused->existing?.onFocusChange(view,focused);if(focused)selectedColumn=index}
+                        place(posterHost,card,LibraryPageLayout.poster(index,large))
+                    }
+                    if(cards.isEmpty()){
+                        ui.text(posterHost,if(count>0)"没有符合条件的内容，可调整筛选。" else "这个分类暂时没有媒体内容。",17,TvUi.MUTED,64f,205f,830f,50f).gravity=Gravity.CENTER
+                        if(count>0)ui.button(posterHost,"清除筛选",396f,275f,168f,40f){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);offset=0;update()}
+                    }
+                    val previous=place(posterHost,ui.button("‹"){offset=result.start-result.size;preferred="grid-previous";update()},LibraryPageLayout.pagerPrevious(large)).apply {tag="grid-previous";contentDescription="上一页";isEnabled=result.previous;isFocusable=result.previous;alpha=if(result.previous)1f else .35f}
+                    pageText(posterHost,result.range,13,TvUi.MUTED,LibraryPageLayout.pagerRange(large)).gravity=Gravity.CENTER
+                    val next=place(posterHost,ui.button("›"){offset=result.start+result.size;preferred="grid-next";update()},LibraryPageLayout.pagerNext(large)).apply {tag="grid-next";contentDescription="下一页";isEnabled=result.next;isFocusable=result.next;alpha=if(result.next)1f else .35f}
+                    cards.forEachIndexed {i,card->card.nextFocusLeftId=cards.getOrNull(i-1)?.id ?: card.id;card.nextFocusRightId=cards.getOrNull(i+1)?.id ?: card.id;card.nextFocusUpId=listOf(search,filter,sort)[(i*3/LibraryPageLayout.columns(large)).coerceAtMost(2)].id;card.nextFocusDownId=if(next.isEnabled)next.id else if(previous.isEnabled)previous.id else card.id}
+                    val target=cards.getOrNull(selectedColumn.coerceAtMost(cards.lastIndex)) ?: filter
+                    previous.nextFocusUpId=target.id;next.nextFocusUpId=target.id;previous.nextFocusRightId=if(next.isEnabled)next.id else previous.id;next.nextFocusLeftId=if(previous.isEnabled)previous.id else next.id
+                    listOf(search,filter,sort).forEach {it.nextFocusDownId=target.id}
+                    if(dialog?.isShowing!=true){
+                        val wanted=preferred?.let {host.findViewWithTag<View>(it)}?.takeIf {it.isEnabled&&it.isFocusable};preferred=null
+                        when {firstRender->focus(target);wanted!=null->focus(wanted);previousFocus?.isAttachedToWindow==true->Unit;else->focus(target)}
+                    }
                 }
             }
-
-            ui.button(page,if(parent==null)"媒体分类" else title,32f,150f,143f,34f){
-                if(views.isNotEmpty())choose("媒体分类",listOf("全部媒体")+views.map {it.name ?: "未命名分类"},0){if(it==0)home(false)else grid(views[it-1].name ?: "媒体分类",views[it-1].id)}
-                else choose("媒体分类",listOf("全部媒体"),0){home(false)}
-            }
-            ui.button(page,q.state.label,187f,150f,126f,34f){choose("观看状态",LibraryBrowse.State.entries.map {it.label},q.state.ordinal){reload(q.copy(state=LibraryBrowse.State.entries[it]))}}
-            val genres=catalog.filter {LibraryBrowse.top(it)&&(q.kind==null||it.type==q.kind)}.flatMap {it.genres.orEmpty()}.distinct().sorted()
-            if(genres.isNotEmpty())ui.button(page,q.genre ?: "全部类型",325f,150f,140f,34f){choose("类型",listOf("全部类型")+genres,genres.indexOf(q.genre)+1){reload(q.copy(genre=genres.getOrNull(it-1)))}}
-            val years=catalog.mapNotNull {LibraryMetadata.year(it)}.distinct().sortedDescending()
-            if(years.isNotEmpty())ui.button(page,q.year?.toString() ?: "全部年份",477f,150f,120f,34f){choose("年份",listOf("全部年份")+years.map {it.toString()},years.indexOf(q.year)+1){reload(q.copy(year=years.getOrNull(it-1)))}}
-            val sortLabel=q.sort.label+if(q.ascending)" · 升序" else " · 降序"
-            ui.button(page,sortLabel,609f,150f,222f,34f){choose("排序",LibraryBrowse.Sort.entries.map {it.label},q.sort.ordinal){reload(q.copy(sort=LibraryBrowse.Sort.entries[it],ascending=LibraryBrowse.Sort.entries[it]==LibraryBrowse.Sort.NAME))}}
-            ui.button(page,"方向",843f,150f,85f,34f){reload(q.copy(ascending=!q.ascending))}
-            val scroll=ScrollView(this);val rows=LinearLayout(this);rows.orientation=LinearLayout.VERTICAL;scroll.addView(rows);ui.at(page,scroll,32f,197f,896f,269f)
-            if(items.isEmpty())section(rows,if(selected.isEmpty())"当前条件下没有媒体" else "本页没有媒体，请返回上一页")
-            val width=if(columns==5)168 else 137
-            val height=width*3/2+62
-            items.chunked(columns).forEach {group->
-                val row=LinearLayout(this)
-                group.forEach {item->row.addView(tile(cardTitle(item),cardMeta(item),width,height,item,poster=catalog.firstOrNull {it.id==item.seriesId}){if(item.type==BaseItemKind.EPISODE&&item.seriesId!=null)detailById(item.seriesId!!)else detail(item)},LinearLayout.LayoutParams(ui.px(width.toFloat()),ui.px(height.toFloat())).apply{marginEnd=ui.px(14f);bottomMargin=ui.px(16f)})};rows.addView(row)
-            }
-            if(homePage&&!q.recent&&window.start==0&&q.state==LibraryBrowse.State.ALL&&q.genre==null&&q.year==null&&q.resolution==null&&q.region==null){
-                val continuing=resumes.filter {it.userData?.played!=true&&resumeMs(it)>0&&(q.kind==null||q.kind==it.type||q.kind==BaseItemKind.SERIES&&it.type==BaseItemKind.EPISODE)}.distinctBy {it.seriesId ?: it.id}
-                if(continuing.isNotEmpty()){section(rows,"继续观看");horizontal(rows,continuing,true){play(it,resumeMs(it))}}
-            }
-            val range=label(window.range,390f,466f,180f,22f,12,true);range.gravity=Gravity.CENTER
-            ui.button(page,"‹",340f,466f,38f,22f){reload(offset=window.start-window.size)}.apply {isEnabled=window.previous;isFocusable=window.previous;alpha=if(window.previous)1f else .35f;contentDescription="上一页"}
-            ui.button(page,"›",582f,466f,38f,22f){reload(offset=window.start+window.size)}.apply {isEnabled=window.next;isFocusable=window.next;alpha=if(window.next)1f else .35f;contentDescription="下一页"}
-            focus((rows.getChildAt(0) as? ViewGroup)?.getChildAt(0) ?: scroll)
+            host.tag=Runnable {update()};update()
         }
+    }
+    private fun posterCard(item: BaseItemDto,large: Boolean,click: ()->Unit): FrameLayout {
+        val card=focusCard(FrameLayout(this),click);val bounds=LibraryPageLayout.poster(0,large)
+        art(card,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
+        pageText(card,cardTitle(item),16,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {setTypeface(null,Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
+        else if(resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(resumeMs(item)*10000.0*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000);ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
+        return card
     }
     private fun cardTitle(item: BaseItemDto)=if(item.type==BaseItemKind.EPISODE)item.seriesName ?: item.name ?: "未命名剧集" else item.name ?: "未命名媒体"
     private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"}).joinToString(" · ")
@@ -359,7 +428,7 @@ class JellyLibraryActivity : FragmentActivity() {
         if(repo.image(item,backdrop)==null) ui.text(parent,"暂无封面",12,TvUi.MUTED,x+10,y+h/2-10,w-20,20f).gravity=Gravity.CENTER
     }
     private fun grid(title: String,parent: UUID?=null,kind: BaseItemKind?=null,start: Int=0,alphabetical: Boolean=false,genre: String?=null,push: Boolean=true) =
-        browse(title,parent,LibraryBrowse.Query(kind=kind,genre=genre,sort=if(alphabetical)LibraryBrowse.Sort.NAME else LibraryBrowse.Sort.ADDED,ascending=alphabetical),start,push)
+        renderGrid(title,parent,LibraryBrowse.Query(kind=kind,genre=genre,sort=if(alphabetical)LibraryBrowse.Sort.NAME else LibraryBrowse.Sort.ADDED,ascending=alphabetical),start,push)
     private fun launchDestination() {
         val requested=intent.getStringExtra("item_id")?.trim().orEmpty()
         if(requested.isNotEmpty()) {
@@ -624,17 +693,18 @@ class JellyLibraryActivity : FragmentActivity() {
         d.listView?.setSelector(ui.focusBackground(TvUi.TILE));d.window?.setBackgroundDrawable(ui.surface(TvUi.PANEL,false))
     }
     private fun backToSaved() {
-        task?.cancel();searchJob?.cancel();generation++
+        task?.cancel();searchJob?.cancel();gridRenderJob?.cancel();generation++
         val saved=history.removeLastOrNull()
         if(saved==null){finish();return}
         if(saved.session!=repo.sessionKey){history.clear();home(false);return}
-        pageSessionKey=saved.session;page=saved.view;pageName=saved.name;setContentView(page);page.findViewById<View>(saved.focus)?.requestFocus()
+        pageSessionKey=saved.session;page=saved.view;pageName=saved.name;setContentView(page);page.findViewById<View>(saved.focus)?.requestFocus();val restored=page;restored.post {if(page===restored)(restored.tag as? Runnable)?.run()}
     }
     private fun back() {
         if(dialog!=null){dialog?.dismiss();return}
         if(pageName=="player") {if(overlay.seeking){cancelSeek();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
         if(history.isEmpty())finish()else backToSaved()
     }
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {if(event.actionMasked==MotionEvent.ACTION_DOWN)interaction++;return super.dispatchTouchEvent(event)}
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if(event.action==KeyEvent.ACTION_DOWN)interaction++
         if(pageName=="player"&&dialog==null){
@@ -673,7 +743,7 @@ class JellyLibraryActivity : FragmentActivity() {
         if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(info!=null && reportStarted && playingSessionKey==repo.sessionKey)reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
         super.onStop()
     }
-    override fun onDestroy(){stopPlayer();task?.cancel();searchJob?.cancel();dialog?.dismiss();super.onDestroy()}
+    override fun onDestroy(){stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
     private fun rememberPosition(item: BaseItemDto,position: Long){local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
     private fun currentPositionPrefix()="pos_${repo.sessions.currentSession.value?.serverId}_${repo.sessions.currentSession.value?.userId}_"
     private fun positionKey(item: BaseItemDto)=(if(playingItem?.id==item.id&&playingPositionPrefix.isNotEmpty())playingPositionPrefix else currentPositionPrefix())+item.id
