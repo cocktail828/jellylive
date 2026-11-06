@@ -78,7 +78,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val duration = p.duration.takeIf { it > 0 } ?: ((stream?.runTimeTicks ?: 0) / 10000)
             if (seek?.isPressed != true) seek?.progress = if (duration > 0) (p.currentPosition * 10000 / duration).toInt() else 0
             clock?.text = "${time(p.currentPosition)} / ${time(duration)}"
-            pause?.text = if (p.isPlaying) "Ⅱ  暂停" else "▷  播放"
+            pause?.let { TvIcons.text(it, if (p.isPlaying) "Ⅱ  暂停" else "▷  播放") }
             playingItem?.let { item ->
                 if(System.currentTimeMillis()-lastPersist>=5000){rememberPosition(item,p.currentPosition);lastPersist=System.currentTimeMillis()}
                 if (reportStarted && System.currentTimeMillis() - lastReport > 15000) {
