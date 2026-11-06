@@ -124,7 +124,7 @@ public final class LiveActivity extends Activity {
         });
     }
     private void finishStartup(Bundle state,String cacheProblem){
-        if(state!=null){route=state.getString("route","home");group=state.getString("group","全部频道");sourceScope=state.getString("source_scope","");favoritesOnly=state.getBoolean("favorites_only",false);returnFromFull=state.getString("return_full","home");searchQuery=state.getString("query","");lastHomeFocus=state.getString("home_focus","channel-list");String saved=state.getString("editor");try{if(saved!=null)editor=new EditorDraft(new JSONObject(saved));}catch(Exception ignored){}if(route.equals("editor")&&editor==null)editor=new EditorDraft();}
+        if(state!=null){route=restoreRoute(state.getString("route","home"));group=state.getString("group","全部频道");sourceScope=state.getString("source_scope","");favoritesOnly=state.getBoolean("favorites_only",false);returnFromFull=restoreRoute(state.getString("return_full","home"));searchQuery=state.getString("query","");lastHomeFocus=state.getString("home_focus","channel-list");String saved=state.getString("editor");try{if(saved!=null)editor=new EditorDraft(new JSONObject(saved));}catch(Exception ignored){}if(route.equals("editor")&&editor==null)editor=new EditorDraft();}
         if(state!=null){
             settingsCategory=state.getString("settings_category","播放设置");guideReturn=state.getString("guide_return","home");guideFullReturn=state.getString("guide_full_return","home");guideChannel=state.getString("guide_channel","");guidePage=state.getInt("guide_page",0);
             resumeSource=state.getString("resume_source","");resumeCode=state.getString("resume_code","");resumePlayback=state.getBoolean("resume_playback",false);
@@ -192,30 +192,31 @@ public final class LiveActivity extends Activity {
         if(route.equals("home")&&f!=null&&f.getTag() instanceof String){String t=(String)f.getTag();if(t.equals("preview")||t.equals("channel-list")||t.equals("group"))lastHomeFocus=t;}
         captureEditor();
     }
-    private void navigate(String target){rememberFocus();backStack.push(route);route=target;render(true);}
+    private static String restoreRoute(String saved){return "channels".equals(saved)?"home":saved;}
+    private void navigate(String target){rememberFocus();backStack.push(route);route=restoreRoute(target);render(true);}
     private void home(){rememberFocus();backStack.clear();route="home";render(true);}
     private void back(){
         if(dialog!=null&&dialog.isShowing()){dialog.dismiss();return;}
         if(drawerVisible){hideDrawer();return;}
         if(controlsVisible){hideControls();return;}
-        if(route.equals("full")){route=returnFromFull;render(true);return;}
-        if(route.equals("guide")){route=guideReturn;if(route.equals("full"))returnFromFull=guideFullReturn;render(true);return;}
+        if(route.equals("full")){route=restoreRoute(returnFromFull);render(true);return;}
+        if(route.equals("guide")){route=restoreRoute(guideReturn);if(route.equals("full"))returnFromFull=guideFullReturn;render(true);return;}
         if(route.equals("home")){exitDialog();return;}
         if(route.equals("editor")&&editor!=null&&editor.busy){toast("正在检测或保存，请稍候。");return;}
-        rememberFocus();route=backStack.isEmpty()?"home":backStack.pop();render(true);
+        rememberFocus();route=backStack.isEmpty()?"home":restoreRoute(backStack.pop());render(true);
     }
     private void render(boolean restore){
-        cancelFavoriteGesture();
+        cancelFavoriteGesture();route=restoreRoute(route);
         boolean enteringHome=route.equals("home")&&!renderedRoute.equals("home");renderedRoute=route;
         screenGeneration++;cancelPreviewSwitch();handler.removeCallbacks(hideControls);handler.removeCallbacks(hideIdleDrawer);handler.removeCallbacks(homeIdle);controlsVisible=false;drawerVisible=false;
         if(page!=null)TvUi.detach(page);page=ui.canvas();if(isLiveRoute())page.setBackgroundColor(Color.TRANSPARENT);FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(ui.px(960),ui.px(540),Gravity.CENTER);root.addView(page,p);
         videoFrame=null;list=null;favoriteGrid=null;settingsPanel=null;settingsTabs.clear();groupButton=null;previewButton=null;tiles=null;sourceStatus=null;sourceRowsHost=null;sourceName=null;sourceUrl=null;sourceEpg=null;editorStatus=null;searchInput=null;controls=null;drawer=null;
         if(!isLiveRoute()&&!route.equals("sources"))suspendPlayback();else if(resumed&&player.getMediaItemCount()>0)player.play();
         videoShell.setVisibility(isLiveRoute()?View.VISIBLE:View.GONE);
-        switch(route){case "full":renderFull();break;case "sources":renderSources();break;case "editor":renderEditor();break;case "favorites":renderBrowser(true);break;case "channels":renderBrowser(false);break;case "guide":renderGuide();break;case "search":renderSearch();break;case "settings":renderSettings();break;case "onboarding":renderOnboarding();break;case "source-error":renderSourceError();break;default:route="home";renderHome();}
+        switch(route){case "full":renderFull();break;case "sources":renderSources();break;case "editor":renderEditor();break;case "favorites":renderFavorites();break;case "guide":renderGuide();break;case "search":renderSearch();break;case "settings":renderSettings();break;case "onboarding":renderOnboarding();break;case "source-error":renderSourceError();break;default:route="home";renderHome();}
         if(isLiveRoute()&&!liveErrorTitle.isEmpty())showVideoError(liveErrorTitle,liveErrorDetail);
         immersive();final int gen=screenGeneration;
-        page.post(()->{if(gen!=screenGeneration||dead||drawerVisible)return;if(route.equals("favorites")){restoreFavoritePosition();return;}String desired=restore?focusMemory.get(route):null;if(desired==null){if(route.equals("sources"))desired="source-refresh";else if(route.equals("editor"))desired="editor-name";else if(route.equals("settings"))desired="settings-"+settingsCategoryIndex();else if(route.equals("source-error"))desired="source-retry";}View f=desired==null?null:page.findViewWithTag(desired);if(f!=null&&f.isFocusable()&&f.isShown())f.requestFocus();else if(route.equals("home"))focusHomeDefault();else if(route.equals("full")){if(errorPanel!=null){View q=firstFocusable(errorPanel);if(q!=null)q.requestFocus();}else videoFrame.requestFocus();}else if(route.equals("channels"))focusList(true);else{View first=firstFocusable(page);if(first!=null)first.requestFocus();}if(list!=null&&restore){int[] a=listMemory.get(route);if(a!=null&&list.hasFocus())list.setSelectionFromTop(Math.min(a[0],shown.size()-1),a[1]);}});
+        page.post(()->{if(gen!=screenGeneration||dead||drawerVisible)return;if(route.equals("favorites")){restoreFavoritePosition();return;}String desired=restore?focusMemory.get(route):null;if(desired==null){if(route.equals("sources"))desired="source-refresh";else if(route.equals("editor"))desired="editor-name";else if(route.equals("settings"))desired="settings-"+settingsCategoryIndex();else if(route.equals("source-error"))desired="source-retry";}View f=desired==null?null:page.findViewWithTag(desired);if(f!=null&&f.isFocusable()&&f.isShown())f.requestFocus();else if(route.equals("home"))focusHomeDefault();else if(route.equals("full")){if(errorPanel!=null){View q=firstFocusable(errorPanel);if(q!=null)q.requestFocus();}else videoFrame.requestFocus();}else{View first=firstFocusable(page);if(first!=null)first.requestFocus();}if(list!=null&&restore){int[] a=listMemory.get(route);if(a!=null&&list.hasFocus())list.setSelectionFromTop(Math.min(a[0],shown.size()-1),a[1]);}});
         if(resumed&&started&&isLiveRoute()&&player.getMediaItemCount()==0&&!openingChannel&&!source.channels.isEmpty()&&(prefs.getBoolean("auto_play",true)||resumePlayback&&resumeSource.equals(source.id)))restoreLastChannel();
         if(enteringHome)lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();
     }
@@ -277,9 +278,9 @@ public final class LiveActivity extends Activity {
             public View getView(int n,View old,ViewGroup parent){JSONObject ch=shown.get(n);FrameLayout row=new FrameLayout(LiveActivity.this);android.graphics.drawable.StateListDrawable rowBackground=new android.graphics.drawable.StateListDrawable();rowBackground.addState(new int[]{android.R.attr.state_selected},ui.surface(TvUi.ACCENT,true));rowBackground.addState(new int[]{},ui.surface(0xff1b2038,false));row.setBackground(rowBackground);row.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(ui.fontScale>1?58:47)));TextView no=ui.text(ch.optString("ChannelNo",String.valueOf(n+1)),12,TvUi.INK);no.setGravity(Gravity.CENTER);GradientDrawable badge=new GradientDrawable();badge.setColor(new int[]{0xff50578d,0xff346d70,0xff3b668b}[n%3]);badge.setCornerRadius(ui.px(20));no.setBackground(badge);ui.at(row,no,9,9,28,28);TextView title=ui.text(ch.optString("ChannelName"),14,TvUi.INK);title.setTypeface(null,Typeface.BOLD);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,title,47,5,w-78,20);TextView sub=ui.text(programmeText(ch),12,TvUi.MUTED);sub.setSingleLine();sub.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,sub,47,27,w-78,17);TextView mark=ui.text(isPlayingChannel(ch)?"▷":"",17,0xffb5a6ff);ui.at(row,mark,w-26,9,20,28);return row;}
         });
         ui.at(page,l,x,y,w,h);
-        l.setOnItemClickListener((p,v,n,id)->{JSONObject c=shown.get(n);if(route.equals("channels")){startFullChannel(c,"channels");return;}cancelPreviewSwitch();play(c,true);if(full)hideDrawer();});
+        l.setOnItemClickListener((p,v,n,id)->{JSONObject c=shown.get(n);cancelPreviewSwitch();play(c,true);if(full)hideDrawer();});
         l.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onItemSelected(AdapterView<?> p,View v,int n,long id){if(l.hasFocus()){lastHomeFocus="channel-list";focusMemory.put(route,"channel-list");if(!full&&route.equals("home")&&n>=0&&n<shown.size())schedulePreview(shown.get(n));}}public void onNothingSelected(AdapterView<?> p){}});
-        l.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=l.getSelectedItemPosition();if(key==KeyEvent.KEYCODE_DPAD_LEFT){if(full){hideDrawer();return true;}if(route.equals("channels")&&groupButton!=null){groupButton.requestFocus();return true;}if(previewButton!=null){if(errorPanel!=null){View f=firstFocusable(errorPanel);if(f!=null)f.requestFocus();}else focusPreview();}else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP&&n<=0){if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n>=shown.size()-1){if(tiles!=null)tiles[1].requestFocus();else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT){if(!full&&previewButton!=null)focusPreview();return true;}return false;});
+        l.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=l.getSelectedItemPosition();if(key==KeyEvent.KEYCODE_DPAD_LEFT){if(full){hideDrawer();return true;}if(previewButton!=null){if(errorPanel!=null){View f=firstFocusable(errorPanel);if(f!=null)f.requestFocus();}else focusPreview();}else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP&&n<=0){if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n>=shown.size()-1){if(tiles!=null)tiles[1].requestFocus();else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT){if(!full&&previewButton!=null)focusPreview();return true;}return false;});
         return l;
     }
     private void focusList(boolean current){
@@ -413,25 +414,6 @@ public final class LiveActivity extends Activity {
     }
     private interface DiskTask{void run()throws Exception;}
     private void diskTask(DiskTask task,Runnable success){diskWorker.execute(()->{try{task.run();onUi(success);}catch(Exception e){onUi(()->toast("更改没有保存，请检查存储后重试。"));}});}
-    private void channelActions(){
-        JSONObject c=null;if(list!=null&&list.getSelectedItemPosition()>=0&&list.getSelectedItemPosition()<shown.size())c=shown.get(list.getSelectedItemPosition());if(c==null)c=currentChannel();if(c==null){toast("没有可操作的频道");return;}
-        final JSONObject channel=c;final String id=source.id;boolean favorite=store.favorite(id,c.optString("ChannelCode"));
-        showActions(c.optString("ChannelName"),new String[]{favorite?"取消收藏":"收藏频道","观看频道","电视节目单"},n->{
-            if(n==0)diskTask(()->store.toggleFavorite(id,channel.optString("ChannelCode")),()->{toast(favorite?"已取消收藏":"已收藏");if(route.equals("favorites")&&id.equals(source.id)){rememberFocus();render(true);}});
-            else if(n==1){if(route.equals("full"))play(channel,true);else startFullChannel(channel,route);}else openGuideFor(channel,route);
-        });
-    }
-    private void renderBrowser(boolean favorites){
-        if(favorites){renderFavorites();return;}
-        ui.header(page,"频道浏览",source.name+" · "+source.channels.size()+" 个频道",()->back());
-        ui.button(page,"频道操作",587,70,162,38,()->channelActions());ui.button(page,"搜索频道",765,70,163,38,()->navigate("search"));
-        filteredChannels(false);ScrollView scroll=new ScrollView(this);LinearLayout groups=new LinearLayout(this);groups.setOrientation(LinearLayout.VERTICAL);scroll.addView(groups);ui.at(page,scroll,32,125,130,294);
-        LinkedHashSet<String> names=new LinkedHashSet<>();names.add("全部频道");for(JSONObject ch:source.channels){String name=ch.optString("CategoryName");if(!name.isEmpty())names.add(name);}
-        for(String name:names){Button button=ui.button(name,()->{group=name;rememberFocus();render(true);});tag(button,"browser-group-"+name);if(name.equals(group)){groupButton=button;button.setTextColor(0xffc5b8ff);}LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(-1,ui.px(38));lp.bottomMargin=ui.px(15);groups.addView(button,lp);button.setOnKeyListener((v,key,event)->{if(event.getAction()==KeyEvent.ACTION_DOWN&&key==KeyEvent.KEYCODE_DPAD_RIGHT){focusList(false);return true;}return false;});}
-        list=makeChannelList(177,125,751,294,false);tag(list,"channel-list");
-        if(shown.isEmpty())ui.text(page,"本分组暂无频道",14,TvUi.MUTED,187,150,700,120);
-        ui.footer(page,"方向键浏览频道 · 确认全屏播放 · 返回主页");
-    }
     private void renderFavorites(){
         Button backButton=ui.header(page,"我的收藏",source.name+" · "+favoriteCount()+" 个收藏频道",()->back());
         shown=new ArrayList<>();for(JSONObject ch:source.channels)if(store.favorite(source.id,ch.optString("ChannelCode")))shown.add(ch);

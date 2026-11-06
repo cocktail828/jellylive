@@ -67,7 +67,7 @@ class FakePrefs { String legacy=''; String getString(String key,String fallback)
 class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview'].collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','restoreRoute'].collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false
@@ -248,6 +248,11 @@ check('programmatic_home_focus_does_not_trigger_preview_or_override_autoplay') {
     assert h.events==['play:b']
 }
 
+check('retired_channel_route_migrates_to_home') {
+    def h=fresh();h.route='full';h.returnFromFull='channels';h.back();assert h.route=='home'
+    h.route='guide';h.guideReturn='channels';h.back();assert h.route=='home'
+    h.route='settings';h.backStack.push('channels');h.back();assert h.route=='home'
+}
 check('saved_filter_focus_is_source_scoped') {
     def h=focusHost();h.channelFocus['home/all/false']='builtin/c';h.playingSource='builtin';h.playingCode='a';h.focusList(true);assert h.list.selected==2
 }
