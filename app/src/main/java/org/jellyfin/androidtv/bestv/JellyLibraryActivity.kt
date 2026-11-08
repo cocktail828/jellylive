@@ -76,6 +76,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private var buffering: FrameLayout?=null
     private val showBuffering=Runnable {if(pageName=="player"&&!playbackFailure&&player?.playbackState==Player.STATE_BUFFERING)buffering?.visibility=View.VISIBLE}
     private var playerHeading: FrameLayout? = null
+    private var playerWallClock: TextView?=null
     private var speedAction: Button? = null
     private var audioAction: Button? = null
     private var subtitleAction: Button? = null
@@ -123,6 +124,7 @@ class JellyLibraryActivity : FragmentActivity() {
             updateSeekAvailability()
             seek?.progress=if(duration>0)(shownPosition*10000/duration).toInt() else 0
             clock?.text="${time(shownPosition)} / ${if(duration>0)time(duration) else "--:--:--"}"
+            playerWallClock?.text=android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis())
             pause?.let {TvIcons.text(it,if(p.playWhenReady&&p.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
             playingItem?.let { item ->
                 if(System.currentTimeMillis()-lastPersist>=5000){rememberPosition(item,p.currentPosition);lastPersist=System.currentTimeMillis()}
@@ -438,7 +440,7 @@ class JellyLibraryActivity : FragmentActivity() {
                     }
                     var recovery: Button?=null
                     if(cards.isEmpty()){
-                        ui.text(posterHost,"▱",48,0xffb7a2ff.toInt(),456f,175f,48f,48f).gravity=Gravity.CENTER
+                        ui.text(posterHost,"⌕",48,0xffb7a2ff.toInt(),456f,175f,48f,48f).gravity=Gravity.CENTER
                         ui.text(posterHost,if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",22,TvUi.INK,48f,245f,864f,36f).gravity=Gravity.CENTER
                         ui.text(posterHost,if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",14,TvUi.MUTED,48f,282f,864f,28f).gravity=Gravity.CENTER
                         recovery=ui.button(posterHost,if(count>0)"清除筛选" else "刷新分类",350f,330f,260f,42f){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);offset=0;update()}else renderGrid(title,parent,query,0,false,true)}
@@ -743,7 +745,8 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.protectControls(panel)
         playerHeading=FrameLayout(this).also {top->
             top.visibility=View.GONE;top.background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xf0101326.toInt(),0xeb101326.toInt(),0x00101326));ui.at(page,top,0f,0f,960f,135f)
-            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,750f,33f)
+            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,if(ui.largeText())792f else 848f,28f,if(ui.largeText())120f else 64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
             if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         }
         ui.at(panel,View(this).apply {setBackgroundColor(0xff4b5268.toInt())},16f,15f,864f,3f)
@@ -854,7 +857,7 @@ class JellyLibraryActivity : FragmentActivity() {
         handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);buffering=null;handler.removeCallbacks(nextTick);nextCard?.let {TvUi.detach(it)};nextCard=null;nextClock=null
         val p=player
         if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted&&playingSessionKey==repo.sessionKey)stream?.let {reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
-        player=null;stream=null;playingItem=null;controls=null;rewindAction=null;forwardAction=null;playbackFailure=false;seek=null;clock=null;pause=null;playerHeading=null;speedAction=null;audioAction=null;subtitleAction=null;seekPreview=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
+        player=null;stream=null;playingItem=null;controls=null;rewindAction=null;forwardAction=null;playbackFailure=false;seek=null;clock=null;pause=null;playerHeading=null;playerWallClock=null;speedAction=null;audioAction=null;subtitleAction=null;seekPreview=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
     private fun choose(title: String,labels: List<String>,selected: Int,chosen: (Int)->Unit) {

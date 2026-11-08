@@ -1,0 +1,27 @@
+Android TV 最新61稿实施验证 · 2026-11-08
+
+基准5d8511e；设计来源为工作区ui-design/designs最新61张有效稿及TV_FOCUS_AND_STATES.txt。
+本轮代码：9566906 公共与直播；0cd08c7 媒体布局/目录/恢复；e62644b 首页错误焦点；
+最后提交补齐播放器真实时钟、零结果搜索图标并记录本验证。
+
+构建：既有Docker镜像cirruslabs/flutter:3.38.6、离线Gradle缓存，assembleDebug成功。
+未安装宿主Android/JDK工具。打包使用被Git忽略的私有bootstrap只读输入。
+签名：最终复制的验收APK独立apksigner verify成功，v1/v2签名有效。
+包名org.jellyfin.androidtv.bestvlive；versionName v0.1.3；versionCode10300。
+
+自动检查295项通过：
+check-container.sh 112：打包配置16、生产直播方法37、确认手势14、
+  真实绘制配色的亮画面对比21、媒体bootstrap13、版本11。
+check-library-container.sh 183：图片及凭据范围11、浏览/日期34、播放器浮层20、
+  普通/大字及720p/1080p/4K布局56、异步列表10、即时筛选16、下集/共享播放器18、
+  并发目录/取消/缓存/状态码分类18。
+
+产物（本地验收，不发布）：.local-build/review/JellyLive-v0.1.3-tv-review.apk
+大小：28964000字节
+SHA256：5055ecb733c5308cdc629f705f1c279883d8c80b6c2d0f977a2b435a33ed12f3
+直播与媒体库两个私有bootstrap均与打包输入逐字节一致；未进入Git。
+
+边界：以上为容器编译、JVM生产逻辑/几何和色彩合成验证。
+没有安装APK、启动Waydroid或执行电视实屏截图；没有push、发版或覆盖旧下载。
+电视遥控完整焦点、实际IME、字幕遮挡、真实服务权限与硬件解码仍待实机验收。
+安装手机/PC/Waydroid软件仍需要用户另行明确同意。
