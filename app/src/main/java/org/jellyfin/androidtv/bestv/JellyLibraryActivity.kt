@@ -514,7 +514,7 @@ class JellyLibraryActivity : FragmentActivity() {
         box.setOnClickListener {click()};return box
     }
     private fun art(parent: FrameLayout,item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,backdrop: Boolean=false) {
-        val image=AsyncImageView(this);image.scaleType=ImageView.ScaleType.CENTER_CROP;image.setBackgroundColor(0xff20283d.toInt());ui.at(parent,image,x,y,w,h)
+        val image=AsyncImageView(this);image.allowHardwareBitmaps=false;image.scaleType=ImageView.ScaleType.CENTER_CROP;image.setBackgroundColor(0xff20283d.toInt());ui.at(parent,image,x,y,w,h)
         image.load(url=repo.image(item,backdrop),placeholder=ColorDrawable(0xff20283d.toInt()),aspectRatio=if(backdrop) 16.0/9 else 2.0/3)
         if(repo.image(item,backdrop)==null) ui.text(parent,"暂无封面",12,TvUi.MUTED,x+10,y+h/2-10,w-20,20f).gravity=Gravity.CENTER
     }
@@ -547,11 +547,11 @@ class JellyLibraryActivity : FragmentActivity() {
         item.taglines?.firstOrNull()?.let {label(it,212f,if(large)151f else 153f,700f,if(large)36f else 24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
         label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,if(large)190f else 180f,700f,if(large)38f else 25f,14,true)
         label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,if(large)221f else 209f,700f,if(large)38f else 25f,13,true)
-        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,if(large)259f else 246f,700f,if(large)58f else 50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
+        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,if(large)252f else 246f,700f,if(large)72f else 50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(if(large)0f else 7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
         val position=resumeMs(item)
-        val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,if(large)330f else 311f,if(large)342f else 165f,if(large)50f else 38f){play(item,position)}
-        ui.button(page,"从头播放",if(large)566f else 389f,if(large)330f else 311f,if(large)342f else 165f,if(large)50f else 38f){play(item,0)}
-        val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",if(large)212f else 566f,if(large)393f else 311f,if(large)342f else 165f,if(large)50f else 38f){}
+        val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,if(large)330f else 311f,if(large)342f else 224f,if(large)50f else 38f){play(item,position)}
+        ui.button(page,"从头播放",if(large)566f else 448f,if(large)330f else 311f,if(large)342f else 224f,if(large)50f else 38f){play(item,0)}
+        val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",if(large)212f else 684f,if(large)393f else 311f,if(large)342f else 224f,if(large)50f else 38f){}
         var isPlayed=item.userData?.played==true
         watched.setOnClickListener {
             watched.isEnabled=false;val session=repo.sessionKey;val host=page
@@ -561,7 +561,6 @@ class JellyLibraryActivity : FragmentActivity() {
                 finally {if(page===host)watched.isEnabled=true}
             }
         }
-        ui.button(page,"更多",if(large)566f else 743f,if(large)393f else 311f,if(large)342f else 165f,if(large)50f else 38f){choose("媒体信息",listOf(meta(item).ifEmpty {"暂无媒体信息"},"服务器：${repo.serverName}"),-1){}}
         val directors=item.people.orEmpty().filter {it.type==PersonKind.DIRECTOR}.mapNotNull {it.name}
         val actors=item.people.orEmpty().filter {it.type==PersonKind.ACTOR}.mapNotNull {it.name}
         if(!large)label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,if(large)455f else 362f,700f,if(large)42f else 28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
@@ -573,7 +572,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;scroll.isFocusable=true;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,48f,if(large)500f else 432f,864f,if(large)104f else 76f)
             people.forEach {person->
                 val card=FrameLayout(this);card.background=ui.surface(TvUi.PANEL,false);row.addView(card,LinearLayout.LayoutParams(ui.px(165f),ui.px(if(large)104f else 76f)).apply {marginEnd=ui.px(12f)})
-                val image=AsyncImageView(this);image.scaleType=ImageView.ScaleType.CENTER_CROP
+                val image=AsyncImageView(this);image.allowHardwareBitmaps=false;image.scaleType=ImageView.ScaleType.CENTER_CROP
                 ui.at(card,image,8f,8f,48f,60f);image.load(url=repo.personImage(person),placeholder=androidx.core.content.ContextCompat.getDrawable(this,org.jellyfin.androidtv.R.drawable.ic_user))
                 ui.text(card,person.name.orEmpty(),15,TvUi.INK,61f,13f,99f,if(large)38f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
                 ui.text(card,person.role ?: if(person.type==PersonKind.DIRECTOR)"导演" else "演员",12,TvUi.MUTED,61f,if(large)58f else 44f,99f,if(large)30f else 20f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
@@ -669,9 +668,11 @@ class JellyLibraryActivity : FragmentActivity() {
         val loading=label("正在获取播放地址…",32f,80f,850f,48f,18)
         makeControls(item)
         buffering=FrameLayout(this).also {panel->
-            panel.visibility=View.GONE;panel.background=ui.surface(0xf0101629.toInt(),false);ui.at(page,panel,332f,207f,296f,70f)
-            ui.text(panel,"正在缓冲…",18,TvUi.INK,16f,8f,264f,28f).gravity=Gravity.CENTER
-            ui.text(panel,"播放恢复后会自动继续",12,TvUi.MUTED,16f,39f,264f,22f).gravity=Gravity.CENTER
+            val titleHeight=maxOf(28f,28f*ui.fontScale);val hintHeight=maxOf(22f,19f*ui.fontScale)
+            val panelHeight=20f+titleHeight+hintHeight
+            panel.visibility=View.GONE;panel.background=ui.surface(0xf0101629.toInt(),false);ui.at(page,panel,332f,242f-panelHeight/2,296f,panelHeight)
+            ui.text(panel,"正在缓冲…",18,TvUi.INK,16f,8f,264f,titleHeight).gravity=Gravity.CENTER
+            ui.text(panel,"播放恢复后会自动继续",12,TvUi.MUTED,16f,12f+titleHeight,264f,hintHeight).gravity=Gravity.CENTER
         }
         page.isFocusableInTouchMode=true;page.requestFocus()
         video.setOnClickListener {if(overlay.visible)hidePlayerControls()else showControls()}
@@ -745,9 +746,9 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.protectControls(panel)
         playerHeading=FrameLayout(this).also {top->
             top.visibility=View.GONE;top.background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xf0101326.toInt(),0xeb101326.toInt(),0x00101326));ui.at(page,top,0f,0f,960f,135f)
-            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,if(ui.largeText())48f else 33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
             playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,if(ui.largeText())792f else 848f,28f,if(ui.largeText())120f else 64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
-            if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         }
         ui.at(panel,View(this).apply {setBackgroundColor(0xff4b5268.toInt())},16f,15f,864f,3f)
         val progress=SeekBar(this);seek=progress;progress.id=View.generateViewId();progress.max=10000;progress.visibility=View.GONE;progress.setPadding(0,0,0,0)

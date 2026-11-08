@@ -22,7 +22,13 @@ public final class TvGlass {
         final int divisor=6;
         Bitmap shot=Bitmap.createBitmap(Math.max(1,root.getWidth()/divisor),Math.max(1,root.getHeight()/divisor),Bitmap.Config.ARGB_8888);
         Canvas canvas=new Canvas(shot);canvas.scale(shot.getWidth()/(float)root.getWidth(),shot.getHeight()/(float)root.getHeight());
-        float opacity=panel.getAlpha();panel.setAlpha(0);root.draw(canvas);panel.setAlpha(opacity);
+        float opacity=panel.getAlpha();
+        try {panel.setAlpha(0);root.draw(canvas);}
+        catch(RuntimeException unavailable){
+            // Hardware bitmaps and vendor drawing implementations can reject a software
+            // snapshot. Frosting is optional; the readable tint must remain visible.
+            shot.recycle();return;
+        } finally {panel.setAlpha(opacity);}
         SurfaceView video=findSurface(root);
         Runnable finish=()->WORK.execute(()->{
             int left=Math.max(0,Math.min(shot.getWidth()-1,Math.round(ui.px(x)/(float)divisor)));

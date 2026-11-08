@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import coil3.ImageLoader
 import coil3.asImage
 import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import coil3.request.crossfade
 import coil3.request.target
 import coil3.request.transformations
@@ -43,6 +44,9 @@ class AsyncImageView @JvmOverloads constructor(
 	private val styledAttributes = context.obtainStyledAttributes(attrs, R.styleable.AsyncImageView, defStyleAttr, 0)
 	private val imageLoader by inject<ImageLoader>()
 	private var loadJob: Job? = null
+
+	/** Disable for surfaces that also draw background snapshots into a software Canvas. */
+	var allowHardwareBitmaps = true
 
 	/**
 	 * The duration of the crossfade when changing switching the images of the url, blurhash and
@@ -88,12 +92,14 @@ class AsyncImageView @JvmOverloads constructor(
 			// Start loading image or placeholder
 			val request = if (url == null) {
 				ImageRequest.Builder(context).apply {
+					allowHardware(this@AsyncImageView.allowHardwareBitmaps)
 					target(this@AsyncImageView)
 					data(placeholder)
 					if (circleCrop) transformations(CircleCropTransformation())
 				}.build()
 			} else {
 				ImageRequest.Builder(context).apply {
+					allowHardware(this@AsyncImageView.allowHardwareBitmaps)
 					val crossFadeDurationMs = crossFadeDuration.inWholeMilliseconds.toInt()
 					if (crossFadeDurationMs > 0) crossfade(crossFadeDurationMs)
 					else crossfade(false)
