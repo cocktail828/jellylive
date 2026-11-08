@@ -14,6 +14,8 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
     java -cp "$check_lib/*" groovy.ui.GroovyMain scripts/checks/LiveInteractionCheck.groovy
     javac -proc:none -d /tmp/live-gesture-check app/src/main/java/org/jellyfin/androidtv/bestv/LiveConfirmGesture.java scripts/checks/LiveConfirmGestureCheck.java
     java -cp /tmp/live-gesture-check LiveConfirmGestureCheck
+    javac -proc:none -d /tmp/overlay-contrast-check app/src/main/java/org/jellyfin/androidtv/bestv/OverlayContrast.java scripts/checks/OverlayContrastCheck.java
+    java -cp /tmp/overlay-contrast-check OverlayContrastCheck
     java -cp "$check_lib/*" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -jvm-target 17 \
       -classpath "$check_lib/kotlin-stdlib-2.2.0.jar" -d /tmp/library-bootstrap-check \
       app/src/main/java/org/jellyfin/androidtv/bestv/LibraryBootstrap.kt scripts/checks/LibraryBootstrapCheck.kt

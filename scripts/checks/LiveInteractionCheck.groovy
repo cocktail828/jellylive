@@ -36,6 +36,7 @@ class FakeHandler {
         android.os.SystemClock.now=until
     }
 }
+class FakeUi { int multiplier=1; int timeout(int normal){normal*multiplier} }
 class FakePlayer {
     int state=3
     boolean playing=true
@@ -49,7 +50,8 @@ class FakeDialog {
     void dismiss(){showing=false;dismissed=true}
 }
 class View {
-    boolean focused=false
+    boolean focused=false,attached=true
+    boolean isAttachedToWindow(){attached}
     void requestFocus(){focused=true}
 }
 class FakeList extends View {
@@ -67,7 +69,7 @@ class FakePrefs { String legacy=''; String getString(String key,String fallback)
 class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','restoreRoute'].collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute'].collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false
@@ -82,9 +84,10 @@ class InteractionHost {
     def prefs=new FakePrefs()
     def list=new FakeList()
     def previewButton=new View()
-    def errorPanel=null,groupButton=null
+    def errorPanel=null,groupButton=null,lastRecoveryAction=null,recoveryRetry=new View()
     List<Channel> shown=[]
     def editor=[busy:false]
+    def ui=new FakeUi()
     def player=new FakePlayer()
     def handler=new FakeHandler()
     def dialog=null
@@ -235,7 +238,7 @@ check('home_default_keeps_channels_reachable_when_playback_has_error') {
 }
 check('home_default_with_no_channels_focuses_recovery') {
     def h=focusHost();h.shown=[];h.errorPanel=loader.loadClass('View').newInstance()
-    h.focusHomeDefault();assert h.errorPanel.focused && !h.list.focused
+    h.focusHomeDefault();assert h.recoveryRetry.focused && !h.list.focused
 }
 check('returning_to_list_preserves_selected_channel') {
     def h=focusHost();h.list.selected=2;h.store.saved='b'
@@ -283,6 +286,19 @@ check('other_sources_aggregate_without_builtin_or_disabled_sources') {
 check('duplicate_codes_use_source_identity') {
     def policy=loader.loadClass('LiveFilter');assert policy.key('builtin','1')!=policy.key('other','1')
     assert policy.focus(['builtin/1','other/1'],null,'other/1')==1
+}
+
+check('drawer_respects_accessibility_recommended_timeout') {
+    def h=fresh();h.route='full';h.drawerVisible=true;h.ui.multiplier=3;h.resetIdleTimers();h.handler.advance(10000)
+    assert h.drawerVisible;h.handler.advance(20000);assert !h.drawerVisible
+}
+check('recovery_restores_last_visible_action') {
+    def h=fresh();h.lastRecoveryAction=loader.loadClass('View').newInstance();h.focusRecovery()
+    assert h.lastRecoveryAction.focused && !h.recoveryRetry.focused
+}
+check('stale_recovery_action_falls_back_to_retry') {
+    def h=fresh();h.lastRecoveryAction=loader.loadClass('View').newInstance();h.lastRecoveryAction.attached=false;h.focusRecovery()
+    assert h.recoveryRetry.focused && !h.lastRecoveryAction.focused
 }
 
 def output=[javaSyntaxParsed:true,scope:'Production method bodies executed in Groovy with fake platform/clock; not Android compilation or TV execution',checks:results.size(),results:results]
