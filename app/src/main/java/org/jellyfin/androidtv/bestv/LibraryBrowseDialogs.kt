@@ -46,71 +46,18 @@ object LibraryBrowseDialogs {
         query: LibraryBrowse.Query,
         onChanged: (LibraryBrowse.Query) -> Unit,
     ): AlertDialog {
-        val panel = FrameLayout(activity).apply { setBackgroundColor(SHEET) }
+        val panel = FrameLayout(activity).apply { background = ui.glass(SHEET) }
         val dialog = AlertDialog.Builder(activity).create().apply { setView(panel, 0, 0, 0, 0) }
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         val selection = LibraryBrowseSelection(query, onChanged)
-        var countJob: Job? = null
-        var request = 0
         val selections = mutableListOf<Selection>()
-
         ui.title(panel, "筛选", 22f, 25f, 200f, 32f)
-        val close = ui.button(panel, "关闭", 264f, 23f, 54f, 34f) { dialog.dismiss() }
-        close.setTextSize(TypedValue.COMPLEX_UNIT_PX, 12f * ui.scale * ui.fontScale)
-        val scopeLabel = when (query.kind) {
-            BaseItemKind.MOVIE -> "当前范围：电影"
-            BaseItemKind.SERIES -> "当前范围：剧集"
-            else -> "当前媒体分类"
-        }
-        ui.text(panel, scopeLabel, 12, TvUi.MUTED, 22f, 63f, 296f, 20f)
-
         val body = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
-        val scroll = ScrollView(activity).apply {
-            isFillViewport = false
-            isHorizontalScrollBarEnabled = false
-            addView(body)
-        }
-        ui.at(panel, scroll, 22f, 90f, 296f, 314f)
-        val loading = ui.text("正在加载筛选条件…", 14, TvUi.MUTED)
-        body.addView(loading, LinearLayout.LayoutParams(-1, ui.px(38f)))
-        val summary = ui.text(panel, "", 12, TvUi.MUTED, 22f, 413f, 296f, 40f).apply {
-            maxLines = 2
-            ellipsize = TextUtils.TruncateAt.END
-        }
-        val matches = ui.text(panel, "正在统计…", 14, TvUi.MUTED, 154f, 467f, 164f, 36f).apply {
-            gravity = Gravity.CENTER
-        }
-
-        fun refreshSelections() {
-            selections.forEach { it.button.isSelected = it.selected(selection.current) }
-            val values = listOfNotNull(
-                selection.current.state.takeUnless { it == LibraryBrowse.State.ALL }?.label,
-                selection.current.genre,
-                selection.current.year?.toString(),
-                selection.current.resolution?.let(::resolutionLabel),
-                selection.current.region,
-            )
-            summary.text = "当前条件：${values.joinToString(" / ").ifEmpty { "全部" }}"
-        }
-
-        fun countCurrent() {
-            countJob?.cancel()
-            val serial = ++request
-            val snapshot = selection.current
-            matches.text = "正在统计…"
-            countJob = scope.launch {
-                delay(100)
-                val count = withContext(Dispatchers.Default) { LibraryBrowse.select(items, snapshot).size }
-                if (!dialog.isShowing || request != serial || snapshot != selection.current) return@launch
-                matches.text = "匹配 $count 项"
-            }
-        }
-
-        fun edit(value: LibraryBrowse.Query) {
-            if (!selection.select(value)) return
-            refreshSelections()
-            countCurrent()
-        }
+        val scroll = ScrollView(activity).apply { isFillViewport = false; isHorizontalScrollBarEnabled = false; addView(body) }
+        ui.at(panel, scroll, 22f, 75f, 296f, 365f)
+        body.addView(ui.text("正在加载筛选条件…",14,TvUi.MUTED), LinearLayout.LayoutParams(-1,ui.px(38f)))
+        fun refreshSelections() { selections.forEach { it.button.isSelected = it.selected(selection.current) } }
+        fun edit(value: LibraryBrowse.Query) { if(selection.select(value)) refreshSelections() }
 
         fun <T> group(
             title: String,
@@ -143,11 +90,11 @@ object LibraryBrowseDialogs {
             body.addView(grid, LinearLayout.LayoutParams(-1, ui.px(rows * (height + space) - space)))
         }
 
-        ui.button(panel, "重置", 22f, 467f, 120f, 36f) {
-            if (selection.resetFilters()) { refreshSelections(); countCurrent() }
-        }
+        val reset=ui.button(panel, "重置", 22f, 479f, 142f, 38f) { if(selection.resetFilters()) refreshSelections() }
+        val close=ui.button(panel, "关闭", 176f, 479f, 142f, 38f) { dialog.dismiss() }
         refreshSelections()
         show(dialog, ui, 340f, 540f, Gravity.END or Gravity.CENTER_VERTICAL)
+        TvGlass.apply(activity,ui,panel,620f,0f,340f,540f)
         cancelOnDetach(dialog, scope)
         close.requestFocus()
 
@@ -179,7 +126,6 @@ object LibraryBrowseDialogs {
             if (facets.regions.isNotEmpty()) group("地区", facets.regions, 2,
                 { it }, { q, value -> q.region == value }, { q, value -> q.copy(region = value) })
             refreshSelections()
-            countCurrent()
             if (dialog.currentFocus === close) selections.firstOrNull { it.selected(selection.current) }?.button?.requestFocus()
         }
         return dialog
@@ -191,7 +137,7 @@ object LibraryBrowseDialogs {
         query: LibraryBrowse.Query,
         onChanged: (LibraryBrowse.Query) -> Unit,
     ): AlertDialog {
-        val panel = FrameLayout(activity).apply { background = ui.surface(SHEET, false) }
+        val panel = FrameLayout(activity).apply { background = ui.glass(SHEET) }
         val dialog = AlertDialog.Builder(activity).create().apply { setView(panel, 0, 0, 0, 0) }
         val selection = LibraryBrowseSelection(query, onChanged)
         val sortButtons = mutableListOf<Pair<LibraryBrowse.Sort, Button>>()
@@ -206,24 +152,23 @@ object LibraryBrowseDialogs {
             descending.isSelected = !selection.current.ascending
         }
 
-        ui.title(panel, "排序", 22f, 22f, 280f, 32f)
-        val close = ui.button(panel, "关闭", 344f, 22f, 54f, 34f) { dialog.dismiss() }
-        close.setTextSize(TypedValue.COMPLEX_UNIT_PX, 12f * ui.scale * ui.fontScale)
-        LibraryBrowse.Sort.entries.forEachIndexed { index, option ->
-            val button = ui.button(panel, option.label, 22f, 70f + index * 44f, 376f, 36f) {
+        ui.title(panel, "排序", 22f, 25f, 280f, 32f)
+        listOf(LibraryBrowse.Sort.NAME,LibraryBrowse.Sort.ADDED,LibraryBrowse.Sort.YEAR,LibraryBrowse.Sort.RATING,LibraryBrowse.Sort.DURATION).forEachIndexed { index, option ->
+            val button = ui.button(panel, option.label, 22f, 80f + index * 53f, 296f, 42f) {
                 if (selection.selectSort(option)) refresh()
             }
             button.background = choiceBackground(ui)
             sortButtons += option to button
         }
-        ui.text(panel, "顺序", 14, TvUi.MUTED, 22f, 301f, 376f, 24f)
-        ascending = ui.button(panel, "", 22f, 335f, 182f, 36f) { if (selection.setAscending(true)) refresh() }
-        descending = ui.button(panel, "", 216f, 335f, 182f, 36f) { if (selection.setAscending(false)) refresh() }
+        ui.text(panel, "顺序", 14, TvUi.MUTED, 22f, 364f, 296f, 24f)
+        ascending = ui.button(panel, "", 22f, 402f, 142f, 38f) { if (selection.setAscending(true)) refresh() }
+        descending = ui.button(panel, "", 176f, 402f, 142f, 38f) { if (selection.setAscending(false)) refresh() }
         ascending.background = choiceBackground(ui)
         descending.background = choiceBackground(ui)
-        ui.button(panel, "关闭", 22f, 402f, 376f, 38f) { dialog.dismiss() }
+        val close=ui.button(panel, "关闭", 22f, 479f, 296f, 38f) { dialog.dismiss() }
         refresh()
-        show(dialog, ui, 420f, 464f, Gravity.CENTER)
+        show(dialog, ui, 340f, 540f, Gravity.END or Gravity.CENTER_VERTICAL)
+        TvGlass.apply(activity,ui,panel,620f,0f,340f,540f)
         sortButtons.firstOrNull { it.first == query.sort }?.second?.requestFocus() ?: close.requestFocus()
         return dialog
     }
@@ -241,6 +186,7 @@ object LibraryBrowseDialogs {
         LibraryBrowse.Sort.NAME -> if (ascending) "名称正序" else "名称倒序"
         LibraryBrowse.Sort.RATING -> if (ascending) "从低到高" else "从高到低"
         LibraryBrowse.Sort.YEAR -> if (ascending) "从旧到新" else "从新到旧"
+        LibraryBrowse.Sort.DURATION -> if(ascending) "从短到长" else "从长到短"
         LibraryBrowse.Sort.ADDED, LibraryBrowse.Sort.WATCHED -> if (ascending) "从早到晚" else "从晚到早"
     }
 
@@ -250,8 +196,8 @@ object LibraryBrowseDialogs {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             decorView.setPadding(0, 0, 0, 0)
             decorView.systemUiVisibility = ui.activity.window.decorView.systemUiVisibility
-            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(.6f)
+            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0f)
             setGravity(gravity)
             setLayout(ui.px(width), ui.px(height))
         }

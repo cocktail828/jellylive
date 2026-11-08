@@ -13,8 +13,9 @@ fun main(){
  fun verify(name: String,ok: Boolean){check(ok){name};checks++;println("PASS $name")}
  val all=(1..86).map {item(it,",\"CommunityRating\":${it/10.0},\"Genres\":[\"${if(it%2==0)"Drama" else "Action"}\"],\"ProductionYear\":${2000+it%3}")}
  val q=LibraryBrowse.Query()
+ verify("default ordering is name ascending",q.sort==LibraryBrowse.Sort.NAME&&q.ascending)
  verify("complete filtered scope before page",LibraryBrowse.select(all,q.copy(genre="Drama")).size==43)
- verify("rating sort reaches item outside first page",LibraryBrowse.select(all,q.copy(sort=LibraryBrowse.Sort.RATING)).first().id==all.last().id)
+ verify("rating sort reaches item outside first page",LibraryBrowse.select(all,q.copy(sort=LibraryBrowse.Sort.RATING,ascending=false)).first().id==all.last().id)
  verify("year and genre combine",LibraryBrowse.select(all,q.copy(genre="Drama",year=2001)).all {it.productionYear==2001&&"Drama" in it.genres.orEmpty()})
  verify("paging preserves exact total",LibraryBrowse.select(all,q).drop(60).take(60).size==26)
  val unseen=item(101);val watching=item(102,",\"UserData\":{\"PlaybackPositionTicks\":10000,\"Played\":false}")

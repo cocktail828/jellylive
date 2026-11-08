@@ -6,6 +6,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -37,8 +40,14 @@ public final class TvUi {
     public EditText input(FrameLayout p,String hint,String value,float x,float y,float w,boolean password){
         EditText e=new EditText(activity);e.setId(View.generateViewId());e.setSingleLine(true);e.setTextSize(TypedValue.COMPLEX_UNIT_PX,15*scale*fontScale);e.setTextColor(INK);e.setHintTextColor(MUTED);e.setHint(hint);e.setText(value);e.setPadding(px(14),0,px(14),0);e.setBackground(focusBackground(0xff20263e));e.setInputType(android.text.InputType.TYPE_CLASS_TEXT|(password?android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD:android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));return at(p,e,x,y,w,40);
     }
-    public Button header(FrameLayout p,String title,String sub,Runnable back){Button b=button(p,"‹",32,28,38,38,back);b.setTag("back");title(p,title,84,28,650,34);text(p,sub,12,MUTED,84,65,690,23);text(p,"JellyLive",16,0xffb9b0ef,814,29,114,34);return b;}
-    public void footer(FrameLayout p,String hint){View line=new View(activity);line.setBackgroundColor(0xff30364e);at(p,line,32,489,896,1);text(p,hint,12,MUTED,32,497,800,25);}
+    public TextView header(FrameLayout p,String title,String sub,Runnable back){TextView heading=title(p,title,32,28,650,34);text(p,sub,12,MUTED,32,65,690,23);text(p,"JellyLive",16,0xffb9b0ef,814,29,114,34);return heading;}
+    /** Older page builders still call this; persistent instruction footers are retired. */
+    public void footer(FrameLayout p,String hint){}
+    public GradientDrawable glass(int color){GradientDrawable d=new GradientDrawable();d.setColor((color&0x00ffffff)|0xa6000000);d.setCornerRadius(px(9));d.setStroke(px(.5f),0xff59627d);return d;}
+    public Button quietButton(String value,String description,Runnable click){
+        Button b=button(value,click);b.setTextSize(TypedValue.COMPLEX_UNIT_PX,13*scale*fontScale);b.setTypeface(null,Typeface.NORMAL);b.setPadding(px(4),0,px(4),0);b.setSingleLine();b.setEllipsize(android.text.TextUtils.TruncateAt.END);b.setContentDescription(description);
+        b.setBackground(new Drawable(){final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);public void draw(Canvas c){if(isStateful()&&b.hasFocus()){paint.setColor(0xffbba9ef);paint.setStrokeWidth(Math.max(1,px(1)));c.drawLine(px(7),getBounds().bottom-px(4),getBounds().right-px(7),getBounds().bottom-px(4),paint);}}public boolean isStateful(){return true;}protected boolean onStateChange(int[] state){b.setTextColor(b.hasFocus()?INK:MUTED);invalidateSelf();return true;}public void setAlpha(int alpha){}public void setColorFilter(android.graphics.ColorFilter filter){}public int getOpacity(){return android.graphics.PixelFormat.TRANSLUCENT;}});return b;
+    }
     public void tag(View v,String tag){v.setTag(tag);}
     public static void detach(View v){if(v.getParent() instanceof ViewGroup)((ViewGroup)v.getParent()).removeView(v);}
 }

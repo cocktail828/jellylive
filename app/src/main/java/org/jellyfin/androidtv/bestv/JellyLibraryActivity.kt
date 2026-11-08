@@ -182,16 +182,17 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.text(page, text, size, if(muted) TvUi.MUTED else TvUi.INK, x, y, w, h)
     private fun centerState(title: String, subtitle: String, buttons: List<Pair<String, () -> Unit>>) {
         val panel=FrameLayout(this); panel.background=ui.surface(TvUi.PANEL,false); ui.at(page,panel,32f,103f,896f,347f)
-        ui.text(panel,"▱",50,0xffb7a2ff.toInt(),410f,20f,100f,75f)
-        ui.title(panel,title,104f,120f,760f,50f)
-        ui.text(panel,subtitle,14,TvUi.MUTED,150f,174f,720f,45f)
-        val width=if(buttons.size==3) 160f else 200f
+        ui.text(panel,"▱",48,0xffb7a2ff.toInt(),424f,81f,48f,48f).gravity=Gravity.CENTER
+        ui.title(panel,title,24f,142f,848f,46f).apply {gravity=Gravity.CENTER;maxLines=1}
+        ui.text(panel,subtitle,14,TvUi.MUTED,24f,186f,848f,30f).gravity=Gravity.CENTER
+        val width=160f
         val start=(896-(buttons.size*width+(buttons.size-1)*14))/2
         buttons.forEachIndexed { i, (name, click) ->
-            val b=ui.button(panel,name,start+i*(width+14),257f,width,40f,click)
-            if(i==0) focus(b)
+            val button=ui.button(panel,name,start+i*(width+14),228f,width,38f,click)
+            if(i==0) focus(button)
         }
     }
+
     private fun disconnected(push: Boolean=true) {
         fresh("disconnected",push); header("我的媒体库")
         centerState("连接你的 Jellyfin，开启私人影院。","你仍然可以随时返回主页观看直播。",listOf("连接 Jellyfin" to { connection() },"▷ 返回看直播" to { finish() }))
@@ -280,7 +281,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val host=page;val session=repo.sessionKey;val initialInteraction=interaction
         val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
         val resumeTitle=pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
-        val status=pageText(host,"正在加载继续观看…",14,TvUi.MUTED,LibraryPageLayout.HOME_RESUME_ROW)
+        val status=pageText(host,"正在加载继续观看…",14,TvUi.MUTED,LibraryPageLayout.HOME_RESUME_ROW).apply {gravity=Gravity.CENTER}
         val explore=pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
         val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
         val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
@@ -289,19 +290,25 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         entries.forEachIndexed {index,card->card.nextFocusLeftId=entries.getOrNull(index-1)?.id ?: card.id;card.nextFocusRightId=entries.getOrNull(index+1)?.id ?: card.id;card.nextFocusUpId=search.id;card.nextFocusDownId=card.id}
         search.nextFocusDownId=entries.first().id;focus(entries.first(),initialInteraction)
+        lifecycleScope.launch {
+            val catalog=try {withTimeout(15000){repo.catalog()}}catch(_:Exception){return@launch}
+            if(page!==host||session!=repo.sessionKey)return@launch
+            LibraryPageLayout.Entry.entries.forEachIndexed {index,entry->
+                val count=LibraryBrowse.select(catalog,entry.query()).size
+                entries[index].findViewWithTag<TextView>("entry-subtitle")?.text="${count} ${if(entry==LibraryPageLayout.Entry.MOVIES)"部电影" else if(entry==LibraryPageLayout.Entry.SERIES)"部剧集" else "项内容"}"
+            }
+        }
         homeResumeJob?.cancel()
         homeResumeJob=lifecycleScope.launch {
             val resumes=try {withTimeout(8000){repo.resume()}.filter {it.userData?.played!=true&&resumeMs(it)>0}.distinctBy {it.seriesId ?: it.id}}
                 catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
                 catch(_:Exception){null}
             if(session!=repo.sessionKey)return@launch
-            if(resumes==null){status.text="继续观看暂不可用，仍可浏览下方分类。";return@launch}
-            host.removeView(status)
+            if(resumes==null){status.text="暂时无法读取观看历史，请检查媒体库连接。";return@launch}
             if(resumes.isEmpty()){
-                host.removeView(resumeTitle)
-                fun move(view: View,box: LibraryPageLayout.Box){view.layoutParams=(view.layoutParams as FrameLayout.LayoutParams).apply {leftMargin=ui.px(box.x);topMargin=ui.px(box.y)}}
-                move(explore,LibraryPageLayout.homeExploreLabel(false));entries.forEachIndexed {i,view->move(view,LibraryPageLayout.homeEntry(i,false))}
+                status.text="暂无观看历史"
             }else{
+                host.removeView(status)
                 val scroller=HorizontalScrollView(this@JellyLibraryActivity);scroller.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this@JellyLibraryActivity);scroller.addView(row)
                 val cards=resumes.map {item->homeCard(cardTitle(item),if(item.type==BaseItemKind.EPISODE)"第 ${item.indexNumber ?: "?"} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}",item=item){play(item,resumeMs(item))}.also {row.addView(it,LinearLayout.LayoutParams(ui.px(287f),ui.px(130f)).apply {marginEnd=ui.px(14f)})}}
                 place(host,scroller,LibraryPageLayout.HOME_RESUME_ROW)
@@ -318,7 +325,7 @@ class JellyLibraryActivity : FragmentActivity() {
         else ui.at(card,ImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP;setImageResource(requireNotNull(illustration))},0f,0f,287f,LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT)
         ui.at(card,View(this).apply {setBackgroundColor(0xff10182a.toInt())},0f,LibraryPageLayout.HOME_CARD_INFO_TOP,287f,50f)
         pageText(card,name,16,TvUi.INK,LibraryPageLayout.HOME_CARD_TITLE).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE).apply {tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(card,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(card,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
         card.contentDescription="$name，$subtitle";return card
     }
@@ -334,14 +341,14 @@ class JellyLibraryActivity : FragmentActivity() {
         load({repo.catalog(parent)}) {catalog->
             if(session!=repo.sessionKey){home(false);return@load}
             fresh("grid",false);val host=page;val large=ui.fontScale>1
-            val back=ui.header(host,title,"",{back()});ui.footer(host,"方向键浏览 · 确认箭头翻页 · 返回媒体库")
-            val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,84f,65f,690f,23f)
+            ui.header(host,title,"",{back()});ui.footer(host,"方向键浏览 · 确认箭头翻页 · 返回媒体库")
+            val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,32f,65f,690f,23f)
             var query=initialQuery;var offset=start;val updates=LibraryGridUpdates()
             val posterHost=FrameLayout(this);ui.at(host,posterHost,0f,0f,960f,489f);posterHost.isFocusable=false
             val search=place(host,ui.button("⌕ 搜索媒体"){search(parent=parent,kind=query.kind)},LibraryPageLayout.GRID_SEARCH).apply {tag="grid-search"}
             val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_FILTER).apply {tag="grid-filter"}
-            val sort=place(host,ui.button("排序：最近添加"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_SORT).apply {tag="grid-sort"}
-            search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=back.id
+            val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_SORT).apply {tag="grid-sort"}
+            search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=search.id
             var selectedColumn=0;var preferred: String?=null
             fun update(){
                 if(page!==host||session!=repo.sessionKey)return
@@ -355,7 +362,7 @@ class JellyLibraryActivity : FragmentActivity() {
                     val count=filterCount(requestedQuery)
                     subtitle.text="${if(requestedQuery.kind==BaseItemKind.MOVIE)"全部电影" else if(requestedQuery.kind==BaseItemKind.SERIES)"全部剧集" else "全部媒体"} · ${result.total} ${if(requestedQuery.kind==BaseItemKind.MOVIE)"部" else "项"}${if(count>0)" · 已筛选" else ""}"
                     TvIcons.text(filter,if(count==0)"类型：全部" else if(count==1&&requestedQuery.genre!=null)"类型：${requestedQuery.genre}" else "筛选：${count}项")
-                    val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"年份升序" else "年份降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序"}
+                    val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"年份升序" else "年份降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序";LibraryBrowse.Sort.DURATION->if(requestedQuery.ascending)"时长升序" else "时长降序"}
                     TvIcons.text(sort,"排序：$order")
                     val cards=result.items.mapIndexed {index,item->
                         val card=posterCard(item,large){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
@@ -385,14 +392,21 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun posterCard(item: BaseItemDto,large: Boolean,click: ()->Unit): FrameLayout {
         val card=focusCard(FrameLayout(this),click);val bounds=LibraryPageLayout.poster(0,large)
         art(card,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
-        pageText(card,cardTitle(item),16,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {setTypeface(null,Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        val imageHeight=LibraryPageLayout.posterImageHeight(large)
+        ui.at(card,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0x0010182a,0xee10182a.toInt()))},0f,imageHeight-48f,bounds.width,48f)
+        val caption=pageText(card,cardTitle(item),16,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {
+            setTypeface(null,Typeface.BOLD);setSingleLine();gravity=Gravity.CENTER;ellipsize=android.text.TextUtils.TruncateAt.END;marqueeRepeatLimit=-1
+        }
+        val original=card.onFocusChangeListener
+        card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);caption.ellipsize=if(focused)android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused}
         pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,12,TvUi.INK,7f,7f,36f,20f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
         if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
         else if(resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(resumeMs(item)*10000.0*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000);ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
         return card
     }
     private fun cardTitle(item: BaseItemDto)=if(item.type==BaseItemKind.EPISODE)item.seriesName ?: item.name ?: "未命名剧集" else item.name ?: "未命名媒体"
-    private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"}).joinToString(" · ")
+    private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),item.genres?.firstOrNull()).joinToString(" · ")
     private fun section(body: LinearLayout, title: String) { body.addView(ui.text(title,17,TvUi.INK),LinearLayout.LayoutParams(-1,ui.px(35f)).apply {topMargin=ui.px(7f);bottomMargin=ui.px(6f)}) }
     private fun horizontal(body: LinearLayout, items: List<BaseItemDto>, progress: Boolean=false, click: (BaseItemDto)->Unit) {
         val sc=HorizontalScrollView(this);sc.isHorizontalScrollBarEnabled=false
@@ -427,7 +441,7 @@ class JellyLibraryActivity : FragmentActivity() {
         image.load(url=repo.image(item,backdrop),placeholder=ColorDrawable(0xff20283d.toInt()),aspectRatio=if(backdrop) 16.0/9 else 2.0/3)
         if(repo.image(item,backdrop)==null) ui.text(parent,"暂无封面",12,TvUi.MUTED,x+10,y+h/2-10,w-20,20f).gravity=Gravity.CENTER
     }
-    private fun grid(title: String,parent: UUID?=null,kind: BaseItemKind?=null,start: Int=0,alphabetical: Boolean=false,genre: String?=null,push: Boolean=true) =
+    private fun grid(title: String,parent: UUID?=null,kind: BaseItemKind?=null,start: Int=0,alphabetical: Boolean=true,genre: String?=null,push: Boolean=true) =
         renderGrid(title,parent,LibraryBrowse.Query(kind=kind,genre=genre,sort=if(alphabetical)LibraryBrowse.Sort.NAME else LibraryBrowse.Sort.ADDED,ascending=alphabetical),start,push)
     private fun launchDestination() {
         val requested=intent.getStringExtra("item_id")?.trim().orEmpty()
@@ -752,6 +766,6 @@ class JellyLibraryActivity : FragmentActivity() {
         val seen=local.getLong("seen_${positionKey(item)}",0)
         return if(seen>0 && seen>=(item.userData?.lastPlayedDate?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli() ?: 0))local.getLong(positionKey(item),server)else server
     }
-    private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"},LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
+    private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),item.genres?.firstOrNull(),LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {"${it/10000/60000} 分钟"}).joinToString(" · ")
     private fun time(ms: Long): String {val secs=(ms.coerceAtLeast(0)/1000);return if(secs>=3600) "%d:%02d:%02d".format(secs/3600,secs/60%60,secs%60) else "%02d:%02d".format(secs/60,secs%60)}
 }

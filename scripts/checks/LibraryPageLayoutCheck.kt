@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
     verify("home exposes exactly original three category entries",entries.map {it.title}==listOf("电影","剧集","最近添加"))
     verify("movie entry uses movie scope",entries[0].query().kind==BaseItemKind.MOVIE)
     verify("series entry uses series scope",entries[1].query().kind==BaseItemKind.SERIES)
-    verify("recent entry is recently added across media kinds",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.ADDED&&!it.ascending})
+    verify("recent entry retains the complete media scope and current default ordering",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.NAME&&it.ascending})
     verify("home search retains original design location",LibraryPageLayout.HOME_SEARCH==LibraryPageLayout.Box(770f,69f,158f,38f))
     for(hasResume in listOf(false,true)){
         val cards=entries.indices.map {LibraryPageLayout.homeEntry(it,hasResume)}
@@ -28,7 +28,7 @@ fun main(args: Array<String>) {
         verify("home title stays above entries ($hasResume)",LibraryPageLayout.homeExploreLabel(hasResume).bottom<=cards.first().y)
         verify("home category sizes remain original ($hasResume)",cards.all {near(it.width,287f)&&near(it.height,130f)})
         if(hasResume)verify("resume stays above explore section",LibraryPageLayout.HOME_RESUME_ROW.bottom<LibraryPageLayout.homeExploreLabel(true).y)
-        else verify("no-resume state gives space to category entries",cards.first().y<LibraryPageLayout.homeEntry(0,true).y)
+        else verify("empty history retains category position",cards.first().y==LibraryPageLayout.homeEntry(0,true).y)
     }
     val homeCard=LibraryPageLayout.Box(0f,0f,287f,130f)
     verify("home captions and progress stay inside card",listOf(LibraryPageLayout.HOME_CARD_TITLE,LibraryPageLayout.HOME_CARD_SUBTITLE,LibraryPageLayout.HOME_CARD_PROGRESS).all {inside(it,homeCard)})
@@ -37,6 +37,7 @@ fun main(args: Array<String>) {
     val tools=listOf(LibraryPageLayout.GRID_SEARCH,LibraryPageLayout.GRID_FILTER,LibraryPageLayout.GRID_SORT)
     verify("category tools stay in original one toolbar row",tools.map {it.y}.distinct().size==1&&tools.all {near(it.y,68f)&&near(it.height,38f)})
     verify("category tools fit without overlap",tools.all {inside(it,safe)}&&tools.zipWithNext().all {(a,b)->!overlaps(a,b)})
+    verify("toolbar has three equal functional areas",tools.map {it.width}.distinct()==listOf(148f)&&tools.zipWithNext().all {(a,b)->near(b.x-a.right,12f)})
     for(large in listOf(false,true)){
         val columns=LibraryPageLayout.columns(large)
         val cards=(0 until columns).map {LibraryPageLayout.poster(it,large)}
@@ -52,7 +53,7 @@ fun main(args: Array<String>) {
         verify("posters do not cover pagination ($large)",cards.all {c->pager.none {overlaps(it,c)}})
         verify("poster artwork keeps 2-to-3 ratio ($large)",near(imageHeight/cards[0].width,1.5f))
         verify("title and metadata fit poster ($large)",inside(title,localCard)&&inside(metadata,localCard))
-        verify("artwork title and metadata do not overlap ($large)",title.y>=imageHeight&&!overlaps(title,metadata))
+        verify("caption overlays artwork while metadata stays below ($large)",title.y<imageHeight&&title.bottom<=imageHeight&&!overlaps(title,metadata))
         verify("pager stays above footer ($large)",pager.all {inside(it,safe)})
         verify("pager controls are separate ($large)",pager.zipWithNext().all {(a,b)->!overlaps(a,b)})
         verify("page range remains screen centered ($large)",near(pager[1].x+pager[1].width/2,480f))

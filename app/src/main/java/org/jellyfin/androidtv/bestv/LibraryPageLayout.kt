@@ -16,7 +16,7 @@ object LibraryPageLayout {
         SERIES("剧集", BaseItemKind.SERIES, "library_entry_series"),
         RECENT("最近添加", null, "library_entry_recent");
 
-        fun query() = LibraryBrowse.Query(kind=kind, sort=LibraryBrowse.Sort.ADDED, ascending=false)
+        fun query() = LibraryBrowse.Query(kind=kind, sort=LibraryBrowse.Sort.NAME, ascending=true)
     }
 
     val HOME_SEARCH = Box(770f, 69f, 158f, 38f)
@@ -31,16 +31,16 @@ object LibraryPageLayout {
     val HOME_CARD_PROGRESS = Box(8f, 127f, 271f, 2f)
 
     fun homeExploreLabel(hasResume: Boolean) =
-        if (hasResume) HOME_EXPLORE_LABEL else HOME_EXPLORE_LABEL.copy(y=101f)
+        HOME_EXPLORE_LABEL
 
     fun homeEntry(index: Int, hasResume: Boolean=true): Box {
         require(index in Entry.entries.indices)
-        return Box(32f + index * 301f, if (hasResume) 321f else 132f, 287f, 130f)
+        return Box(32f + index * 301f, 321f, 287f, 130f)
     }
 
-    val GRID_SEARCH = Box(470f, 68f, 108f, 38f)
-    val GRID_FILTER = Box(590f, 68f, 150f, 38f)
-    val GRID_SORT = Box(755f, 68f, 173f, 38f)
+    val GRID_SEARCH = Box(460f, 68f, 148f, 38f)
+    val GRID_FILTER = Box(620f, 68f, 148f, 38f)
+    val GRID_SORT = Box(780f, 68f, 148f, 38f)
     val GRID_PREVIOUS = Box(372f, 424f, 36f, 36f)
     val GRID_RANGE = Box(420f, 424f, 120f, 36f)
     val GRID_NEXT = Box(552f, 424f, 36f, 36f)
@@ -61,7 +61,7 @@ object LibraryPageLayout {
 
     fun posterImageHeight(large: Boolean=false) = poster(0, large).width * 1.5f
     fun posterTitle(large: Boolean=false) =
-        Box(8f, posterImageHeight(large) + 5f, poster(0, large).width - 16f, if (large) 44f else 38f)
+        Box(6f, posterImageHeight(large) - 32f, poster(0, large).width - 12f, 28f)
     fun posterMetadata(large: Boolean=false) =
-        Box(8f, posterImageHeight(large) + if (large) 50f else 45f, poster(0, large).width - 16f, if (large) 20f else 18f)
+        Box(8f, posterImageHeight(large) + 7f, poster(0, large).width - 16f, if (large) 20f else 18f)
 }

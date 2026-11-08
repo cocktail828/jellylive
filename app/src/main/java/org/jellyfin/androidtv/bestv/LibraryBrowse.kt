@@ -6,10 +6,10 @@ import org.jellyfin.sdk.model.api.MediaStreamType
 
 /** Filter the complete scope before paging; never derive facets or totals from the visible page. */
 object LibraryBrowse {
-    enum class Sort(val label: String) { ADDED("最近添加"), WATCHED("最近观看"), YEAR("上映年份"), RATING("评分"), NAME("名称") }
+    enum class Sort(val label: String) { ADDED("最近添加"), WATCHED("最近观看"), YEAR("上映年份"), RATING("评分"), NAME("名称"), DURATION("时长") }
     enum class State(val label: String) { ALL("全部状态"), UNSEEN("未看"), WATCHING("观看中"), FINISHED("已看") }
     data class Query(val kind: BaseItemKind?=null, val recent: Boolean=false, val state: State=State.ALL,
-        val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.ADDED, val ascending: Boolean=false)
+        val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.NAME, val ascending: Boolean=sort==Sort.NAME)
     data class Page(val items: List<BaseItemDto>,val start: Int,val total: Int,val size: Int){
         val previous get()=start>0
         val next get()=start+items.size<total
@@ -53,12 +53,13 @@ object LibraryBrowse {
             Sort.WATCHED -> compareBy(nullsLast()) { it.userData?.lastPlayedDate }
             Sort.YEAR -> compareBy(nullsLast()) { LibraryMetadata.year(it) }
             Sort.RATING -> compareBy(nullsLast()) { it.communityRating }
+            Sort.DURATION -> compareBy(nullsLast()) { it.runTimeTicks }
             Sort.NAME -> compareBy { (it.sortName ?: it.name.orEmpty()).lowercase() }
         }
         // Unknown values always trail actual data in either direction.
         val known: (BaseItemDto)->Boolean = when(q.sort) {
             Sort.ADDED -> { {it.dateCreated!=null} }; Sort.WATCHED -> { {it.userData?.lastPlayedDate!=null} }
-            Sort.YEAR -> { {LibraryMetadata.year(it)!=null} }; Sort.RATING -> { {LibraryMetadata.rating(it)!=null} }; Sort.NAME -> { {true} }
+            Sort.YEAR -> { {LibraryMetadata.year(it)!=null} }; Sort.RATING -> { {LibraryMetadata.rating(it)!=null} }; Sort.NAME -> { {true} }; Sort.DURATION -> { {(it.runTimeTicks ?: 0)>0} }
         }
         return filtered.sortedWith(compareByDescending<BaseItemDto> {known(it)}.then(if(q.ascending)comparator else comparator.reversed()).thenBy {it.id})
     }
