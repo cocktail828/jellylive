@@ -186,6 +186,10 @@ class ServerRepositoryImpl(
 	override suspend fun getServer(id: UUID, eagerUpdate: Boolean): Server? {
 		val server = authenticationStore.getServer(id) ?: return null
 
+		// A cold launch can restore a recently cached server without fetching PublicInfo.
+		// Re-register its identified protocol before the first authenticated DTO is read.
+		FnMediaCompatibility.rememberServer(server.address, server.name)
+
 		val updatedServer = try {
 			val forceUpdate = eagerUpdate && server.version
 				?.let(ServerVersion::fromString)
@@ -197,7 +201,7 @@ class ServerRepositoryImpl(
 			null
 		}
 
-		return (updatedServer ?: server).asServer(id)
+		return (updatedServer ?: server).asServer(id).also { FnMediaCompatibility.rememberServer(it.address, it.name) }
 	}
 
 	override suspend fun updateServer(server: Server, force: Boolean): Boolean {
