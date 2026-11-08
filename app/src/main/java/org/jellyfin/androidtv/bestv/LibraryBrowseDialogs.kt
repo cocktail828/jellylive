@@ -54,7 +54,7 @@ object LibraryBrowseDialogs {
         ui.title(panel, "筛选", 22f, 25f, 200f, 32f)
         val body = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         val scroll = ScrollView(activity).apply { isFillViewport = false; isHorizontalScrollBarEnabled = false; addView(body) }
-        ui.at(panel, scroll, 22f, 75f, 296f, 365f)
+        ui.at(panel, scroll, 22f, 58f, 296f, 382f)
         body.addView(ui.text("正在加载筛选条件…",14,TvUi.MUTED), LinearLayout.LayoutParams(-1,ui.px(38f)))
         fun refreshSelections() { selections.forEach { it.button.isSelected = it.selected(selection.current) } }
         fun edit(value: LibraryBrowse.Query) { if(selection.select(value)) refreshSelections() }
@@ -68,14 +68,14 @@ object LibraryBrowseDialogs {
             update: (LibraryBrowse.Query, T?) -> LibraryBrowse.Query,
         ) {
             val heading = ui.text(title, 14, TvUi.MUTED)
-            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(25f)).apply {
-                topMargin = ui.px(if (body.childCount == 0) 0f else 17f)
+            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(22f)).apply {
+                topMargin = ui.px(if (body.childCount == 0) 0f else 10f)
                 bottomMargin = ui.px(8f)
             })
             val choices: List<T?> = listOf(null) + values
-            val space = 8f
+            val space = 7f
             val width = (296f - space * (columns - 1)) / columns
-            val height = if (ui.fontScale > 1f) 44f else 38f
+            val height = if (ui.fontScale > 1f) 44f else 35f
             val grid = FrameLayout(activity)
             choices.forEachIndexed { index, value ->
                 val button = ui.button(if (value == null) "全部" else label(value)) { edit(update(selection.current, value)) }
@@ -114,15 +114,15 @@ object LibraryBrowseDialogs {
             }
             if (!dialog.isShowing) return@launch
             body.removeAllViews()
-            group("观看状态", LibraryBrowse.State.entries.filter { it != LibraryBrowse.State.ALL }, if (ui.fontScale > 1f) 2 else 4,
+            group("观看状态", LibraryBrowse.State.entries.filter { it == LibraryBrowse.State.UNSEEN || it == LibraryBrowse.State.FINISHED }, 3,
                 { it.label }, { q, value -> q.state == (value ?: LibraryBrowse.State.ALL) },
                 { q, value -> q.copy(state = value ?: LibraryBrowse.State.ALL) })
             if (facets.genres.isNotEmpty()) group("类型", facets.genres, 3,
                 { it }, { q, value -> q.genre == value }, { q, value -> q.copy(genre = value) })
-            if (facets.years.isNotEmpty()) group("上映年份", facets.years, 3,
-                { it.toString() }, { q, value -> q.year == value }, { q, value -> q.copy(year = value) })
             if (facets.resolutions.isNotEmpty()) group("分辨率", facets.resolutions, 3,
                 ::resolutionLabel, { q, value -> q.resolution == value }, { q, value -> q.copy(resolution = value) })
+            if (facets.years.isNotEmpty()) group("上映年份", facets.years, 3,
+                { it.toString() }, { q, value -> q.year == value }, { q, value -> q.copy(year = value) })
             if (facets.regions.isNotEmpty()) group("地区", facets.regions, 2,
                 { it }, { q, value -> q.region == value }, { q, value -> q.copy(region = value) })
             refreshSelections()
@@ -154,15 +154,15 @@ object LibraryBrowseDialogs {
 
         ui.title(panel, "排序", 22f, 25f, 280f, 32f)
         listOf(LibraryBrowse.Sort.NAME,LibraryBrowse.Sort.ADDED,LibraryBrowse.Sort.YEAR,LibraryBrowse.Sort.RATING,LibraryBrowse.Sort.DURATION).forEachIndexed { index, option ->
-            val button = ui.button(panel, option.label, 22f, 80f + index * 53f, 296f, 42f) {
+            val button = ui.button(panel, option.label, 22f, 71f + index * 46f, 296f, 38f) {
                 if (selection.selectSort(option)) refresh()
             }
             button.background = choiceBackground(ui)
             sortButtons += option to button
         }
-        ui.text(panel, "顺序", 14, TvUi.MUTED, 22f, 364f, 296f, 24f)
-        ascending = ui.button(panel, "", 22f, 402f, 142f, 38f) { if (selection.setAscending(true)) refresh() }
-        descending = ui.button(panel, "", 176f, 402f, 142f, 38f) { if (selection.setAscending(false)) refresh() }
+        ui.text(panel, "排列方向", 14, TvUi.MUTED, 22f, 322f, 296f, 24f)
+        ascending = ui.button(panel, "", 22f, 358f, 142f, 38f) { if (selection.setAscending(true)) refresh() }
+        descending = ui.button(panel, "", 176f, 358f, 142f, 38f) { if (selection.setAscending(false)) refresh() }
         ascending.background = choiceBackground(ui)
         descending.background = choiceBackground(ui)
         val close=ui.button(panel, "关闭", 22f, 479f, 296f, 38f) { dialog.dismiss() }
@@ -196,8 +196,8 @@ object LibraryBrowseDialogs {
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
             decorView.setPadding(0, 0, 0, 0)
             decorView.systemUiVisibility = ui.activity.window.decorView.systemUiVisibility
-            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            setDimAmount(0f)
+            addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(.18f)
             setGravity(gravity)
             setLayout(ui.px(width), ui.px(height))
         }

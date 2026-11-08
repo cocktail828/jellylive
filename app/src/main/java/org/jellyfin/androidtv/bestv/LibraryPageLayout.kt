@@ -55,13 +55,13 @@ object LibraryPageLayout {
         require(index in 0 until columns(large))
         // Larger captions need their own room. Five 160px cards with 24px gaps
         // fill the same 896px content width and retain a strict 2:3 image.
-        return if (large) Box(32f + index * 184f, 112f, 160f, 312f)
-            else Box(32f + index * 151f, 135f, 137f, 270f)
+        return if (large) Box(32f + index * 184f, 112f, 160f, 272f)
+            else Box(32f + index * 151f, 135f, 137f, 232f)
     }
 
     fun posterImageHeight(large: Boolean=false) = poster(0, large).width * 1.5f
     fun posterTitle(large: Boolean=false) =
-        Box(6f, posterImageHeight(large) - 32f, poster(0, large).width - 12f, 28f)
+        Box(9f, posterImageHeight(large) - 29f, poster(0, large).width - 18f, 26f)
     fun posterMetadata(large: Boolean=false) =
-        Box(8f, posterImageHeight(large) + 7f, poster(0, large).width - 16f, if (large) 20f else 18f)
+        Box(0f, posterImageHeight(large) + 4f, poster(0, large).width, 22f)
 }

@@ -1,0 +1,73 @@
+JellyLive 最新设计实施核对 · 2026-11-08
+
+基准与范围
+基准代码 4633e21；设计以工作区 ui-design/designs/INTERACTION_RULES.txt、
+manifest.json 和当前47张有效SVG为准。图05、32、42继续停用；不恢复其入口。
+图号是画册序号，历史SVG文件名中的数字与画册序号不同，不能混用。
+本次使用既有Docker镜像与离线缓存；没有安装宿主工具，没有push或发布新版本。
+版本仍 v0.1.3 / versionCode 10300。
+
+图号 → 实施位置与核对内容
+01、02、24 → LiveActivity：已有启动旋转与缓存优先逻辑继续使用；无额外等待。
+03、04、30、31 → LiveActivity / LiveFilter：四个互斥分组，默认当前频道焦点；
+  任意频道右键到分组，下键恢复原频道；其他直播源聚合已启用的第三方来源。
+06、07、08 → LiveActivity：收藏卡片单击三项操作，图07为260×176逻辑尺寸。
+09 → PlaybackLayout / LiveActivity：32,436,896,72两行栏，864宽进度；
+  下行左侧频道名，右侧画面比例/音轨/字幕；按钮仅显示实际值，无播放列表。
+10、36 → LiveActivity：侧栏x680、宽280，内容232，9个常规行；
+  默认透明度35%，0–80%/5%可调；分组下拉同步收窄。
+11、12、26 → LiveActivity：独立节目单继续使用真实数据；
+  图12为360×206逻辑尺寸，简介滚动，不虚构节目或回看。
+13、14、37、38 → LiveActivity：内置源仅刷新/配置，统一添加M3U/Jellyfin；
+  来源卡片单独管理，没有“使用”动作；保存回来源页，不直接切台。
+  未提供可访问频道的Jellyfin不保存为空来源，刷新失败保留上次成功缓存。
+15、41 → JellyLibraryActivity / LibraryPageLayout：继续观看区域固定；
+  无历史居中显示“暂无观看历史”，错误另行说明；三张分类入口显示真实已知数量。
+16 → LibraryPageLayout / JellyLibraryActivity：2:3图片，一排6张/大字号5张；
+  图片底部居中单行标题，聚焦溢出滚动，左上真实评分，图片下年份/类型；
+  三个工具148等宽、12间距，居中分页，默认名称升序。
+17 → JellyLibraryActivity / LibraryRepository：背景、海报、信息、简介、
+  四个168等宽操作及真实演职人员；支持续播/从头/标记观看/媒体信息。
+18 → JellyLibraryActivity：真实季和分集，213×113分集卡片与底部信息区。
+19、49、50 → JellyLibraryActivity / MediaOverlay / PlaybackLayout：
+  与直播同高的底栏，左侧暂停/快退/快进/HH:mm:ss；右侧倍速/音轨/字幕；
+  默认隐藏，播放时5秒idle；暂停/拖动/弹层保持。进度预览确认提交，返回取消，
+  下键取消并回原项；触摸拖动松手提交、ACTION_CANCEL撤销。
+20 → JellyLibraryActivity：当前媒体库及入口分类搜索，返回保留页面与筛选。
+21、22 → LiveActivity：设置页焦点联动；增加自动下集和侧栏透明度；
+  名称和值分列；系统可用能力与偏好继续沿用。
+23 → JellyLibraryActivity：连接、私有初始配置和切换规则继续保留；
+  添加Jellyfin来源后从连接页返回，仅加载实际有权限的直播频道。
+25 → LiveActivity：错误内容相对预览中心对齐，频道列表仍可操作。
+27、28、29 → JellyLibraryActivity：图标、主提示、说明和动作组在内容区居中。
+33、34 → LiveConfirmGesture / LiveActivity：实际播放频道长按收藏；
+  一次按住一次操作，松手不补短按，保存结果短暂显示，不自动弹首次说明。
+35、43、44、45、47、48 → TvOptions / MediaTracks：局部锚定选项，
+  音轨/字幕单行左右列，宽度按真实文字适配，7档倍速0.5x–2x；
+  已选值直接展示，字幕关闭回到“字幕”，无全屏暗幕。
+39、40 → LibraryBrowseDialogs / LibraryBrowseSelection：右贴边340宽；
+  类型/分辨率/年份/地区等真实条件，选择和重置即时生效；
+  无匹配计数、条件总结或应用按钮；排序同宽右贴边，无顶部关闭。
+46 → EpisodeSequence / JellyLibraryActivity：同剧常规季集顺序跨季；
+  自然结束后5秒倒计时，不插特别篇。取消/返回/关闭偏好不跳转；
+  其他浮层期间暂停倒计时。下集从0开始，继承速度和音轨/字幕语言偏好。
+
+公共样式
+TvUi移除定制页面左上返回入口，常驻指导页脚不再绘制。
+两种播放器统一72逻辑像素高的两行底栏，右侧三个96×30功能区。
+TvGlass仅模糊背景快照，面板背景65%不透明，前景文字/图标/焦点保持清晰；
+视频背景在API24+通过PixelCopy读取。API21–23或PixelCopy失败时保留透明底色，
+不以黑色视频截图覆盖；这类设备不承诺具备视频背景模糊效果。
+
+验证证据与边界
+容器离线compileDebugJavaWithJavac成功；assembleDebug成功并通过apksigner校验。
+check-container.sh：87项；check-library-container.sh：149项；合计236项通过。
+检查覆盖来源隔离、焦点恢复、返回优先级、idle、长按释放、完整筛选分页、
+异步结果防过期、即时筛选/排序、真实图片认证、季集排序、时分秒和共享布局约束。
+这些是生产代码的JVM逻辑/坐标验证，不是Android实屏截图或电视硬件解码验收。
+当前ADB无在线设备，现有Waydroid容器停止。尚未安装测试APK。
+实屏逐图截图、完整遥控焦点链、实际触摸拖动和设备视频兼容仍待安装授权后验收。
+
+本地验收产物（Git忽略，不覆盖已有发布下载）
+.local-build/review/JellyLive-v0.1.3-design-review.apk
+含此前授权保留的本地bootstrap配置；配置文件仍被Git忽略，不在源码提交中。

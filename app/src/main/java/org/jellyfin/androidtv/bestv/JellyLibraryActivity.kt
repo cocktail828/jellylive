@@ -88,7 +88,7 @@ class JellyLibraryActivity : FragmentActivity() {
             if(!getSharedPreferences("bestv_live",MODE_PRIVATE).getBoolean("auto_next_episode",true)){cancelAutoNext();return}
             if(dialog?.isShowing==true){nextCard?.visibility=View.GONE;handler.postDelayed(this,500);return}
             nextCard?.visibility=View.VISIBLE
-            nextClock?.text="${time(nextSeconds*1000L)} 后播放下一集"
+            nextClock?.text="${time(nextSeconds*1000L)} 后播放"
             if(nextSeconds--<=0){playingItem?.let {nextEpisodeItem(it)}?.let {replacePlayback(it,0)};return}
             handler.postDelayed(this,1000)
         }
@@ -302,9 +302,9 @@ class JellyLibraryActivity : FragmentActivity() {
         fresh("home",push);header("我的媒体库","${repo.serverName} · 已连接")
         val host=page;val session=repo.sessionKey;val initialInteraction=interaction
         val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
-        val resumeTitle=pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
+        pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
         val status=pageText(host,"正在加载继续观看…",14,TvUi.MUTED,LibraryPageLayout.HOME_RESUME_ROW).apply {gravity=Gravity.CENTER}
-        val explore=pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
+        pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
         val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
         val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
             val card=homeCard(entry.title,"浏览全部内容",illustrations[index]){renderGrid(entry.title,null,entry.query())}
@@ -315,8 +315,10 @@ class JellyLibraryActivity : FragmentActivity() {
         lifecycleScope.launch {
             val catalog=try {withTimeout(15000){repo.catalog()}}catch(_:Exception){return@launch}
             if(page!==host||session!=repo.sessionKey)return@launch
+            val counts=withContext(Dispatchers.Default){LibraryPageLayout.Entry.entries.map {LibraryBrowse.select(catalog,it.query()).size}}
+            if(page!==host||session!=repo.sessionKey)return@launch
             LibraryPageLayout.Entry.entries.forEachIndexed {index,entry->
-                val count=LibraryBrowse.select(catalog,entry.query()).size
+                val count=counts[index]
                 entries[index].findViewWithTag<TextView>("entry-subtitle")?.text="${count} ${if(entry==LibraryPageLayout.Entry.MOVIES)"部电影" else if(entry==LibraryPageLayout.Entry.SERIES)"部剧集" else "项内容"}"
             }
         }
@@ -371,6 +373,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_FILTER).apply {tag="grid-filter"}
             val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.GRID_SORT).apply {tag="grid-sort"}
             search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=search.id
+            listOf(search,filter,sort).forEach {it.setSingleLine();it.ellipsize=android.text.TextUtils.TruncateAt.END}
             var selectedColumn=0;var preferred: String?=null
             fun update(){
                 if(page!==host||session!=repo.sessionKey)return
@@ -413,16 +416,18 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun posterCard(item: BaseItemDto,large: Boolean,click: ()->Unit): FrameLayout {
         val card=focusCard(FrameLayout(this),click);val bounds=LibraryPageLayout.poster(0,large)
-        art(card,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
+        card.background=ColorDrawable(Color.TRANSPARENT);card.clipToOutline=false
+        val imageHost=FrameLayout(this).apply {background=ui.surface(TvUi.PANEL,false);clipToOutline=true};ui.at(card,imageHost,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
+        art(imageHost,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
         val imageHeight=LibraryPageLayout.posterImageHeight(large)
         ui.at(card,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0x0010182a,0xee10182a.toInt()))},0f,imageHeight-48f,bounds.width,48f)
-        val caption=pageText(card,cardTitle(item),16,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {
+        val caption=pageText(card,cardTitle(item),14,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {
             setTypeface(null,Typeface.BOLD);setSingleLine();gravity=Gravity.CENTER;ellipsize=android.text.TextUtils.TruncateAt.END;marqueeRepeatLimit=-1
         }
         val original=card.onFocusChangeListener
-        card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);caption.ellipsize=if(focused)android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused}
-        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,12,TvUi.INK,7f,7f,36f,20f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
+        card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);if(focused)card.foreground=android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(bounds.height-imageHeight));caption.ellipsize=if(focused)android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused}
+        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {gravity=Gravity.TOP;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,13,0xfff7d68d.toInt(),7f,7f,41f,21f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
         if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
         else if(resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(resumeMs(item)*10000.0*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000);ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
         return card
@@ -492,7 +497,7 @@ class JellyLibraryActivity : FragmentActivity() {
         item.taglines?.firstOrNull()?.let {label(it,212f,153f,716f,24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
         label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,180f,716f,25f,14,true)
         label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,209f,716f,25f,13,true)
-        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,246f,716f,50f,15).apply {maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,246f,716f,50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
         val position=resumeMs(item)
         val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,311f,168f,38f){play(item,position)}
         ui.button(page,"从头播放",392f,311f,168f,38f){play(item,0)}
@@ -539,16 +544,20 @@ class JellyLibraryActivity : FragmentActivity() {
             label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",32f,179f,555f,48f,14).maxLines=2
             art(page,item,625f,91f,303f,160f,true)
             val toPlay=next ?: episodes.firstOrNull {it.userData?.played!=true} ?: episodes.firstOrNull()
-            val first=ui.button(page,if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集",32f,230f,230f,38f) {toPlay?.let {play(it,resumeMs(it))}}
+            val first=ui.button(page,if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集",32f,225f,165f,38f) {toPlay?.let {play(it,resumeMs(it))}}
             first.isEnabled=toPlay!=null
             val chosen=seasons.firstOrNull {it.id==selected} ?: seasons.firstOrNull()
-            ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",32f,294f,174f,38f) {
+            ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",32f,294f,130f,38f) {
                 if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(item,false,seasons[it].id)}
             }
-            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,32f,337f,896f,149f)
+            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,32f,350f,896f,113f)
             episodes.forEach { episode ->
                 val status=if(episode.userData?.played==true) "已观看" else if(resumeMs(episode)>0) "继续 ${time(resumeMs(episode))}" else episode.name.orEmpty()
-                row.addView(tile("第 ${episode.indexNumber ?: "?"} 集",status,180,149,episode,true) {play(episode,resumeMs(episode))},LinearLayout.LayoutParams(ui.px(180f),ui.px(149f)).apply {marginEnd=ui.px(14f)})
+                val card=focusCard(FrameLayout(this)){play(episode,resumeMs(episode))};art(card,episode,0f,0f,213f,113f,true)
+                ui.at(card,View(this).apply {setBackgroundColor(0xff10182b.toInt())},0f,63f,213f,50f)
+                ui.text(card,"第 ${episode.indexNumber ?: "?"} 集",15,TvUi.INK,10f,70f,193f,24f).setTypeface(null,Typeface.BOLD)
+                ui.text(card,status,12,TvUi.MUTED,10f,94f,193f,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                row.addView(card,LinearLayout.LayoutParams(ui.px(213f),ui.px(113f)).apply {marginEnd=ui.px(14f)})
             }
             if(episodes.isEmpty())label("本季暂无可播放剧集",270f,297f,500f,30f,14,true)
             if(first.isEnabled)focus(first)
@@ -622,7 +631,7 @@ class JellyLibraryActivity : FragmentActivity() {
                         val exo=ExoPlayer.Builder(this@JellyLibraryActivity,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(LibraryMediaHttp.client(repo.api,mediaHttpFactory)))).build()
                         player=exo;video.player=exo
                         val display=getSharedPreferences("bestv_live",MODE_PRIVATE)
-                        video.resizeMode=if(display.getBoolean("fill_video",false))androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM else androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        val aspect=display.getString("video_aspect",if(display.getBoolean("fill_video",false))"zoom" else "fit");video.resizeMode=when(aspect){"zoom"->androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM;"stretch"->androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL;else->androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT}
                         exo.setPlaybackSpeed(mediaSpeed)
                         exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).build()
                         exo.addListener(object: Player.Listener {
@@ -687,13 +696,13 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun showAutoNext(item: BaseItemDto){
         if(nextCancelled||nextCard!=null||manualEnd||!getSharedPreferences("bestv_live",MODE_PRIVATE).getBoolean("auto_next_episode",true))return
         val next=nextEpisodeItem(item) ?: return
-        val card=FrameLayout(this);card.background=ui.glass(TvUi.PANEL);nextCard=card;ui.at(page,card,620f,289f,308f,127f)
-        ui.title(card,"下一集 · 第 ${next.indexNumber ?: "?"} 集",14f,10f,280f,25f)
-        ui.text(card,next.name.orEmpty(),14,TvUi.INK,14f,38f,280f,23f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        nextClock=ui.text(card,"00:00:05 后播放下一集",12,TvUi.MUTED,14f,64f,280f,20f)
-        val now=ui.button(card,"立即播放",14f,88f,134f,28f){replacePlayback(next,0)}
-        ui.button(card,"取消",160f,88f,134f,28f){cancelAutoNext()}
-        TvGlass.apply(this,ui,card,620f,289f,308f,127f);nextSeconds=5;handler.post(nextTick)
+        val card=FrameLayout(this);card.background=ui.glass(TvUi.PANEL);nextCard=card;ui.at(page,card,592f,312f,320f,114f)
+        ui.heading(card,"下一集 · 第 ${next.parentIndexNumber ?: "?"} 季 第 ${next.indexNumber ?: "?"} 集",15,16f,8f,288f,25f)
+        ui.text(card,next.name.orEmpty(),13,TvUi.MUTED,16f,34f,160f,26f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        nextClock=ui.text(card,"00:00:05 后播放",12,TvUi.MUTED,185f,34f,119f,26f)
+        val now=ui.quietButton("立即播放","立即播放下一集"){replacePlayback(next,0)};ui.at(card,now,16f,65f,136f,30f)
+        ui.at(card,ui.quietButton("取消","取消自动播放下一集"){cancelAutoNext()},168f,65f,136f,30f)
+        TvGlass.apply(this,ui,card,592f,312f,320f,114f);nextSeconds=5;handler.post(nextTick)
         if(dialog?.isShowing!=true)now.requestFocus()
     }
     private fun cancelAutoNext(){nextCancelled=true;handler.removeCallbacks(nextTick);nextCard?.let {val focused=it.hasFocus();TvUi.detach(it);if(focused)pause?.requestFocus()};nextCard=null;nextClock=null}

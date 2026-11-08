@@ -59,7 +59,7 @@ fun main(args: Array<String>) {
         verify("page range remains screen centered ($large)",near(pager[1].x+pager[1].width/2,480f))
         verify("previous and next are symmetric ($large)",near(pager[0].x+pager[0].width/2+pager[2].x+pager[2].width/2,960f))
     }
-    verify("normal grid preserves original first poster",LibraryPageLayout.poster(0)==LibraryPageLayout.Box(32f,135f,137f,270f))
+    verify("normal grid retains supplied image width and compact caption area",LibraryPageLayout.poster(0)==LibraryPageLayout.Box(32f,135f,137f,232f))
     println("$count library page layout checks passed")
     if(args.isNotEmpty()){
         fun box(b: LibraryPageLayout.Box)=buildJsonObject {put("x",b.x);put("y",b.y);put("width",b.width);put("height",b.height)}
