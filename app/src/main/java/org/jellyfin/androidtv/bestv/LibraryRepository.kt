@@ -10,6 +10,7 @@ import org.jellyfin.androidtv.auth.model.*
 import org.jellyfin.androidtv.auth.repository.*
 import org.jellyfin.androidtv.data.repository.ItemRepository
 import org.jellyfin.androidtv.util.apiclient.getUrl
+import org.jellyfin.androidtv.util.apiclient.primaryImage
 import org.jellyfin.androidtv.util.apiclient.itemImages
 import org.jellyfin.androidtv.util.apiclient.itemBackdropImages
 import org.jellyfin.sdk.api.client.ApiClient
@@ -131,6 +132,11 @@ class LibraryRepository : KoinComponent {
     suspend fun detail(id: UUID) = withContext(Dispatchers.IO) {
         if(legacyProvider) legacyRead<BaseItemDto>("${userPath()}/Items/$id") else api.userLibraryApi.getItem(id).content
     }
+    suspend fun setPlayed(id: UUID, played: Boolean) = withContext(Dispatchers.IO) {
+        if(played) api.playStateApi.markPlayedItem(itemId=id) else api.playStateApi.markUnplayedItem(itemId=id)
+        catalogAt=0
+    }
+    fun personImage(person: BaseItemPerson): String? = person.primaryImage?.getUrl(api,maxWidth=160)
     suspend fun seasons(series: UUID) = withContext(Dispatchers.IO) { api.tvShowsApi.getSeasons(seriesId=series).content.items }
     suspend fun episodes(series: UUID, season: UUID?=null) = withContext(Dispatchers.IO) {
         api.tvShowsApi.getEpisodes(seriesId=series, seasonId=season, fields=ItemRepository.itemFields, isMissing=false).content.items

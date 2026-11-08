@@ -15,8 +15,8 @@ import android.widget.TextView;
 public final class TvIcons extends Drawable {
     private final char icon;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private static final String SYMBOLS="⌄‹›Ⅱ⌕▣▱△▷◇☆⚙✓";
-    private static final String[] LABELS={"展开","返回","下一项","暂停","搜索","媒体库","媒体图片","提示","播放","直播源","收藏","设置","已完成"};
+    private static final String SYMBOLS="⌄‹›Ⅱ⌕▣▱△▷◇☆⚙✓≪≫★";
+    private static final String[] LABELS={"展开","返回","下一项","暂停","搜索","媒体库","媒体图片","提示","播放","直播源","收藏","设置","已完成","快退","快进","评分"};
 
     private TvIcons(char icon,int color,int size){this.icon=icon;paint.setColor(color);paint.setStrokeWidth(1.8f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);setBounds(0,0,size,size);}
     public static void text(TextView view,CharSequence value){
@@ -36,6 +36,8 @@ public final class TvIcons extends Drawable {
             case '⌄':line(c,5,9,12,16,19,9);break;
             case '‹':line(c,15,5,8,12,15,19);break;
             case '›':line(c,9,5,16,12,9,19);break;
+            case '≪':line(c,12,5,4,12,12,19,12,5);line(c,21,5,13,12,21,19,21,5);break;
+            case '≫':line(c,3,5,11,12,3,19,3,5);line(c,12,5,20,12,12,19,12,5);break;
             case 'Ⅱ':line(c,8,5,8,19);line(c,16,5,16,19);break;
             case '⌕':c.drawCircle(10,10,6,paint);line(c,15,15,21,21);break;
             case '▣':c.drawRoundRect(3,4,21,20,2,2,paint);line(c,7,4,7,20);line(c,17,4,17,20);line(c,3,9,7,9);line(c,3,15,7,15);line(c,17,9,21,9);line(c,17,15,21,15);break;
@@ -43,6 +45,7 @@ public final class TvIcons extends Drawable {
             case '△':line(c,12,3,22,21,2,21,12,3);line(c,12,9,12,14);c.drawCircle(12,18,.6f,paint);break;
             case '▷':line(c,7,4,20,12,7,20,7,4);break;
             case '◇':c.drawRoundRect(3,6,21,20,2,2,paint);line(c,8,2,12,6,16,2);line(c,8,23,16,23);break;
+            case '★':paint.setStyle(Paint.Style.FILL);
             case '☆':{Path p=new Path();for(int i=0;i<10;i++){double a=-Math.PI/2+i*Math.PI/5;float r=i%2==0?10:4.6f,x=12+r*(float)Math.cos(a),y=12+r*(float)Math.sin(a);if(i==0)p.moveTo(x,y);else p.lineTo(x,y);}p.close();c.drawPath(p,paint);break;}
             case '⚙':c.drawCircle(12,12,6.5f,paint);c.drawCircle(12,12,2.5f,paint);for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);line(c,12,2,12,5);c.restore();}break;
             case '✓':line(c,4,12,9,17,20,6);break;
