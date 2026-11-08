@@ -15,6 +15,11 @@ tv-regression-probe.apk。驱动与 debug 产品使用相同的本地测试签�
   adb -s SERIAL shell am instrument -w -r -e phase run \
     org.jellyfin.androidtv.bestvlive.probe/.TvRegressionProbe
 
+播放能力只读诊断：-e playbackAudit true，比对当前两个电影样本的真实profile、源与协商结果。
+仅接受目录恰好两个样本，其他目录需先实现明确的样本范围，避免无界诊断。
+会读取播放信息但不启动视频；原始DTO可能含NAS路径，必须保持在私有忽略目录。
+Main10对照只修改诊断内存副本，不改变产品profile或绕过解码能力检查。
+
 可选参数：-e mediaOnly true 只做媒体；-e fromStart true 从头播放；
 -e resumeAudit true 只读记录当前会话续播数据和本地进度（报告不含地址/账号/影片名）；
 -e resumeAudit true -e expectResume true 检查冷启动能重建实际续播卡片；

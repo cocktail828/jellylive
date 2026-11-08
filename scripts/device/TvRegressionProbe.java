@@ -50,6 +50,7 @@ public final class TvRegressionProbe extends Instrumentation {
         if(method==null)throw new NoSuchMethodException(name);method.setAccessible(true);Object result=method.invoke(target,args);
         Object suspended=Class.forName("kotlin.coroutines.intrinsics.IntrinsicsKt",true,loader).getMethod("getCOROUTINE_SUSPENDED").invoke(null);
         if(result==suspended){if(!ready.await(40,TimeUnit.SECONDS))throw new IllegalStateException("Suspend call timed out: "+name);result=outcome[0];}
+        if(result!=null&&result.getClass().getName().equals("kotlin.Result")){Method unbox=result.getClass().getDeclaredMethod("unbox-impl");unbox.setAccessible(true);result=unbox.invoke(result);}
         Class.forName("kotlin.ResultKt",true,loader).getMethod("throwOnFailure",Object.class).invoke(null,result);return result;
     }
     private void resumeAudit()throws Exception{
@@ -70,6 +71,45 @@ public final class TvRegressionProbe extends Instrumentation {
             check("compatible server returns resume data",!resumes.isEmpty()&&!audit.has("resumeErrors"));
         }
         shot("resume-home-before");
+    }
+    private Object invokeAny(Object target,String name,Object...args)throws Exception{
+        for(Method method:target.getClass().getMethods())if(method.getName().equals(name)&&method.getParameterTypes().length==args.length){method.setAccessible(true);return method.invoke(target,args);}
+        throw new NoSuchMethodException(name);
+    }
+    private JSONObject modelJson(Object model)throws Exception{
+        ClassLoader loader=getTargetContext().getClassLoader();Object companion=model.getClass().getField("Companion").get(null);
+        Object serializer=invokeAny(companion,"serializer");Object instance=Class.forName("org.jellyfin.sdk.api.client.util.ApiSerializer",true,loader).getField("INSTANCE").get(null);
+        Object json=invokeAny(instance,"getJson");return new JSONObject((String)invokeAny(json,"encodeToString",serializer,model));
+    }
+    private void playbackAudit()throws Exception{
+        library=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.JellyLibraryActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        check("playback audit restores actual connection",waitPage("home",30));Object repo=field(library,"repo");List<?> catalog=(List<?>)suspendCall(repo,"catalog",null,true);
+        if(catalog.size()!=2)throw new IllegalStateException("This diagnostic requires exactly two movie samples; choose a bounded sample before running on a larger library");
+        Object serverRepo=invokeAny(repo,"getServers");Object server=invokeAny(invokeAny(serverRepo,"getCurrentServer"),"getValue");Object version=invokeAny(server,"getServerVersion");
+        Object preferences=main(()->call(library,"getPreferences"));ClassLoader loader=getTargetContext().getClassLoader();Object profile=null;
+        for(Method method:Class.forName("org.jellyfin.androidtv.util.profile.DeviceProfileKt",true,loader).getMethods())if(method.getName().equals("createDeviceProfile")&&method.getParameterTypes().length==3){profile=method.invoke(null,library,preferences,version);break;}
+        if(profile==null)throw new IllegalStateException("No device profile");JSONObject profileJson=modelJson(profile);JSONObject audit=new JSONObject().put("deviceProfile",profileJson);JSONArray items=new JSONArray();
+        JSONArray decoders=new JSONArray();for(android.media.MediaCodecInfo info:new android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS).getCodecInfos())if(!info.isEncoder())for(String type:info.getSupportedTypes())if(type.equalsIgnoreCase("video/hevc")){JSONArray levels=new JSONArray();for(android.media.MediaCodecInfo.CodecProfileLevel level:info.getCapabilitiesForType(type).profileLevels)levels.put(new JSONObject().put("profile",level.profile).put("level",level.level));decoders.put(new JSONObject().put("name",info.getName()).put("profileLevels",levels));}audit.put("hevcDecoders",decoders);
+        Object compatibility=Class.forName("org.jellyfin.androidtv.util.sdk.FnMediaCompatibility",true,loader).newInstance();Method supports=compatibility.getClass().getDeclaredMethod("supportsSource",JSONObject.class,JSONObject.class);supports.setAccessible(true);
+        Object manager=main(()->call(library,"getPlayback"));String methodName=null;for(Method method:manager.getClass().getDeclaredMethods())if(method.getName().startsWith("getVideoStreamInfoInternal"))methodName=method.getName();
+        for(Object brief:catalog){Object id=invokeAny(brief,"getId");Object item=suspendCall(repo,"detail",id);JSONObject data=modelJson(item);Object sources=invokeAny(item,"getMediaSources");Object first=sources instanceof List&&!((List<?>)sources).isEmpty()?((List<?>)sources).get(0):null;
+            Object options=Class.forName("org.jellyfin.androidtv.data.compat.VideoOptions",true,loader).newInstance();invokeAny(options,"setItemId",id);invokeAny(options,"setProfile",profile);invokeAny(options,"setMediaSources",sources);if(first!=null)invokeAny(options,"setMediaSourceId",invokeAny(first,"getId"));
+            try{Object stream=suspendCall(manager,methodName,options,0L);data.put("resolveResultClass",stream.getClass().getName());data.put("resolvedStream",new JSONObject().put("hasUrl",invokeAny(stream,"getMediaUrl")!=null).put("playMethod",String.valueOf(invokeAny(stream,"getPlayMethod"))).put("source",invokeAny(stream,"getMediaSource")==null?JSONObject.NULL:modelJson(invokeAny(stream,"getMediaSource"))));}
+            catch(Exception e){JSONArray errors=new JSONArray();for(Throwable cause=e;cause!=null;cause=cause.getCause())errors.put(cause.getClass().getSimpleName());data.put("resolveErrors",errors);}
+            items.put(data);
+        }
+        for(int index=0;index<items.length();index++){
+            JSONObject item=items.getJSONObject(index);JSONObject source=item.getJSONArray("MediaSources").getJSONObject(0);JSONObject control=new JSONObject(profileJson.toString());
+            JSONArray codecs=control.getJSONArray("CodecProfiles");for(int i=0;i<codecs.length();i++){JSONObject codec=codecs.getJSONObject(i);if(!codec.optString("Codec").equals("hevc"))continue;JSONArray conditions=codec.optJSONArray("Conditions");if(conditions!=null)for(int j=0;j<conditions.length();j++){JSONObject condition=conditions.getJSONObject(j);if(condition.optString("Property").equals("VideoProfile")&&condition.optString("Condition").equals("EqualsAny"))condition.put("Value",condition.optString("Value")+",main 10");}}
+            boolean actual=(Boolean)supports.invoke(compatibility,source,profileJson),allowed=(Boolean)supports.invoke(compatibility,source,control);
+            item.put("main10OnlyControl",new JSONObject().put("actualProfileAllows",actual).put("localCopyAllowingMain10Allows",allowed));
+            check("playback API returns StreamInfo for movie "+index,item.has("resolvedStream")&&!item.has("resolveErrors"));
+            JSONArray streams=source.getJSONArray("MediaStreams");boolean tenBit=false;for(int i=0;i<streams.length();i++)if(streams.getJSONObject(i).optString("Type").equals("Video"))tenBit=streams.getJSONObject(i).optInt("BitDepth")==10;
+            if(tenBit){check("Main10 is blocked by actual capability and has no stream URL",!actual&&!item.getJSONObject("resolvedStream").getBoolean("hasUrl"));check("only allowing Main10 in a diagnostic copy removes rejection",allowed);}
+            else check("Main8 retains a real stream URL",actual&&item.getJSONObject("resolvedStream").getBoolean("hasUrl"));
+        }
+        audit.put("items",items);try(FileWriter out=new FileWriter(new File(output,"playback-audit-private.json"))){out.write(audit.toString(2));}
+        check("playback audit inspected both real movies",items.length()==2);
     }
     private int countPrefix(View view,String prefix){int count=view.getTag() instanceof String&&((String)view.getTag()).startsWith(prefix)?1:0;if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)count+=countPrefix(((ViewGroup)view).getChildAt(i),prefix);return count;}
     private void resumePlayback()throws Exception{
@@ -210,7 +250,7 @@ public final class TvRegressionProbe extends Instrumentation {
         String phase=arguments.getString("phase","run").replaceAll("[^a-zA-Z0-9_-]","");output=new File(getTargetContext().getExternalFilesDir("tv-regression"),phase);output.mkdirs();
         String error="";
         try{
-            if("true".equals(arguments.getString("resumeAudit"))||"true".equals(arguments.getString("resumeVerify"))){resumeAudit();if("true".equals(arguments.getString("resumeVerify")))resumePlayback();}else {
+            if("true".equals(arguments.getString("playbackAudit"))){playbackAudit();}else if("true".equals(arguments.getString("resumeAudit"))||"true".equals(arguments.getString("resumeVerify"))){resumeAudit();if("true".equals(arguments.getString("resumeVerify")))resumePlayback();}else {
             if(!"true".equals(arguments.getString("mediaOnly"))){live=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.LiveActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             check("live home starts",waitTag(live,"group",25));SystemClock.sleep(1000);groupAndSettings();livePlayer();}media();snapshotFallback();returnToLive();}
         }catch(Throwable e){failures++;error=e.toString();try{shot("fatal-state");}catch(Exception ignored){}}

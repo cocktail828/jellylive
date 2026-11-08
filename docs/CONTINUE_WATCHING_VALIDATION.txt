@@ -26,8 +26,8 @@
 实际边界
 飞牛Stopped事件仍返回403；补发Progress没有报告HTTP错误，但随后读取的服务器位置未改变。
 因此本轮确认本机进度持久化/续播；不宣称飞牛跨设备最新进度同步已修复。
-另一部影片取播放信息时返回HTML（JSON解码期望对象但读到“<”），尚未创建播放器。
-resume-final、resume-delivery各两项播放断言失败，均保留；此独立播放兼容问题未修复。
+另一部影片未创建播放器。旧“播放信息返回HTML”的归因已纠正：HTML异常来自DisplayPreferencesStore；实际是Waydroid Main10能力匹配拒绝，详见HEVC_MAIN10_WAYDROID_DIAGNOSIS.txt。
+resume-final、resume-delivery各两项播放断言失败，均保留；当前确认是Waydroid Main10能力协商限制，没有以强制解码绕过。
 最后通过的resume-playable显式使用已能播放的影片；不能把它当成两部影片均播放成功。
 
 产物
