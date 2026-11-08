@@ -22,5 +22,8 @@ fun main(){
  state.preview(200000,100000);verify("forward clamps to duration",state.target==100000L)
  verify("cancel returns original playing state",state.cancel()==true)
  state.blocked=true;state.show(0);verify("errors and ended hold actions",!state.expire(100000))
+ state.blocked=false;state.paused=false;state.idleMillis=30000;state.show(0)
+ verify("accessibility timeout extends actual policy",!state.expire(5000)&&!state.expire(29999)&&state.expire(30000))
+ state.paused=true;state.show(100);verify("extended timeout still respects pause",!state.expire(100000))
  println("$count media overlay checks passed")
 }

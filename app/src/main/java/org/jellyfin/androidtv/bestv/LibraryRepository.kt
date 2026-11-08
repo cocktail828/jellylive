@@ -88,20 +88,23 @@ class LibraryRepository : KoinComponent {
             sortBy=listOf(if(alphabetical) ItemSortBy.SORT_NAME else ItemSortBy.DATE_CREATED),
             sortOrder=listOf(if(alphabetical) SortOrder.ASCENDING else SortOrder.DESCENDING), enableUserData=true).content
     }
-    private var catalogKey = ""
-    private var catalogAt = 0L
-    private var catalogItems = emptyList<BaseItemDto>()
+    private val catalogCache=CatalogCache<List<BaseItemDto>>()
+    fun close(){catalogCache.close()}
     val sessionKey get() = "${api.baseUrl}|${sessions.currentSession.value?.userId}"
     /** Some compatible servers silently ignore Genres/Years/IsPlayed. Read a complete snapshot,
      * on IO, then apply all filters and totals together. A truncated scope is never presented. */
     suspend fun catalog(parent: UUID?=null, refresh: Boolean=false): List<BaseItemDto> = withContext(Dispatchers.IO) {
         val session=sessionKey
         val key="$session|$parent"
-        if(!refresh && key==catalogKey && (System.nanoTime()/1_000_000)-catalogAt<120_000) return@withContext catalogItems
+        catalogCache.get(key,refresh) {
         val roots=if(legacyProvider) parent?.let {listOf(it)} ?: views().map {it.id}.distinct() else listOf(parent)
         val collected=linkedMapOf<UUID,BaseItemDto>()
         for(root in roots) {
+            // Two user views may legitimately contain the same title. Only repeated
+            // pages within this root indicate a server paging failure.
+            val rootSeen=hashSetOf<UUID>()
             var offset=0
+            var expectedTotal=0
             do {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 check(sessionKey==session) {"媒体库已切换，请重新打开"}
@@ -113,17 +116,20 @@ class LibraryRepository : KoinComponent {
                     includeItemTypes=listOf(BaseItemKind.MOVIE,BaseItemKind.SERIES,BaseItemKind.EPISODE,BaseItemKind.VIDEO),
                     fields=ItemRepository.browseFields+setOf(ItemFields.MEDIA_STREAMS,ItemFields.MEDIA_SOURCES,ItemFields.PRODUCTION_LOCATIONS,ItemFields.ITEM_COUNTS),
                     sortBy=listOf(ItemSortBy.SORT_NAME),sortOrder=listOf(SortOrder.ASCENDING),enableUserData=true).content
-                val before=collected.size
-                result.items.forEach {collected[it.id]=it}
+                expectedTotal=result.totalRecordCount
+                if(expectedTotal<result.items.size)throw CatalogIncompleteException("服务器未提供可靠的目录总数")
+                val before=rootSeen.size
+                result.items.forEach {rootSeen.add(it.id);collected[it.id]=it}
                 offset+=result.items.size
-                check(offset>=result.totalRecordCount || collected.size>before) {"服务器未正确分页，请进入具体分类重试"}
-                check(collected.size<=50_000) {"内容较多，请进入具体媒体分类浏览"}
-                if(result.items.isEmpty()) {check(offset>=result.totalRecordCount){"媒体列表未完整返回，请刷新重试"};break}
+                if(result.items.isNotEmpty() && rootSeen.size<=before)throw CatalogIncompleteException("服务器未正确分页，请进入具体分类重试")
+                if(collected.size>50_000)throw CatalogIncompleteException("内容较多，请进入具体媒体分类浏览")
+                if(result.items.isEmpty()) {if(offset<result.totalRecordCount)throw CatalogIncompleteException("媒体列表未完整返回，请刷新重试");break}
             } while(offset<result.totalRecordCount)
+            if(rootSeen.size<expectedTotal)throw CatalogIncompleteException("媒体列表未完整返回，请刷新重试")
         }
         check(sessionKey==session) {"媒体库已切换，请重新打开"}
-        catalogKey=key;catalogAt=(System.nanoTime()/1_000_000);catalogItems=collected.values.toList()
-        catalogItems
+        collected.values.toList()
+        }
     }
     suspend fun searchMedia(query: String): List<BaseItemDto> = withContext(Dispatchers.IO) {
         if(legacyProvider)legacyBrowse(null,null,0,query,false,null,12).items
@@ -134,7 +140,7 @@ class LibraryRepository : KoinComponent {
     }
     suspend fun setPlayed(id: UUID, played: Boolean) = withContext(Dispatchers.IO) {
         if(played) api.playStateApi.markPlayedItem(itemId=id) else api.playStateApi.markUnplayedItem(itemId=id)
-        catalogAt=0
+        catalogCache.invalidate()
     }
     fun personImage(person: BaseItemPerson): String? = person.primaryImage?.getUrl(api,maxWidth=160)
     suspend fun seasons(series: UUID) = withContext(Dispatchers.IO) { api.tvShowsApi.getSeasons(seriesId=series).content.items }

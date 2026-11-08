@@ -14,23 +14,23 @@ fun main(args: Array<String>) {
         child.x>=parent.x&&child.y>=parent.y&&child.right<=parent.right&&child.bottom<=parent.bottom
     fun overlaps(a: LibraryPageLayout.Box,b: LibraryPageLayout.Box)=
         a.x<b.right&&a.right>b.x&&a.y<b.bottom&&a.bottom>b.y
-    val safe=LibraryPageLayout.Box(32f,0f,896f,489f)
+    val safe=LibraryPageLayout.Box(48f,27f,864f,486f)
     val entries=LibraryPageLayout.Entry.entries
     verify("home exposes exactly original three category entries",entries.map {it.title}==listOf("电影","剧集","最近添加"))
     verify("movie entry uses movie scope",entries[0].query().kind==BaseItemKind.MOVIE)
     verify("series entry uses series scope",entries[1].query().kind==BaseItemKind.SERIES)
-    verify("recent entry retains the complete media scope and current default ordering",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.NAME&&it.ascending})
-    verify("home search retains original design location",LibraryPageLayout.HOME_SEARCH==LibraryPageLayout.Box(770f,69f,158f,38f))
+    verify("recent entry retains the complete media scope and real added-date descending ordering",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.ADDED&&!it.ascending})
+    verify("home search retains original design location",LibraryPageLayout.HOME_SEARCH==LibraryPageLayout.Box(754f,69f,158f,38f))
     for(hasResume in listOf(false,true)){
         val cards=entries.indices.map {LibraryPageLayout.homeEntry(it,hasResume)}
         verify("three home entry cards stay inside content ($hasResume)",cards.all {inside(it,safe)})
         verify("home entry cards are flat single row ($hasResume)",cards.map {it.y}.distinct().size==1&&cards.zipWithNext().all {(a,b)->!overlaps(a,b)&&b.x>a.x})
         verify("home title stays above entries ($hasResume)",LibraryPageLayout.homeExploreLabel(hasResume).bottom<=cards.first().y)
-        verify("home category sizes remain original ($hasResume)",cards.all {near(it.width,287f)&&near(it.height,130f)})
+        verify("home category sizes remain original ($hasResume)",cards.all {near(it.width,276f)&&near(it.height,130f)})
         if(hasResume)verify("resume stays above explore section",LibraryPageLayout.HOME_RESUME_ROW.bottom<LibraryPageLayout.homeExploreLabel(true).y)
         else verify("empty history retains category position",cards.first().y==LibraryPageLayout.homeEntry(0,true).y)
     }
-    val homeCard=LibraryPageLayout.Box(0f,0f,287f,130f)
+    val homeCard=LibraryPageLayout.Box(0f,0f,276f,130f)
     verify("home captions and progress stay inside card",listOf(LibraryPageLayout.HOME_CARD_TITLE,LibraryPageLayout.HOME_CARD_SUBTITLE,LibraryPageLayout.HOME_CARD_PROGRESS).all {inside(it,homeCard)})
     verify("home progress does not cover subtitle",!overlaps(LibraryPageLayout.HOME_CARD_SUBTITLE,LibraryPageLayout.HOME_CARD_PROGRESS))
     verify("home captions are separated",!overlaps(LibraryPageLayout.HOME_CARD_TITLE,LibraryPageLayout.HOME_CARD_SUBTITLE))
@@ -49,7 +49,7 @@ fun main(args: Array<String>) {
         verify("correct column count ($large)",columns==if(large)5 else 6)
         verify("posters fit safe content ($large)",cards.all {inside(it,safe)})
         verify("posters retain one row and separate columns ($large)",cards.map {it.y}.distinct().size==1&&cards.zipWithNext().all {(a,b)->!overlaps(a,b)&&b.x>a.x})
-        verify("toolbar does not cover posters ($large)",cards.all {c->tools.none {overlaps(it,c)}})
+        verify("toolbar does not cover posters ($large)",cards.all {c->tools.map {LibraryPageLayout.toolbar(it,large)}.none {overlaps(it,c)}})
         verify("posters do not cover pagination ($large)",cards.all {c->pager.none {overlaps(it,c)}})
         verify("poster artwork keeps 2-to-3 ratio ($large)",near(imageHeight/cards[0].width,1.5f))
         verify("title and metadata fit poster ($large)",inside(title,localCard)&&inside(metadata,localCard))
@@ -59,7 +59,17 @@ fun main(args: Array<String>) {
         verify("page range remains screen centered ($large)",near(pager[1].x+pager[1].width/2,480f))
         verify("previous and next are symmetric ($large)",near(pager[0].x+pager[0].width/2+pager[2].x+pager[2].width/2,960f))
     }
-    verify("normal grid retains supplied image width and compact caption area",LibraryPageLayout.poster(0)==LibraryPageLayout.Box(32f,135f,137f,232f))
+    verify("normal grid retains supplied image width and compact caption area",LibraryPageLayout.poster(0)==LibraryPageLayout.Box(50f,135f,130f,222f))
+    for(large in listOf(false,true)){
+        val toolsForSize=tools.map {LibraryPageLayout.toolbar(it,large)}
+        verify("scaled toolbar remains in safe area ($large)",toolsForSize.all {inside(it,safe)})
+        verify("scaled toolbar keeps equal widths ($large)",toolsForSize.map {it.width}.distinct().size==1)
+        for(screenHeight in listOf(720f,1080f,2160f)){
+            val scale=screenHeight/540f
+            val cards=(0 until LibraryPageLayout.columns(large)).map {LibraryPageLayout.poster(it,large)}
+            verify("full poster focus border fits 5 percent overscan at $screenHeight ($large)",cards.all {it.x*scale>=screenHeight*16/9*.05f&&it.right*scale<=screenHeight*16/9*.95f&&it.y*scale>=screenHeight*.05f&&it.bottom*scale<=screenHeight*.95f})
+        }
+    }
     println("$count library page layout checks passed")
     if(args.isNotEmpty()){
         fun box(b: LibraryPageLayout.Box)=buildJsonObject {put("x",b.x);put("y",b.y);put("width",b.width);put("height",b.height)}

@@ -51,7 +51,7 @@ object LibraryBrowse {
         val comparator: Comparator<BaseItemDto> = when(q.sort) {
             Sort.ADDED -> compareBy(nullsLast()) { it.dateCreated }
             Sort.WATCHED -> compareBy(nullsLast()) { it.userData?.lastPlayedDate }
-            Sort.YEAR -> compareBy(nullsLast()) { LibraryMetadata.year(it) }
+            Sort.YEAR -> compareBy(nullsLast()) { LibraryMetadata.releaseDate(it) }
             Sort.RATING -> compareBy(nullsLast()) { it.communityRating }
             Sort.DURATION -> compareBy(nullsLast()) { it.runTimeTicks }
             Sort.NAME -> compareBy { (it.sortName ?: it.name.orEmpty()).lowercase() }
@@ -59,7 +59,7 @@ object LibraryBrowse {
         // Unknown values always trail actual data in either direction.
         val known: (BaseItemDto)->Boolean = when(q.sort) {
             Sort.ADDED -> { {it.dateCreated!=null} }; Sort.WATCHED -> { {it.userData?.lastPlayedDate!=null} }
-            Sort.YEAR -> { {LibraryMetadata.year(it)!=null} }; Sort.RATING -> { {LibraryMetadata.rating(it)!=null} }; Sort.NAME -> { {true} }; Sort.DURATION -> { {(it.runTimeTicks ?: 0)>0} }
+            Sort.YEAR -> { {LibraryMetadata.releaseDate(it)!=null} }; Sort.RATING -> { {LibraryMetadata.rating(it)!=null} }; Sort.NAME -> { {true} }; Sort.DURATION -> { {(it.runTimeTicks ?: 0)>0} }
         }
         return filtered.sortedWith(compareByDescending<BaseItemDto> {known(it)}.then(if(q.ascending)comparator else comparator.reversed()).thenBy {it.id})
     }

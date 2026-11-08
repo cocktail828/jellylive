@@ -53,5 +53,10 @@ fun main(){
  verify("search original title case insensitive",LibraryBrowse.search(names,"film ALIAS")==listOf(namedMovie))
  verify("blank search does not dump catalog",LibraryBrowse.search(names,"  ").isEmpty())
  verify("collection search cannot access outside snapshot",LibraryBrowse.search(listOf(namedSeries),"Film Alias").isEmpty())
+ val early=item(501,",\"PremiereDate\":\"2025-01-02T00:00:00Z\",\"DateCreated\":\"2026-11-01T00:00:00Z\"")
+ val late=item(502,",\"PremiereDate\":\"2025-12-02T00:00:00Z\",\"DateCreated\":\"2026-11-04T00:00:00Z\"")
+ verify("release sorting distinguishes dates within a year",LibraryBrowse.select(listOf(late,early),q.copy(sort=LibraryBrowse.Sort.YEAR,ascending=true))==listOf(early,late))
+ verify("recent entry uses actual added date across full scope",LibraryBrowse.select(listOf(early,unseen,late),LibraryPageLayout.Entry.RECENT.query())==listOf(late,early,unseen))
+ for(asc in listOf(false,true))verify("unknown release date trails known ($asc)",LibraryBrowse.select(listOf(early,unseen,late),q.copy(sort=LibraryBrowse.Sort.YEAR,ascending=asc)).last()==unseen)
  println("$checks library browse checks passed")
 }

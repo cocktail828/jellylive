@@ -51,10 +51,10 @@ object LibraryBrowseDialogs {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
         val selection = LibraryBrowseSelection(query, onChanged)
         val selections = mutableListOf<Selection>()
-        ui.title(panel, "筛选", 22f, 25f, 200f, 32f)
+        ui.title(panel, "筛选", 22f, 27f, 200f, 32f)
         val body = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
         val scroll = ScrollView(activity).apply { isFillViewport = false; isHorizontalScrollBarEnabled = false; addView(body) }
-        ui.at(panel, scroll, 22f, 58f, 296f, 382f)
+        ui.at(panel, scroll, 22f, 58f, 268f, 382f)
         body.addView(ui.text("正在加载筛选条件…",14,TvUi.MUTED), LinearLayout.LayoutParams(-1,ui.px(38f)))
         fun refreshSelections() { selections.forEach { it.button.isSelected = it.selected(selection.current) } }
         fun edit(value: LibraryBrowse.Query) { if(selection.select(value)) refreshSelections() }
@@ -68,14 +68,15 @@ object LibraryBrowseDialogs {
             update: (LibraryBrowse.Query, T?) -> LibraryBrowse.Query,
         ) {
             val heading = ui.text(title, 14, TvUi.MUTED)
-            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(22f)).apply {
+            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(22f*ui.fontScale)).apply {
                 topMargin = ui.px(if (body.childCount == 0) 0f else 10f)
                 bottomMargin = ui.px(8f)
             })
+            val actualColumns=if(ui.fontScale>1.4f) minOf(columns,2) else columns
             val choices: List<T?> = listOf(null) + values
             val space = 7f
-            val width = (296f - space * (columns - 1)) / columns
-            val height = if (ui.fontScale > 1f) 44f else 35f
+            val width = (268f - space * (actualColumns - 1)) / actualColumns
+            val height = maxOf(35f, 29f*ui.fontScale)
             val grid = FrameLayout(activity)
             choices.forEachIndexed { index, value ->
                 val button = ui.button(if (value == null) "全部" else label(value)) { edit(update(selection.current, value)) }
@@ -84,14 +85,14 @@ object LibraryBrowseDialogs {
                 button.maxLines = 2
                 button.ellipsize = TextUtils.TruncateAt.END
                 selections += Selection(button) { selected(it, value) }
-                ui.at(grid, button, index % columns * (width + space), index / columns * (height + space), width, height)
+                ui.at(grid, button, index % actualColumns * (width + space), index / actualColumns * (height + space), width, height)
             }
-            val rows = (choices.size + columns - 1) / columns
+            val rows = (choices.size + actualColumns - 1) / actualColumns
             body.addView(grid, LinearLayout.LayoutParams(-1, ui.px(rows * (height + space) - space)))
         }
 
-        val reset=ui.button(panel, "重置", 22f, 479f, 142f, 38f) { if(selection.resetFilters()) refreshSelections() }
-        val close=ui.button(panel, "关闭", 176f, 479f, 142f, 38f) { dialog.dismiss() }
+        val reset=ui.button(panel, "重置", 22f, 477f, 128f, 34f) { if(selection.resetFilters()) refreshSelections() }
+        val close=ui.button(panel, "关闭", 162f, 477f, 128f, 34f) { dialog.dismiss() }
         refreshSelections()
         show(dialog, ui, 340f, 540f, Gravity.END or Gravity.CENTER_VERTICAL)
         TvGlass.apply(activity,ui,panel,620f,0f,340f,540f)
@@ -152,20 +153,25 @@ object LibraryBrowseDialogs {
             descending.isSelected = !selection.current.ascending
         }
 
-        ui.title(panel, "排序", 22f, 25f, 280f, 32f)
+        ui.title(panel, "排序", 22f, 27f, 268f, 32f)
+        val sortBody=FrameLayout(activity)
+        val sortScroll=ScrollView(activity).apply {addView(sortBody)}
+        ui.at(panel,sortScroll,22f,71f,268f,365f)
+        val rowHeight=maxOf(38f,29f*ui.fontScale)
+        val rowStep=rowHeight+8f
         listOf(LibraryBrowse.Sort.NAME,LibraryBrowse.Sort.ADDED,LibraryBrowse.Sort.YEAR,LibraryBrowse.Sort.RATING,LibraryBrowse.Sort.DURATION).forEachIndexed { index, option ->
-            val button = ui.button(panel, option.label, 22f, 71f + index * 46f, 296f, 38f) {
+            val button = ui.button(sortBody, option.label, 0f, index * rowStep, 268f, rowHeight) {
                 if (selection.selectSort(option)) refresh()
             }
             button.background = choiceBackground(ui)
             sortButtons += option to button
         }
-        ui.text(panel, "排列方向", 14, TvUi.MUTED, 22f, 322f, 296f, 24f)
-        ascending = ui.button(panel, "", 22f, 358f, 142f, 38f) { if (selection.setAscending(true)) refresh() }
-        descending = ui.button(panel, "", 176f, 358f, 142f, 38f) { if (selection.setAscending(false)) refresh() }
+        ui.text(sortBody, "排列方向", 14, TvUi.MUTED, 0f, maxOf(250f,5*rowStep+10f), 268f, 24f*ui.fontScale)
+        ascending = ui.button(sortBody, "", 0f, maxOf(287f,5*rowStep+42f), 128f, rowHeight) { if (selection.setAscending(true)) refresh() }
+        descending = ui.button(sortBody, "", 140f, maxOf(287f,5*rowStep+42f), 128f, rowHeight) { if (selection.setAscending(false)) refresh() }
         ascending.background = choiceBackground(ui)
         descending.background = choiceBackground(ui)
-        val close=ui.button(panel, "关闭", 22f, 479f, 296f, 38f) { dialog.dismiss() }
+        val close=ui.button(panel, "关闭", 22f, 477f, 268f, 34f) { dialog.dismiss() }
         refresh()
         show(dialog, ui, 340f, 540f, Gravity.END or Gravity.CENTER_VERTICAL)
         TvGlass.apply(activity,ui,panel,620f,0f,340f,540f)

@@ -2,6 +2,7 @@ package org.jellyfin.androidtv.bestv
 
 /** Playback overlay policy, independent of Android rendering and the player clock. */
 class MediaOverlay {
+    var idleMillis=5000L
     var visible=false; private set
     var paused=false
     var dialog=false
@@ -12,7 +13,7 @@ class MediaOverlay {
     val seeking get()=target!=null
     fun show(now: Long){visible=true;interact(now)}
     fun hide(){visible=false;deadline=null}
-    fun interact(now: Long){deadline=if(visible&&!paused&&!dialog&&!seeking&&!blocked)now+5000 else null}
+    fun interact(now: Long){deadline=if(visible&&!paused&&!dialog&&!seeking&&!blocked)now+idleMillis else null}
     fun remaining(now: Long): Long?=deadline?.let {(it-now).coerceAtLeast(0)}
     fun expire(now: Long): Boolean {
         if(visible&&!paused&&!dialog&&!seeking&&!blocked&&deadline?.let {now>=it}==true){hide();return true}
