@@ -53,10 +53,10 @@ class View {
     void requestFocus(){focused=true}
 }
 class FakeList extends View {
-    int selected=-1
+    int selected=-1,top=0
     int getSelectedItemPosition(){selected}
     void setSelection(int value){selected=value}
-    void setSelectionFromTop(int value,int top){selected=value}
+    void setSelectionFromTop(int value,int position){selected=value;top=position}
 }
 class FakeSource {
     String id='builtin'
@@ -240,6 +240,10 @@ check('home_default_with_no_channels_focuses_recovery') {
 check('returning_to_list_preserves_selected_channel') {
     def h=focusHost();h.list.selected=2;h.store.saved='b'
     h.focusList(false);assert h.list.selected==2
+}
+check('returning_from_group_restores_channel_and_exact_scroll_offset') {
+    def h=focusHost();h.list.selected=2;h.channelScroll['home/all/false']=[2,-7] as int[]
+    h.focusList(false);assert h.list.selected==2 && h.list.top==-7
 }
 check('programmatic_home_focus_does_not_trigger_preview_or_override_autoplay') {
     def h=focusHost();h.schedulePreview(channel('a'));h.focusHomeDefault();h.schedulePreview(channel('a'))

@@ -756,7 +756,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val disabled=p.trackSelectionParameters.disabledTrackTypes.contains(type)
         val selected=if(text&&disabled)0 else choices.indexOfFirst {it.selected()}+offset
         optionPopup(if(text)"字幕" else "音轨",names,details,selected){index->
-            val choice=choices.getOrNull(index-offset);MediaTracks.select(p,type,choice)
+            val choice=choices.getOrNull(index-offset);if(!MediaTracks.select(p,type,choice)){Toast.makeText(this,"轨道已变化，请重新选择",Toast.LENGTH_SHORT).show();return@optionPopup}
             if(text){subtitleOff=choice==null;subtitleLanguage=choice?.language}else audioLanguage=choice?.language
             updateTrackLabels()
         }

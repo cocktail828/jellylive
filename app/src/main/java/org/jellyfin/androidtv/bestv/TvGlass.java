@@ -15,6 +15,8 @@ public final class TvGlass {
     private TvGlass(){}
     public static void apply(Activity activity,TvUi ui,View panel,float x,float y,float width,float height){
         panel.setBackground(ui.glass(TvUi.PANEL));
+        panel.setClipToOutline(true);
+        panel.setOutlineProvider(new ViewOutlineProvider(){@Override public void getOutline(View view,Outline outline){outline.setRoundRect(0,0,view.getWidth(),view.getHeight(),ui.px(height>=540?0:9));}});
         View root=activity.findViewById(android.R.id.content);
         if(root==null||root.getWidth()==0||root.getHeight()==0)return;
         final int divisor=6;
@@ -44,7 +46,7 @@ public final class TvGlass {
             },new Handler(Looper.getMainLooper()));return;}catch(IllegalArgumentException ignored){pixels.recycle();}
         }
         // SurfaceView pixels are inaccessible before API 24: keep a transparent tint.
-        if(video!=null&&Build.VERSION.SDK_INT<24){shot.recycle();return;}
+        if(video!=null){shot.recycle();return;}
         finish.run();
     }
     private static SurfaceView findSurface(View view){if(view instanceof SurfaceView&&view.isShown())return (SurfaceView)view;if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++){SurfaceView found=findSurface(group.getChildAt(i));if(found!=null)return found;}}return null;}

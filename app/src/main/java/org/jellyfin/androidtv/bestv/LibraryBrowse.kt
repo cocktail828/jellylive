@@ -6,7 +6,7 @@ import org.jellyfin.sdk.model.api.MediaStreamType
 
 /** Filter the complete scope before paging; never derive facets or totals from the visible page. */
 object LibraryBrowse {
-    enum class Sort(val label: String) { ADDED("最近添加"), WATCHED("最近观看"), YEAR("上映年份"), RATING("评分"), NAME("名称"), DURATION("时长") }
+    enum class Sort(val label: String) { ADDED("最近添加"), WATCHED("最近观看"), YEAR("发布时间"), RATING("评分"), NAME("名称"), DURATION("时长") }
     enum class State(val label: String) { ALL("全部状态"), UNSEEN("未看"), WATCHING("观看中"), FINISHED("已看") }
     data class Query(val kind: BaseItemKind?=null, val recent: Boolean=false, val state: State=State.ALL,
         val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.NAME, val ascending: Boolean=sort==Sort.NAME)

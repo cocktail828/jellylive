@@ -12,7 +12,12 @@ public final class MediaTracks {
     }
     public static List<Choice> choices(Player player,int type){List<Choice> result=new ArrayList<>();for(Tracks.Group group:player.getCurrentTracks().getGroups())if(group.getType()==type)for(int i=0;i<group.length;i++)if(group.isTrackSupported(i))result.add(new Choice(group,i));return result;}
     public static String value(Player player,int type){String role=type==C.TRACK_TYPE_TEXT?"字幕":"音轨";if(player==null||player.getTrackSelectionParameters().disabledTrackTypes.contains(type))return role;for(Choice c:choices(player,type))if(c.selected())return PlaybackLayout.value(role,c.name);return role;}
-    public static void select(Player player,int type,Choice choice){TrackSelectionParameters.Builder builder=player.getTrackSelectionParameters().buildUpon().clearOverridesOfType(type).setTrackTypeDisabled(type,choice==null);if(choice!=null){builder.setOverrideForType(new TrackSelectionOverride(choice.group.getMediaTrackGroup(),choice.index));if(choice.language!=null){if(type==C.TRACK_TYPE_AUDIO)builder.setPreferredAudioLanguage(choice.language);else builder.setPreferredTextLanguage(choice.language);}}player.setTrackSelectionParameters(builder.build());}
+    public static boolean select(Player player,int type,Choice choice){
+        if(choice!=null){boolean valid=false;for(Tracks.Group group:player.getCurrentTracks().getGroups())if(group.getType()==type&&group.getMediaTrackGroup().equals(choice.group.getMediaTrackGroup())&&choice.index<group.length&&group.isTrackSupported(choice.index)){valid=true;break;}if(!valid)return false;}
+        TrackSelectionParameters previous=player.getTrackSelectionParameters();
+        try {TrackSelectionParameters.Builder builder=previous.buildUpon().clearOverridesOfType(type).setTrackTypeDisabled(type,choice==null);if(choice!=null){builder.setOverrideForType(new TrackSelectionOverride(choice.group.getMediaTrackGroup(),choice.index));if(choice.language!=null){if(type==C.TRACK_TYPE_AUDIO)builder.setPreferredAudioLanguage(choice.language);else builder.setPreferredTextLanguage(choice.language);}}player.setTrackSelectionParameters(builder.build());return true;}
+        catch(RuntimeException failure){try{player.setTrackSelectionParameters(previous);}catch(RuntimeException ignored){}return false;}
+    }
     private static String name(Format f,int index,int type){
         if(f.label!=null&&!f.label.trim().isEmpty())return f.label;
         String language=f.language;if(language==null||language.equals("und")||language.isEmpty())return (type==C.TRACK_TYPE_TEXT?"字幕 ":"音轨 ")+(index+1);

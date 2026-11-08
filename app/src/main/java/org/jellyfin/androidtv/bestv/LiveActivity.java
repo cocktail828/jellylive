@@ -286,7 +286,7 @@ public final class LiveActivity extends Activity {
         ui.at(page,l,x,y,w,h);
         l.setOnItemClickListener((p,v,n,id)->{JSONObject c=shown.get(n);cancelPreviewSwitch();play(c,true);if(full)hideDrawer();});
         l.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onItemSelected(AdapterView<?> p,View v,int n,long id){if(l.hasFocus()){lastHomeFocus="channel-list";focusMemory.put(route,"channel-list");if(!full&&route.equals("home")&&n>=0&&n<shown.size())schedulePreview(shown.get(n));}}public void onNothingSelected(AdapterView<?> p){}});
-        l.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=l.getSelectedItemPosition();if(key==KeyEvent.KEYCODE_DPAD_LEFT){if(full){hideDrawer();return true;}if(previewButton!=null){if(errorPanel!=null){View f=firstFocusable(errorPanel);if(f!=null)f.requestFocus();}else focusPreview();}else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP&&n<=0){if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n>=shown.size()-1){if(tiles!=null)tiles[1].requestFocus();else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT){rememberChannelFilter();if(groupButton!=null)groupButton.requestFocus();return true;}return false;});
+        l.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=l.getSelectedItemPosition();if(key==KeyEvent.KEYCODE_DPAD_LEFT){if(full){hideDrawer();return true;}if(previewButton!=null){if(errorPanel!=null){View f=firstFocusable(errorPanel);if(f!=null)f.requestFocus();}else focusPreview();}else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP&&n<=0){rememberChannelFilter();if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n>=shown.size()-1){if(tiles!=null)tiles[1].requestFocus();else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT){rememberChannelFilter();if(groupButton!=null)groupButton.requestFocus();return true;}return false;});
         return l;
     }
     private void focusList(boolean current){
@@ -297,7 +297,7 @@ public final class LiveActivity extends Activity {
             if(playingCode.isEmpty()&&requestedCode.isEmpty()){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");fallback=LiveFilter.key(source.id,code);}
             target=LiveFilter.focus(keys,channelFocus.get(filterKey()),fallback);
         }
-        list.requestFocus();int[] scroll=channelScroll.get(filterKey());if(scroll!=null&&current)list.setSelectionFromTop(target,scroll[1]);else list.setSelection(target);
+        list.requestFocus();int[] scroll=channelScroll.get(filterKey());if(scroll!=null&&(current||scroll[0]==target))list.setSelectionFromTop(target,scroll[1]);else list.setSelection(target);
     }
     private JSONObject findChannel(String code){for(JSONObject c:source.channels)if(code.equals(c.optString("ChannelCode")))return c;return null;}
     private JSONObject requestedChannel(){JSONObject c=findChannel(requestedCode);return c==null?currentChannel():c;}
@@ -672,7 +672,7 @@ public final class LiveActivity extends Activity {
         String[] names=new String[choices.size()+offset],details=new String[names.length];int selected=text&&player.getTrackSelectionParameters().disabledTrackTypes.contains(type)?0:-1;
         if(text){names[0]="关闭";details[0]="不显示字幕";}
         for(int i=0;i<choices.size();i++){MediaTracks.Choice choice=choices.get(i);names[i+offset]=choice.name;details[i+offset]=choice.detail;if(choice.selected()&&!(text&&player.getTrackSelectionParameters().disabledTrackTypes.contains(type)))selected=i+offset;}
-        liveOptions(text?"字幕":"音轨",names,details,selected,false,140,260,29,n->{MediaTracks.select(player,type,n<offset?null:choices.get(n-offset));updateControlLabels();});
+        liveOptions(text?"字幕":"音轨",names,details,selected,false,140,260,29,n->{if(!MediaTracks.select(player,type,n<offset?null:choices.get(n-offset))){toast("轨道已变化，请重新选择");return;}updateControlLabels();});
     }
     private void showActions(String title,String[] names,java.util.function.IntConsumer action){
         cancelFavoriteGesture();

@@ -61,7 +61,7 @@ TvGlass仅模糊背景快照，面板背景65%不透明，前景文字/图标/�
 
 验证证据与边界
 容器离线compileDebugJavaWithJavac成功；assembleDebug成功并通过apksigner校验。
-check-container.sh：87项；check-library-container.sh：149项；合计236项通过。
+check-container.sh：88项；check-library-container.sh：149项；合计237项通过。
 检查覆盖来源隔离、焦点恢复、返回优先级、idle、长按释放、完整筛选分页、
 异步结果防过期、即时筛选/排序、真实图片认证、季集排序、时分秒和共享布局约束。
 这些是生产代码的JVM逻辑/坐标验证，不是Android实屏截图或电视硬件解码验收。
