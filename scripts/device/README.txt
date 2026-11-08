@@ -16,6 +16,12 @@ tv-regression-probe.apk。驱动与 debug 产品使用相同的本地测试签�
     org.jellyfin.androidtv.bestvlive.probe/.TvRegressionProbe
 
 可选参数：-e mediaOnly true 只做媒体；-e fromStart true 从头播放；
+-e resumeAudit true 只读记录当前会话续播数据和本地进度（报告不含地址/账号/影片名）；
+-e resumeAudit true -e expectResume true 检查冷启动能重建实际续播卡片；
+-e resumeVerify true 验证真实卡片、方向键、保存位置播放与返回刷新。
+-e resumeVerify true -e preferLocal true 显式验证列表第一项；仅在其他影片已有独立播放异常证据时使用，并记录验证范围。
+续播播放测试优先选本地/服务器位置一致的影片，避免重置其他设备较新的位置。
+
 -e skipFilter true 只用于记录旧版已知筛选崩溃后的其他基线，正式验证禁止跳过。
 phase 只接受字母、数字、下划线与连字符。字体/显示设置由调用者保存并恢复，
 或按用户指定目标保留。4K截图可能超过5秒idle，驱动在操作前重新显示底栏，

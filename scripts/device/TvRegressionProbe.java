@@ -20,6 +20,7 @@ public final class TvRegressionProbe extends Instrumentation {
     private final JSONArray checks=new JSONArray(), layers=new JSONArray();
     private int failures;
     private Activity live,library;
+    private List<?> resumeItems=Collections.emptyList();
     @Override public void onCreate(Bundle args){super.onCreate(args);arguments=args;start();}
     private <T>T main(Supplier<T> task){final Object[] result=new Object[1];final Throwable[] error=new Throwable[1];runOnMainSync(()->{try{result[0]=task.get();}catch(Throwable e){error[0]=e;}});if(error[0]!=null)throw new RuntimeException(error[0]);return (T)result[0];}
     private Object field(Object target,String name){try{Field f=target.getClass().getDeclaredField(name);f.setAccessible(true);return f.get(target);}catch(Exception e){throw new RuntimeException(e);}}
@@ -38,6 +39,61 @@ public final class TvRegressionProbe extends Instrumentation {
             if(error.getClass().getSimpleName().equals("InvalidStatusException"))type+=" status="+error.getClass().getMethod("getStatus").invoke(error);
             type+=" detail="+error.getMessage();if(error.getStackTrace().length>0)type+=" at="+error.getStackTrace()[0];return type;
         }catch(Exception e){return e.getClass().getName()+" / "+(e.getCause()==null?"":e.getCause().getClass().getName());}
+    }
+    private Object suspendCall(Object target,String name,Object...values)throws Exception{
+        ClassLoader loader=getTargetContext().getClassLoader();Class<?> continuation=Class.forName("kotlin.coroutines.Continuation",true,loader);
+        Object context=Class.forName("kotlin.coroutines.EmptyCoroutineContext",true,loader).getField("INSTANCE").get(null);
+        CountDownLatch ready=new CountDownLatch(1);Object[] outcome=new Object[1];
+        Object callback=Proxy.newProxyInstance(loader,new Class<?>[]{continuation},(proxy,method,args)->{if(method.getName().equals("getContext"))return context;if(method.getName().equals("resumeWith")){outcome[0]=args[0];ready.countDown();}return null;});
+        Object[] args=Arrays.copyOf(values,values.length+1);args[values.length]=callback;
+        Method method=null;for(Method candidate:target.getClass().getDeclaredMethods())if(candidate.getName().equals(name)&&candidate.getParameterTypes().length==args.length){method=candidate;break;}
+        if(method==null)throw new NoSuchMethodException(name);method.setAccessible(true);Object result=method.invoke(target,args);
+        Object suspended=Class.forName("kotlin.coroutines.intrinsics.IntrinsicsKt",true,loader).getMethod("getCOROUTINE_SUSPENDED").invoke(null);
+        if(result==suspended){if(!ready.await(40,TimeUnit.SECONDS))throw new IllegalStateException("Suspend call timed out: "+name);result=outcome[0];}
+        Class.forName("kotlin.ResultKt",true,loader).getMethod("throwOnFailure",Object.class).invoke(null,result);return result;
+    }
+    private void resumeAudit()throws Exception{
+        library=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.JellyLibraryActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        check("resume audit media home loads",waitPage("home",30));
+        Object repo=field(library,"repo");JSONObject audit=new JSONObject();List<?> resumes=Collections.emptyList();
+        try{resumes=(List<?>)suspendCall(repo,"resume");audit.put("serverResumeCount",resumes.size());}catch(Exception e){JSONArray errors=new JSONArray();for(Throwable cause=e;cause!=null;cause=cause.getCause()){String type=cause.getClass().getSimpleName();try{type+=" status="+cause.getClass().getMethod("getStatus").invoke(cause);}catch(Exception ignored){}errors.put(type);}audit.put("resumeErrors",errors);}
+        resumeItems=resumes;
+        List<?> catalog=(List<?>)suspendCall(repo,"catalog",null,true);audit.put("catalogCount",catalog.size());JSONArray items=new JSONArray();
+        for(Object item:catalog){Object user=item.getClass().getMethod("getUserData").invoke(item);JSONObject data=new JSONObject().put("type",String.valueOf(item.getClass().getMethod("getType").invoke(item)));
+            if(user!=null)for(String name:new String[]{"getPlayed","getPlaybackPositionTicks","getLastPlayedDate"})data.put(name,String.valueOf(user.getClass().getMethod(name).invoke(user)));items.put(data);}
+        audit.put("items",items);JSONArray positions=new JSONArray();String prefix=main(()->(String)call(library,"currentPositionPrefix"));
+        for(Map.Entry<String,?> entry:getTargetContext().getSharedPreferences("jellylive_library",0).getAll().entrySet())if(entry.getKey().startsWith(prefix))positions.put(entry.getValue());
+        audit.put("scopedLocalPositionsMs",positions);try(FileWriter out=new FileWriter(new File(output,"resume-audit.json"))){out.write(audit.toString(2));}
+        if("true".equals(arguments.getString("expectResume"))){
+            for(int i=0;i<120&&main(()->findPrefix(root(library),"resume-item-"))==null;i++)SystemClock.sleep(250);
+            check("cold start restores continue watching cards",main(()->countPrefix(root(library),"resume-item-")>0));
+            check("compatible server returns resume data",!resumes.isEmpty()&&!audit.has("resumeErrors"));
+        }
+        shot("resume-home-before");
+    }
+    private int countPrefix(View view,String prefix){int count=view.getTag() instanceof String&&((String)view.getTag()).startsWith(prefix)?1:0;if(view instanceof ViewGroup)for(int i=0;i<((ViewGroup)view).getChildCount();i++)count+=countPrefix(((ViewGroup)view).getChildAt(i),prefix);return count;}
+    private void resumePlayback()throws Exception{
+        View card=null;for(int i=0;i<120&&card==null;i++){card=main(()->findPrefix(root(library),"resume-item-"));if(card==null)SystemClock.sleep(250);}
+        check("continue watching cards appear from real saved progress",card!=null);if(card==null)return;
+        Set<String> expected=new HashSet<>();for(Object item:resumeItems){Object series=item.getClass().getMethod("getSeriesId").invoke(item);expected.add(String.valueOf(series==null?item.getClass().getMethod("getId").invoke(item):series));}
+        check("all distinct server resume titles are shown",main(()->countPrefix(root(library),"resume-item-")>=expected.size())&&!expected.isEmpty());
+        // Prefer a title whose server and local positions agree; diagnostic playback
+        // must not reset another device's newer progress to an old test position.
+        if(!"true".equals(arguments.getString("preferLocal")))for(Object candidate:resumeItems){long remote=((Number)candidate.getClass().getMethod("getUserData").invoke(candidate).getClass().getMethod("getPlaybackPositionTicks").invoke(candidate.getClass().getMethod("getUserData").invoke(candidate))).longValue()/10000;long local=main(()->(Long)call(library,"resumeMs",candidate));if(remote>0&&Math.abs(local-remote)<1000){String wanted="resume-item-"+candidate.getClass().getMethod("getId").invoke(candidate);View matching=tagged(library,wanted);if(matching!=null){card=matching;break;}}}
+        View chosen=card;String tag=String.valueOf(card.getTag());Object item=null;for(Object candidate:resumeItems)if(tag.equals("resume-item-"+candidate.getClass().getMethod("getId").invoke(candidate))){item=candidate;break;}
+        if(item==null)throw new IllegalStateException("Displayed resume item missing from resolved row");Object selected=item;
+        long position=main(()->(Long)call(library,"resumeMs",selected));check("continue watching has positive saved position",position>0);
+        focusTag(library,tag);key(KeyEvent.KEYCODE_DPAD_DOWN);check("resume Down reaches media category",tagOfFocus(library).startsWith("library-entry-"));key(KeyEvent.KEYCODE_DPAD_UP);check("category Up returns to resume row",tagOfFocus(library).startsWith("resume-item-"));
+        focusTag(library,tag);Object previousJob=field(library,"homeResumeJob");key(KeyEvent.KEYCODE_DPAD_CENTER);check("resume card opens player",waitPage("player",10));
+        for(int i=0;i<160&&!main(()->readyPlayer()||Boolean.TRUE.equals(field(library,"playbackFailure")));i++)SystemClock.sleep(250);
+        check("resume playback starts at saved position; expected="+position+"; "+playerState(),main(()->{try{Object player=field(library,"player");Method current=player.getClass().getMethod("getCurrentPosition");current.setAccessible(true);return readyPlayer()&&!Boolean.TRUE.equals(field(library,"playbackFailure"))&&(Long)current.invoke(player)>=position-1500;}catch(Exception e){return false;}}));
+        shot("resume-player-diagnostic");
+        boolean advanced=false;for(int i=0;i<80&&!advanced;i++){advanced=main(()->{try{Object player=field(library,"player");Method current=player.getClass().getMethod("getCurrentPosition");current.setAccessible(true);return (Long)current.invoke(player)>=position+1500;}catch(Exception e){return false;}});if(!advanced)SystemClock.sleep(250);}
+        check("resumed playback actually advances",advanced);main(()->{call(library,"hidePlayerControls");return null;});key(KeyEvent.KEYCODE_BACK);check("Back returns directly to media home",waitPage("home",10));
+        for(int i=0;i<120&&main(()->root(library).findViewWithTag(tag)==chosen);i++)SystemClock.sleep(250);
+        check("Back refreshes home resume job",main(()->field(library,"homeResumeJob")!=previousJob));
+        check("Back replaces old resume card with refreshed progress",tagged(library,tag)!=null&&tagged(library,tag)!=chosen);
+        shot("resume-home-after-playback");
     }
     private View tagged(Activity a,String tag){return main(()->a.getWindow().getDecorView().findViewWithTag(tag));}
     private String focus(Activity a){return main(()->{View v=a.getCurrentFocus();return v==null?"none":v.getClass().getSimpleName()+":"+v.getTag()+":"+(v instanceof TextView?((TextView)v).getText():"");});}
@@ -154,8 +210,9 @@ public final class TvRegressionProbe extends Instrumentation {
         String phase=arguments.getString("phase","run").replaceAll("[^a-zA-Z0-9_-]","");output=new File(getTargetContext().getExternalFilesDir("tv-regression"),phase);output.mkdirs();
         String error="";
         try{
+            if("true".equals(arguments.getString("resumeAudit"))||"true".equals(arguments.getString("resumeVerify"))){resumeAudit();if("true".equals(arguments.getString("resumeVerify")))resumePlayback();}else {
             if(!"true".equals(arguments.getString("mediaOnly"))){live=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.LiveActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            check("live home starts",waitTag(live,"group",25));SystemClock.sleep(1000);groupAndSettings();livePlayer();}media();snapshotFallback();returnToLive();
+            check("live home starts",waitTag(live,"group",25));SystemClock.sleep(1000);groupAndSettings();livePlayer();}media();snapshotFallback();returnToLive();}
         }catch(Throwable e){failures++;error=e.toString();try{shot("fatal-state");}catch(Exception ignored){}}
         try{JSONObject report=new JSONObject().put("phase",phase).put("failures",failures).put("checks",checks).put("layers",layers).put("error",error).put("scope","Installed Android APK; real key events, view Z/focus inspection and screenshots; private reflection only chooses test entry points");try(FileWriter out=new FileWriter(new File(output,"report.json"))){out.write(report.toString(2));}}catch(Exception e){error=e.toString();}
         main(()->{if(library!=null&&!library.isDestroyed())library.finish();if(live!=null&&!live.isDestroyed())live.finish();return null;});waitForIdleSync();SystemClock.sleep(700);

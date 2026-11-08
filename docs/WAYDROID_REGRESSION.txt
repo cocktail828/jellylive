@@ -1,3 +1,5 @@
+本报告记录ba19b73基线；后续继续观看修复与新APK见CONTINUE_WATCHING_VALIDATION.txt。
+
 Waydroid 原生回归修复 · 2026-11-08
 
 基准 c4e2251。用户授权修正实际问题，并明确同意 Waydroid 的全部操作。

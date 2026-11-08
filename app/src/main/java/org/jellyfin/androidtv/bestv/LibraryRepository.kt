@@ -15,6 +15,7 @@ import org.jellyfin.androidtv.util.apiclient.itemImages
 import org.jellyfin.androidtv.util.apiclient.itemBackdropImages
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.HttpMethod
+import org.jellyfin.sdk.api.client.exception.InvalidStatusException
 import org.jellyfin.sdk.api.client.extensions.*
 import org.jellyfin.sdk.model.api.*
 import org.koin.core.component.KoinComponent
@@ -58,8 +59,15 @@ class LibraryRepository : KoinComponent {
         if(legacyProvider) legacyRead<BaseItemDtoQueryResult>("${userPath()}/Views").items else api.userViewsApi.getUserViews().content.items
     }
     suspend fun resume() = withContext(Dispatchers.IO) {
-        if(legacyProvider) legacyRead<BaseItemDtoQueryResult>("${userPath()}/Items/Resume",mapOf("Fields" to ItemRepository.browseFields.joinToString(",") {it.serialName},"Limit" to 12,"MediaTypes" to "Video","IncludeItemTypes" to "Movie,Episode","ExcludeActiveSessions" to true)).items
-        else api.itemsApi.getResumeItems(fields=ItemRepository.browseFields, limit=12, mediaTypes=listOf(MediaType.VIDEO),
+        if(legacyProvider) {
+            try {legacyRead<BaseItemDtoQueryResult>("${userPath()}/Items/Resume",mapOf("Fields" to ItemRepository.browseFields.joinToString(",") {it.serialName},"Limit" to 12,"MediaTypes" to "Video","IncludeItemTypes" to "Movie,Episode","ExcludeActiveSessions" to true)).items}
+            catch(error: InvalidStatusException){
+                if(!LibraryResume.needsCatalogFallback(error.status))throw error
+                // Some identified fnmedia versions reject Resume while ordinary per-user
+                // items contain valid progress. Do not mask auth/network/server failures.
+                LibraryResume.select(catalog(refresh=true),emptyList(),{(it.userData?.playbackPositionTicks ?: 0)/10000},{0})
+            }
+        } else api.itemsApi.getResumeItems(fields=ItemRepository.browseFields, limit=12, mediaTypes=listOf(MediaType.VIDEO),
             includeItemTypes=listOf(BaseItemKind.MOVIE, BaseItemKind.EPISODE), excludeActiveSessions=true).content.items
     }
     /** fnmedia's empty root is not an empty library: enumerate its actual user views. */

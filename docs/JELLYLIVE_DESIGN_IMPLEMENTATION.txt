@@ -23,6 +23,7 @@ manifest.json 和最新61张有效SVG（64个历史图号）为准。图05、32�
   未提供可访问频道的Jellyfin不保存为空来源，刷新失败保留上次成功缓存。
 15、41 → JellyLibraryActivity / LibraryPageLayout：继续观看区域固定；
   无历史居中显示“暂无观看历史”，错误另行说明；三张分类入口显示真实已知数量。
+  续播合并当前会话服务器/本机正进度，返回时局部刷新；飞牛兼容与原生证据见CONTINUE_WATCHING_VALIDATION.txt。
 16 → LibraryPageLayout / JellyLibraryActivity：2:3图片，一排6张/大字号5张；
   图片底部居中单行标题，聚焦溢出滚动，左上真实评分，图片下年份/类型；
   三个工具148等宽、12间距，居中分页，电影/剧集默认名称升序；最近添加默认真实入库时间倒序。

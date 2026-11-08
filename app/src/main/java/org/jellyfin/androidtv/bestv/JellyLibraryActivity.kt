@@ -339,7 +339,8 @@ class JellyLibraryActivity : FragmentActivity() {
         val host=page;val session=repo.sessionKey;val initialInteraction=interaction
         val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
         pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
-        val status=pageText(host,"正在加载继续观看…",14,TvUi.MUTED,LibraryPageLayout.HOME_RESUME_ROW).apply {gravity=Gravity.CENTER}
+        val resumeArea=place(host,FrameLayout(this),LibraryPageLayout.HOME_RESUME_ROW)
+        resumeStatus(resumeArea,"正在加载继续观看…")
         pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
         val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
         val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
@@ -359,26 +360,58 @@ class JellyLibraryActivity : FragmentActivity() {
                 entries[index].findViewWithTag<TextView>("entry-subtitle")?.text="${count} ${if(entry==LibraryPageLayout.Entry.MOVIES)"部电影" else if(entry==LibraryPageLayout.Entry.SERIES)"部剧集" else "项内容"}"
             }
         }
+        host.tag=Runnable {refreshHomeResume(host,resumeArea,search,entries,null)}
+        refreshHomeResume(host,resumeArea,search,entries,initialInteraction)
+    }
+    private fun resumeStatus(area: FrameLayout,message: String){
+        area.removeAllViews()
+        val bounds=LibraryPageLayout.HOME_RESUME_ROW
+        ui.text(area,message,14,TvUi.MUTED,0f,0f,bounds.width,bounds.height).apply {gravity=Gravity.CENTER;tag="home-resume-status"}
+    }
+    private fun refreshHomeResume(host: FrameLayout,area: FrameLayout,search: View,entries: List<View>,initialInteraction: Int?){
+        val session=repo.sessionKey;val prefix=currentPositionPrefix()
         homeResumeJob?.cancel()
         homeResumeJob=lifecycleScope.launch {
-            val resumes=try {withTimeout(8000){repo.resume()}.filter {it.userData?.played!=true&&resumeMs(it)>0}.distinctBy {it.seriesId ?: it.id}}
-                catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
-                catch(_:Exception){null}
-            if(session!=repo.sessionKey)return@launch
-            if(resumes==null){status.text="暂时无法读取观看历史，请检查媒体库连接。";return@launch}
+            val ids=LibraryResume.localIds(local.all,prefix)
+            val (server,localItems)=coroutineScope {
+                val remote=async {
+                    try {withTimeout(8000){repo.resume()}}
+                    catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
+                    catch(_: Exception){null}
+                }
+                // Resolve saved IDs through this session so removed/inaccessible items and
+                // remotely completed titles cannot reappear from an old catalog snapshot.
+                val saved=async {ids.map {id->async {
+                    try {withTimeout(6000){repo.detail(id)}}
+                    catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
+                    catch(_: Exception){null}
+                }}.awaitAll().filterNotNull()}
+                remote.await() to saved.await()
+            }
+            if(page!==host||session!=repo.sessionKey)return@launch
+            val resumes=LibraryResume.select(server.orEmpty(),localItems,::resumeMs,{item->if(local.getLong(positionKey(item),0)>0)local.getLong("seen_${positionKey(item)}",0)else 0})
+            val previous=currentFocus?.takeIf {isWithin(it,area)}?.tag
+            area.removeAllViews()
+            entries.forEach {it.nextFocusUpId=search.id};search.nextFocusDownId=entries.first().id
             if(resumes.isEmpty()){
-                status.text="暂无观看历史"
+                resumeStatus(area,if(server==null||ids.isNotEmpty()&&localItems.isEmpty())"暂时无法读取观看历史，请检查媒体库连接。" else "暂无观看历史")
+                if(previous!=null)entries.first().requestFocus()
             }else{
-                host.removeView(status)
                 val scroller=HorizontalScrollView(this@JellyLibraryActivity);scroller.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this@JellyLibraryActivity);scroller.addView(row)
-                val cards=resumes.map {item->homeCard(cardTitle(item),if(item.type==BaseItemKind.EPISODE)"第 ${item.indexNumber ?: "?"} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}",item=item){play(item,resumeMs(item))}.also {row.addView(it,LinearLayout.LayoutParams(ui.px(276f),ui.px(130f)).apply {marginEnd=ui.px(16f)})}}
-                place(host,scroller,LibraryPageLayout.HOME_RESUME_ROW)
+                val cards=resumes.map {item->homeCard(cardTitle(item),if(item.type==BaseItemKind.EPISODE)"第 ${item.indexNumber ?: "?"} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}",item=item){play(item,resumeMs(item))}.also {it.tag="resume-item-${item.id}";row.addView(it,LinearLayout.LayoutParams(ui.px(276f),ui.px(130f)).apply {marginEnd=ui.px(16f)})}}
+                ui.at(area,scroller,0f,0f,LibraryPageLayout.HOME_RESUME_ROW.width,LibraryPageLayout.HOME_RESUME_ROW.height)
                 cards.forEachIndexed {i,card->card.nextFocusUpId=search.id;card.nextFocusDownId=entries[i.coerceAtMost(entries.lastIndex)].id}
                 entries.forEachIndexed {i,card->card.nextFocusUpId=cards[i.coerceAtMost(cards.lastIndex)].id}
                 search.nextFocusDownId=cards.first().id
-                if(page===host)focus(cards.first(),initialInteraction)
+                if(previous!=null)(cards.firstOrNull {it.tag==previous} ?: cards.first()).requestFocus()
+                else if(initialInteraction!=null)focus(cards.first(),initialInteraction)
             }
         }
+    }
+    private fun isWithin(view: View,parent: View): Boolean {
+        var current: View?=view
+        while(current!=null){if(current===parent)return true;current=current.parent as? View}
+        return false
     }
     private fun homeCard(name: String,subtitle: String,illustration: Int?=null,item: BaseItemDto?=null,click: ()->Unit): FrameLayout {
         val card=focusCard(FrameLayout(this),click)
@@ -857,7 +890,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun stopPlayer() {
         handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);buffering=null;handler.removeCallbacks(nextTick);nextCard?.let {TvUi.detach(it)};nextCard=null;nextClock=null
         val p=player
-        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted&&playingSessionKey==repo.sessionKey)stream?.let {reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
+        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted&&playingSessionKey==repo.sessionKey)stream?.let {reporting.reportProgress(this,null,item,it,p.currentPosition*10000,true);reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
         player=null;stream=null;playingItem=null;controls=null;rewindAction=null;forwardAction=null;playbackFailure=false;seek=null;clock=null;pause=null;playerHeading=null;playerWallClock=null;speedAction=null;audioAction=null;subtitleAction=null;seekPreview=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -911,6 +944,7 @@ class JellyLibraryActivity : FragmentActivity() {
         super.onStart()
         if(player!=null&&playingSessionKey!=repo.sessionKey)stopPlayer()
         if(pageName !in listOf("loading","connection")&&pageSessionKey!=repo.sessionKey){history.clear();home(false)}
+        if(pageName=="home")(page.tag as? Runnable)?.run()
         if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)}
     }
     override fun onStop(){
@@ -920,13 +954,13 @@ class JellyLibraryActivity : FragmentActivity() {
         super.onStop()
     }
     override fun onDestroy(){repo.close();stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
-    private fun rememberPosition(item: BaseItemDto,position: Long){local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
+    private fun rememberPosition(item: BaseItemDto,position: Long){if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
     private fun currentPositionPrefix()="pos_${repo.sessions.currentSession.value?.serverId}_${repo.sessions.currentSession.value?.userId}_"
     private fun positionKey(item: BaseItemDto)=(if(playingItem?.id==item.id&&playingPositionPrefix.isNotEmpty())playingPositionPrefix else currentPositionPrefix())+item.id
     private fun resumeMs(item: BaseItemDto): Long {
         val server=(item.userData?.playbackPositionTicks ?: 0)/10000
         val seen=local.getLong("seen_${positionKey(item)}",0)
-        return if(seen>0 && seen>=(item.userData?.lastPlayedDate?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli() ?: 0))local.getLong(positionKey(item),server)else server
+        return LibraryResume.position(server,item.userData?.lastPlayedDate?.toInstant(java.time.ZoneOffset.UTC)?.toEpochMilli() ?: 0,local.getLong(positionKey(item),0),seen)
     }
     private fun meta(item: BaseItemDto): String = listOfNotNull(LibraryMetadata.year(item)?.toString(),LibraryMetadata.rating(item)?.let {"评分 $it"},LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(2)?.joinToString(" / ")?.takeIf {it.isNotEmpty()},item.runTimeTicks?.let {time(it/10000)}).joinToString(" · ")
     private fun time(ms: Long): String = PlaybackLayout.time(ms)
