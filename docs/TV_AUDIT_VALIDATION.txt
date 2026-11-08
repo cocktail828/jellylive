@@ -1,3 +1,6 @@
+历史验收记录：以下为Waydroid验证前的c4e2251基线。
+后续用户已授权并执行原生验证；当前修复、产物与边界见WAYDROID_REGRESSION.txt。
+
 Android TV 最新61稿实施验证 · 2026-11-08
 
 基准5d8511e；设计来源为工作区ui-design/designs最新61张有效稿及TV_FOCUS_AND_STATES.txt。

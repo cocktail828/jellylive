@@ -1,0 +1,58 @@
+Waydroid 原生回归修复 · 2026-11-08
+
+基准 c4e2251。用户授权修正实际问题，并明确同意 Waydroid 的全部操作。
+目标电视为荣耀智慧屏 X1，3840×2160、16:9；MEMC 由电视处理，不由虚拟机认证。
+使用既有 Waydroid Android 13/API33 与既有 Docker SDK/JDK/离线 Gradle 缓存。
+Waydroid 为普通 Android 虚拟系统，调整分辨率不等于把系统变成 Android TV。
+没有在宿主机安装依赖，没有修改用户媒体库连接、清除产品数据或向 GitHub push。
+版本仍为 v0.1.3 / versionCode10300，不发布新版本。
+
+实际问题和修复
+1. Material Button 默认 StateListAnimator 使按钮 Z 高于后添加的文字。
+   原生检查发现 buttonZ=4、labelZ=0；选中背景和焦点背景覆盖标签。
+   TvUi 统一关闭这层系统抬升，保留自定义焦点；直播分组、设置和播放器共用修复。
+2. 设置选项缺少列内方向关系，系统空间搜索会跳回分类或停在错误项。
+   按视觉位置排序设置动作，补全上下边界、左回分类、右留本列，过滤失效焦点。
+3. 实际海报加载后打开筛选触发 software Canvas 不支持 hardware bitmap 的崩溃。
+   媒体页面图片请求关闭 hardware bitmap；其他页面默认不变。
+   TvGlass 快照失败时恢复 panel alpha 并保留可读底色，模糊不可用也不使弹层消失。
+4. 飞牛影视连接缓存冷启动跳过 PublicInfo，进程内协议识别丢失，DTO 空 UUID 解析失败。
+   从已缓存的服务器名称/地址恢复识别，再请求数据；只识别已知飞牛来源。
+5. 按用户要求删除详情“更多”。剩下三项等宽，普通字号224、大字号342逻辑宽度。
+   大字号设置标题、详情简介、播放器标题、缓冲提示与频道编号同步消除实屏裁切。
+6. 进入媒体库时释放直播播放器和定时任务；返回时重建并恢复频道。
+   拒绝已释放播放器的迟到回调，避免两个页面同时保留解码器。
+
+运行证据（原始截图/报告含本地影视库信息，不提交 Git）
+路径 .local-build/waydroid-review；before-controls 为旧版实际文字遮挡基线。
+delivery-normal / delivery-large：1920×1080、density320，普通/150%字体各52项通过。
+这些运行在最后的频道编号单行适配前。
+verified-4k-large：最终APK、3840×2160、density320、150%字体，53项全部通过。
+verified-4k-normal：最终APK、3840×2160、density320、100%字体，53项全部通过。
+两轮4K报告 error 为空、failures=0，实际PNG均为3840×2160；共106项原生断言。
+结束保留4K/density320供用户查看，恢复普通字体；卸载独立probe，产品保留已安装。
+驱动 scripts/device/TvRegressionProbe.java 使用真实 Android D-pad 事件、控件 Z/焦点
+检查与 UiAutomation 截图；反射仅选择入口、读取状态或构造快照失败/缓冲预览。
+实际从首页“媒体库”进入，加载真实 NAS 海报/详情，播放真实影片后返回并恢复直播。
+验证错误为空、failures=0以及必需断言存在；不能只看 am instrument 的退出码。
+缓冲截图是受控预览，用于字高验证，不代表当时发生网络缓冲。
+测试媒体没有可选字幕，字幕项实际验证了“没有可切换的字幕”反馈；未认证全部字幕格式。
+
+验证环境记录
+早期反复强杀测试进程使 Waydroid 虚拟媒体服务积累资源，停在 MediaCodec.native_setup。
+通过重启既有 Waydroid guest 清理后完整流程可播放；最终驱动正常 finish Activity 再退出。
+最终产品继续使用原先的 DefaultRenderersFactory，没有加入虚拟机专用同步解码策略。
+4K截图保存可能超过底栏5秒idle；驱动在下一次点击前确认底栏显示，另行实测idle折叠，
+没有为测试延长产品超时。
+
+容器与产物核验
+assembleDebug --offline 成功；公共/直播113 + 媒体183 = 296项现有检查通过。
+独立 apksigner verify 成功，v1/v2签名有效。
+APK .local-build/review/JellyLive-v0.1.3-waydroid-fix.apk，29199021字节。
+SHA256 1136652899c7cca61eee0841a32543eb3f954724b0b4f9b2b0e51640ccd397fa。
+两个私有 bootstrap 与本地忽略输入逐字节一致，值没有写入报告或提交。
+设计图17/62同步三按钮布局，画册61张有效稿、1022处文字与焦点检查通过。
+
+边界
+这是实际安装 APK 的 Android 虚拟设备验证。电视厂商遥控器、IME、权限状态、
+全部字幕/音视频格式、硬解长时间稳定性和 MEMC 仍需荣耀智慧屏实机确认。
