@@ -267,6 +267,15 @@ check('source_filter_and_favorite_intersection') {
     assert !policy.includes('builtin',true,'thirdparty',true,true)
     assert !policy.includes('builtin',true,'builtin',true,false)
 }
+check('other_sources_aggregate_without_builtin_or_disabled_sources') {
+    def policy=loader.loadClass('LiveFilter')
+    assert policy.includes('@other',false,'m3u-one',true,false)
+    assert policy.includes('@other',false,'jellyfin-one',true,false)
+    assert !policy.includes('@other',false,'builtin',true,false)
+    assert !policy.includes('@other',false,'m3u-two',false,false)
+    assert policy.includes('',true,'m3u-one',true,true)
+    assert !policy.includes('',true,'m3u-one',true,false)
+}
 check('duplicate_codes_use_source_identity') {
     def policy=loader.loadClass('LiveFilter');assert policy.key('builtin','1')!=policy.key('other','1')
     assert policy.focus(['builtin/1','other/1'],null,'other/1')==1

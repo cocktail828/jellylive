@@ -20,7 +20,7 @@ public final class TvGlass {
         final int divisor=6;
         Bitmap shot=Bitmap.createBitmap(Math.max(1,root.getWidth()/divisor),Math.max(1,root.getHeight()/divisor),Bitmap.Config.ARGB_8888);
         Canvas canvas=new Canvas(shot);canvas.scale(shot.getWidth()/(float)root.getWidth(),shot.getHeight()/(float)root.getHeight());
-        int visibility=panel.getVisibility();panel.setVisibility(View.INVISIBLE);root.draw(canvas);panel.setVisibility(visibility);
+        float opacity=panel.getAlpha();panel.setAlpha(0);root.draw(canvas);panel.setAlpha(opacity);
         SurfaceView video=findSurface(root);
         Runnable finish=()->WORK.execute(()->{
             int left=Math.max(0,Math.min(shot.getWidth()-1,Math.round(ui.px(x)/(float)divisor)));
@@ -40,7 +40,7 @@ public final class TvGlass {
             Bitmap pixels=Bitmap.createBitmap(Math.max(1,video.getWidth()/divisor),Math.max(1,video.getHeight()/divisor),Bitmap.Config.ARGB_8888);
             try {PixelCopy.request(video,pixels,result->{
                 if(result==PixelCopy.SUCCESS){int[] vr=new int[2],rr=new int[2];video.getLocationInWindow(vr);root.getLocationInWindow(rr);Canvas c=new Canvas(shot);c.drawBitmap(pixels,null,new RectF((vr[0]-rr[0])/(float)divisor,(vr[1]-rr[1])/(float)divisor,(vr[0]-rr[0]+video.getWidth())/(float)divisor,(vr[1]-rr[1]+video.getHeight())/(float)divisor),new Paint(Paint.FILTER_BITMAP_FLAG));}
-                pixels.recycle();finish.run();
+                pixels.recycle();if(result==PixelCopy.SUCCESS)finish.run();else shot.recycle();
             },new Handler(Looper.getMainLooper()));return;}catch(IllegalArgumentException ignored){pixels.recycle();}
         }
         // SurfaceView pixels are inaccessible before API 24: keep a transparent tint.

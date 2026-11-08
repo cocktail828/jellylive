@@ -4,8 +4,9 @@ import java.util.List;
 
 /** Display scope is independent of the source currently playing. */
 public final class LiveFilter {
+    public static final String OTHERS="@other";
     public static boolean includes(String scope,boolean favorites,String id,boolean enabled,boolean favorite){
-        return enabled&&(scope.isEmpty()||scope.equals(id))&&(!favorites||favorite);
+        return enabled&&(scope.isEmpty()||scope.equals(id)||(scope.equals(OTHERS)&&!id.equals("builtin")))&&(!favorites||favorite);
     }
     public static String key(String source,String code){return source+"/"+code;}
     public static int focus(List<String> keys,String remembered,String playing){

@@ -35,6 +35,7 @@ public final class TvUi {
     public TextView text(String s,int size,int color){TextView t=new TextView(activity);t.setTextColor(color);t.setTextSize(TypedValue.COMPLEX_UNIT_PX,size*scale*fontScale);t.setGravity(Gravity.CENTER_VERTICAL);t.setFontFeatureSettings("kern");t.setIncludeFontPadding(false);TvIcons.text(t,s);return t;}
     public TextView text(FrameLayout p,String s,int size,int color,float x,float y,float w,float h){return at(p,text(s,size,color),x,y,w,h);}
     public TextView title(FrameLayout p,String s,float x,float y,float w,float h){TextView t=text(p,s,21,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}
+    public TextView heading(FrameLayout p,String s,int size,float x,float y,float w,float h){TextView t=text(p,s,size,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}
     public Button button(String s,Runnable click){Button b=new Button(activity);b.setId(View.generateViewId());b.setAllCaps(false);b.setTextColor(INK);b.setTextSize(TypedValue.COMPLEX_UNIT_PX,14*scale*fontScale);b.setTypeface(null,Typeface.BOLD);b.setGravity(Gravity.CENTER);b.setPadding(px(10),0,px(10),0);b.setMinHeight(0);b.setMinimumHeight(0);b.setMinWidth(0);b.setMinimumWidth(0);b.setBackground(focusBackground(TILE));b.setOnClickListener(v->click.run());TvIcons.text(b,s);return b;}
     public Button button(FrameLayout p,String s,float x,float y,float w,float h,Runnable click){return at(p,button(s,click),x,y,w,h);}
     public EditText input(FrameLayout p,String hint,String value,float x,float y,float w,boolean password){
