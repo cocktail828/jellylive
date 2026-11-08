@@ -232,9 +232,9 @@ check('home_default_ignores_other_source_playback_and_falls_back_if_missing') {
     def h=focusHost();h.playingSource='other';h.playingCode='c';h.store.saved='missing'
     h.focusHomeDefault();assert h.list.selected==0
 }
-check('home_default_keeps_channels_reachable_when_playback_has_error') {
+check('home_playback_error_defaults_to_recovery_before_channel_list') {
     def h=focusHost();h.store.saved='b';h.errorPanel=loader.loadClass('View').newInstance()
-    h.focusHomeDefault();assert h.list.focused && h.list.selected==1 && !h.errorPanel.focused
+    h.focusHomeDefault();assert h.recoveryRetry.focused && !h.list.focused
 }
 check('home_default_with_no_channels_focuses_recovery') {
     def h=focusHost();h.shown=[];h.errorPanel=loader.loadClass('View').newInstance()

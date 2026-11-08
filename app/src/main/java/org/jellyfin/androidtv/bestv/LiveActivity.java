@@ -251,6 +251,7 @@ public final class LiveActivity extends Activity {
     }
     private void focusHomeDefault(){
         homeFocusFromInput=false;cancelPreviewSwitch();
+        if(errorPanel!=null){focusRecovery();return;}
         if(list!=null&&!shown.isEmpty())focusList(true);
         else focusPreview();
     }
