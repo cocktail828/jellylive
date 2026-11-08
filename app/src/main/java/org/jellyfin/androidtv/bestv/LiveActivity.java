@@ -57,6 +57,7 @@ public final class LiveActivity extends Activity {
     private LinearLayout sourceRowsHost;
     private List<JSONObject> shown=new ArrayList<>();
     private Button groupButton,previewButton,aspectAction,audioAction,subtitleAction;
+    private boolean playerReleasedForLibrary;
     private View drawerShade;
     private Button recoveryRetry,recoverySources;
     private View lastRecoveryAction;
@@ -137,7 +138,7 @@ public final class LiveActivity extends Activity {
         if(!sourceScope.isEmpty()&&!sourceScope.equals(LiveSourceStore.BUILTIN))sourceScope=LiveFilter.OTHERS;
         if(favoritesOnly)sourceScope="";
         video=new PlayerView(this);video.setUseController(false);video.setFocusable(false);video.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        player=new ExoPlayer.Builder(this).setRenderersFactory(new DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)).build();video.setPlayer(player);applyPlayerSettings();
+        createLivePlayer();
         if(startupRotation!=null){startupRotation.cancel();startupRotation=null;}
         root.removeAllViews();stage=ui.canvas();FrameLayout.LayoutParams stageParams=new FrameLayout.LayoutParams(ui.px(960),ui.px(540),Gravity.CENTER);root.addView(stage,stageParams);
         videoShell=new FrameLayout(this);videoShell.setBackgroundColor(Color.BLACK);videoShell.setClipToOutline(true);videoShell.addView(video,new FrameLayout.LayoutParams(-1,-1));stage.addView(videoShell);videoShell.setVisibility(View.GONE);
@@ -146,6 +147,15 @@ public final class LiveActivity extends Activity {
         if(!cacheProblem.isEmpty())toast(cacheProblem);
         worker.scheduleWithFixedDelay(()->onUi(()->{if(resumed)refreshSource(source.id,false);}),6,6,TimeUnit.HOURS);
         if(resumed)resumeReady();
+    }
+    private void createLivePlayer(){
+        player=new ExoPlayer.Builder(this).setRenderersFactory(new DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)).build();
+        playerReleasedForLibrary=false;video.setPlayer(player);applyPlayerSettings();
+    }
+    private void releaseLivePlayerForLibrary(){
+        if(player==null||playerReleasedForLibrary)return;
+        suspendPlayback();handler.removeCallbacks(homeIdle);handler.removeCallbacks(hideControls);handler.removeCallbacks(hideIdleDrawer);
+        video.setPlayer(null);player.release();playerReleasedForLibrary=true;
     }
     private void restoreStringMap(Bundle state,String key,Map<String,String> target){try{JSONObject values=new JSONObject(state.getString(key,"{}"));Iterator<String> names=values.keys();while(names.hasNext()){String name=names.next();target.put(name,values.optString(name));}}catch(Exception ignored){}}
     private void showStartup(){
@@ -224,7 +234,7 @@ public final class LiveActivity extends Activity {
         if(resumed&&started&&isLiveRoute()&&player.getMediaItemCount()==0&&!openingChannel&&!source.channels.isEmpty()&&(prefs.getBoolean("auto_play",true)||resumePlayback&&resumeSource.equals(source.id)))restoreLastChannel();
         if(enteringHome)lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();
     }
-    private View firstFocusable(View v){if(v.isFocusable())return v;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View f=firstFocusable(((ViewGroup)v).getChildAt(i));if(f!=null)return f;}return null;}
+    private View firstFocusable(View v){if(v.getVisibility()!=View.VISIBLE||!v.isEnabled())return null;if(v.isFocusable())return v;if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){View f=firstFocusable(((ViewGroup)v).getChildAt(i));if(f!=null)return f;}return null;}
     private void tag(View v,String t){v.setTag(t);}
     private void attachVideo(float x,float y,float w,float h,boolean focus){
         FrameLayout.LayoutParams host=new FrameLayout.LayoutParams(ui.px(w),ui.px(h));host.leftMargin=ui.px(x);host.topMargin=ui.px(y);videoShell.setLayoutParams(host);videoShell.setBackground(ui.surface(Color.BLACK,false));
@@ -278,7 +288,7 @@ public final class LiveActivity extends Activity {
                 JSONObject ch=shown.get(n);FrameLayout row=new FrameLayout(LiveActivity.this);
                 android.graphics.drawable.StateListDrawable bg=new android.graphics.drawable.StateListDrawable();bg.addState(new int[]{android.R.attr.state_selected},ui.surface(TvUi.ACCENT,true));bg.addState(new int[]{},full?new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT):ui.surface(0xff1b2038,false));row.setBackground(bg);
                 row.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(ui.largeText()?58:full?45:47)));
-                TextView number=ui.text(ch.optString("ChannelNo",String.valueOf(n+1)),12,TvUi.INK);number.setGravity(Gravity.CENTER);
+                TextView number=ui.text(ch.optString("ChannelNo",String.valueOf(n+1)),12,TvUi.INK);number.setGravity(Gravity.CENTER);number.setSingleLine();number.setTextScaleX(Math.min(1f,ui.px(26)/Math.max(1f,number.getPaint().measureText(number.getText().toString()))));
                 if(!full){GradientDrawable badge=new GradientDrawable();badge.setColor(new int[]{0xff50578d,0xff346d70,0xff3b668b}[n%3]);badge.setCornerRadius(ui.px(20));number.setBackground(badge);}
                 ui.at(row,number,full?10:9,9,28,28);
                 float left=full?46:47;TextView title=ui.text(ch.optString("ChannelName"),full?15:14,TvUi.INK);title.setTypeface(null,Typeface.BOLD);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,title,left,full?1.5f:3,w-left-22,ui.largeText()?31:22);
@@ -307,6 +317,7 @@ public final class LiveActivity extends Activity {
     private JSONObject currentChannel(){JSONObject c=playingSource.equals(source.id)?findChannel(playingCode):null;if(c==null)c=findChannel(requestedCode);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);return c;}
     private void restoreLastChannel(){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");JSONObject c=findChannel(code);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);if(c!=null)play(c,true);}
     private void play(JSONObject ch,boolean fresh){
+        if(playerReleasedForLibrary)return;
         if(ch==null||!resumed||!isLiveRoute())return;
         cancelFavoriteGesture();cancelPreviewSwitch();LiveSourceStore.Source targetSource=owner(ch);
         if(!targetSource.id.equals(source.id)){source=targetSource;requestedCode="";failedChannels.clear();final String selectedId=source.id;diskTask(()->store.activate(selectedId),()->{});}
@@ -332,7 +343,7 @@ public final class LiveActivity extends Activity {
                     requestedCode=playingCode;resumeCode=playingCode;resumeSource=playingSource;final String restored=playingSource;diskTask(()->store.activate(restored),()->{});bindPlaybackListener(gen,playingSource,playingCode);if(videoMessage!=null)videoMessage.setVisibility(View.GONE);toast("无法打开此频道，继续播放原频道。");return;}showVideoError(failedChannels.size()>=source.channels.size()?"当前来源的频道暂不可用":"无法打开此频道",builtin&&config.optString("user_id").isEmpty()?"请先导入机顶盒配置，或添加第三方直播源。":"请检查网络、授权或来源；也可选择其他频道。");});}
         });
     }
-    private boolean validPlayback(int generation,String id,String code){return !dead&&resumed&&isLiveRoute()&&generation==playGeneration&&source.id.equals(id)&&requestedCode.equals(code);}
+    private boolean validPlayback(int generation,String id,String code){return !dead&&!playerReleasedForLibrary&&resumed&&isLiveRoute()&&generation==playGeneration&&source.id.equals(id)&&requestedCode.equals(code);}
     private void bindPlaybackListener(int generation,String id,String code){
         if(playbackListener!=null)player.removeListener(playbackListener);
         playbackListener=new Player.Listener(){
@@ -626,12 +637,14 @@ public final class LiveActivity extends Activity {
     }
     private void openBoxConfig(){suspendPlayback();startActivity(new Intent(this,BoxConfigActivity.class));}
     private void openLibrary(boolean connect){openLibrary(connect,null,null);}
-    private void openLibrary(boolean connect,String itemId,String query){rememberFocus();suspendPlayback();try{Intent i=new Intent().setClassName(this,"org.jellyfin.androidtv.bestv.JellyLibraryActivity");i.putExtra("connect",connect);if(itemId!=null)i.putExtra("item_id",itemId);if(query!=null)i.putExtra("search_query",query);startActivity(i);}catch(Exception e){toast("媒体库暂时无法打开");if(isLiveRoute())restoreLastChannel();}}
+    private void openLibrary(boolean connect,String itemId,String query){rememberFocus();releaseLivePlayerForLibrary();try{Intent i=new Intent().setClassName(this,"org.jellyfin.androidtv.bestv.JellyLibraryActivity");i.putExtra("connect",connect);if(itemId!=null)i.putExtra("item_id",itemId);if(query!=null)i.putExtra("search_query",query);startActivity(i);}catch(Exception e){toast("媒体库暂时无法打开");if(playerReleasedForLibrary)createLivePlayer();if(isLiveRoute())restoreLastChannel();}}
     private static final String[] SETTINGS_CATEGORIES={"播放设置","显示与操作","Jellyfin 连接","内置源配置","关于 JellyLive"};
     private int settingsCategoryIndex(){for(int i=0;i<SETTINGS_CATEGORIES.length;i++)if(SETTINGS_CATEGORIES[i].equals(settingsCategory))return i;return 0;}
     private void rememberSettingsFocus(){if(settingsPanel==null||!settingsPanel.hasFocus())return;View focused=getCurrentFocus();if(focused!=null&&focused.getTag() instanceof String)settingsFocus.put((String)settingsPanel.getTag(),(String)focused.getTag());}
     private void focusSettingsPanel(){
-        if(settingsPanel==null)return;String key=settingsFocus.get(settingsCategory);View target=key==null?null:settingsPanel.findViewWithTag(key);if(target==null)target=firstFocusable(settingsPanel);if(target!=null)target.requestFocus();
+        if(settingsPanel==null)return;String key=settingsFocus.get(settingsCategory);View target=key==null?null:settingsPanel.findViewWithTag(key);
+        if(target==null||!target.isFocusable()||!target.isEnabled()||!target.isShown())target=firstFocusable(settingsPanel);
+        if(target!=null)target.requestFocus();
     }
     private void selectSettingsCategory(String category){
         if(category.equals(settingsCategory)&&settingsPanel!=null)return;rememberSettingsFocus();settingsCategory=category;renderSettingsPanel(false);
@@ -643,17 +656,18 @@ public final class LiveActivity extends Activity {
             String category=SETTINGS_CATEGORIES[i];Button tab=ui.button(page,category,48,109+i*56,210,38,()->selectSettingsCategory(category));tag(tab,"settings-"+i);settingsTabs.add(tab);
             tab.setBackground(ui.focusBackground(category.equals(settingsCategory)?0xff36305c:TvUi.TILE));tab.setOnFocusChangeListener((v,focused)->{if(focused)selectSettingsCategory(category);});
         }
+        for(int i=0;i<settingsTabs.size();i++){Button tab=settingsTabs.get(i);tab.setNextFocusUpId(settingsTabs.get(Math.max(0,i-1)).getId());tab.setNextFocusDownId(settingsTabs.get(Math.min(settingsTabs.size()-1,i+1)).getId());tab.setNextFocusLeftId(tab.getId());tab.setNextFocusRightId(tab.getId());}
         renderSettingsPanel(false);ui.footer(page,"方向键选择本页分类与右侧选项 · 返回恢复主页位置");
     }
     private void renderSettingsPanel(boolean restore){
         rememberSettingsFocus();if(settingsPanel!=null)TvUi.detach(settingsPanel);
-        FrameLayout panel=new FrameLayout(this);settingsPanel=panel;tag(panel,settingsCategory);panel.setBackground(ui.surface(TvUi.PANEL,false));ui.at(page,panel,265,109,647,341);ui.heading(panel,settingsCategory,18,22,16,594,34);
+        FrameLayout panel=new FrameLayout(this);settingsPanel=panel;tag(panel,settingsCategory);panel.setBackground(ui.surface(TvUi.PANEL,false));ui.at(page,panel,265,109,647,ui.largeText()?355:341);ui.heading(panel,settingsCategory,18,22,16,594,ui.largeText()?42:34);
         if(settingsCategory.equals("播放设置")){
             settingRow(panel,"启动行为",prefs.getBoolean("auto_play",true)?"主页自动续播":"主页不自动播放",48,()->showActions("启动行为",new String[]{"主页自动续播","主页不自动播放"},n->{prefs.edit().putBoolean("auto_play",n==0).apply();renderSettingsPanel(true);}));
             settingRow(panel,"画面比例",aspectLabel(),88,()->showActions("画面比例",new String[]{"原始","填充","拉伸"},n->{prefs.edit().putString("video_aspect",new String[]{"fit","zoom","stretch"}[n]).putBoolean("fill_video",n==1).apply();applyVideoAspect();renderSettingsPanel(true);}));
             settingRow(panel,"默认音轨",languageLabel(prefs.getString("preferred_audio","auto")),128,()->showActions("默认音轨",new String[]{"跟随媒体","中文","英语"},n->{prefs.edit().putString("preferred_audio",new String[]{"auto","zh","en"}[n]).apply();applyPlayerSettings();renderSettingsPanel(true);}));
             settingRow(panel,"默认字幕",languageLabel(prefs.getString("preferred_subtitle","off")),168,()->showActions("默认字幕",new String[]{"关闭","中文","英语"},n->{prefs.edit().putString("preferred_subtitle",new String[]{"off","zh","en"}[n]).apply();applyPlayerSettings();renderSettingsPanel(true);}));
-            ui.text(panel,"解码方式",14,TvUi.INK,22,208,300,38);ui.text(panel,"自动",14,0xffc5b8ff,314,208,280,38);
+            ui.text(panel,"解码方式",14,TvUi.INK,22,ui.largeText()?220:208,300,ui.largeText()?42:38);ui.text(panel,"自动",14,0xffc5b8ff,314,ui.largeText()?220:208,280,ui.largeText()?42:38);
             settingRow(panel,"剧集自动播放下一集",prefs.getBoolean("auto_next_episode",true)?"开启":"关闭",288,()->showActions("剧集自动播放下集",new String[]{"开启","关闭"},n->{prefs.edit().putBoolean("auto_next_episode",n==0).apply();renderSettingsPanel(true);}));
             settingRow(panel,"侧栏透明度",prefs.getInt("drawer_transparency",35)+"%",248,()->{String[] values=new String[17];for(int i=0;i<values.length;i++)values[i]=(i*5)+"%";showActions("频道侧栏透明度",values,n->{prefs.edit().putInt("drawer_transparency",n*5).apply();renderSettingsPanel(true);});});
         }else if(settingsCategory.equals("显示与操作")){
@@ -664,11 +678,23 @@ public final class LiveActivity extends Activity {
         else if(settingsCategory.equals("内置源配置")){ui.text(panel,"已有内置或保存的配置无需重新填写。\n支持机顶盒 ADB 只读导入、手动修改及 JSON 文件导入导出。",15,TvUi.MUTED,22,65,594,110);ui.button(panel,"打开机顶盒配置",22,197,220,40,()->openBoxConfig());}
         else{ui.text(panel,"JellyLive "+org.jellyfin.androidtv.BuildConfig.VERSION_NAME+"\n基于 Jellyfin Android TV / Media3，GPL-2.0。\n直播来源、授权与可用性以真实服务为准。\n不包含回看、时移或录制。",15,TvUi.MUTED,22,65,594,160);}
         for(int i=0;i<panel.getChildCount();i++){View child=panel.getChildAt(i);if(child.isFocusable()&&child.getTag()==null)tag(child,"setting-action-"+i);}
+        linkSettingsOptions(panel);
         if(restore){String category=settingsCategory;panel.post(()->{if(panel==settingsPanel&&route.equals("settings")&&category.equals(settingsCategory))focusSettingsPanel();});}
     }
+    /** Keep vertical motion within the current column, including gaps occupied by static text. */
+    private void linkSettingsOptions(FrameLayout panel){
+        List<View> actions=new ArrayList<>();collectSettingsActions(panel,actions);
+        actions.sort((a,b)->Integer.compare(settingsTop(a,panel),settingsTop(b,panel)));
+        int tab=settingsTabs.get(settingsCategoryIndex()).getId();
+        for(int i=0;i<actions.size();i++){View action=actions.get(i);action.setNextFocusUpId(actions.get(Math.max(0,i-1)).getId());action.setNextFocusDownId(actions.get(Math.min(actions.size()-1,i+1)).getId());action.setNextFocusLeftId(tab);action.setNextFocusRightId(action.getId());}
+    }
+    private void collectSettingsActions(ViewGroup group,List<View> actions){
+        for(int i=0;i<group.getChildCount();i++){View child=group.getChildAt(i);if(child.getVisibility()!=View.VISIBLE||!child.isEnabled())continue;if(child.isFocusable()){if(child.getId()==View.NO_ID)child.setId(View.generateViewId());actions.add(child);}else if(child instanceof ViewGroup)collectSettingsActions((ViewGroup)child,actions);}
+    }
+    private int settingsTop(View view,ViewGroup panel){int top=0;for(View current=view;current!=panel&&current!=null;current=current.getParent() instanceof View?(View)current.getParent():null){ViewGroup.LayoutParams params=current.getLayoutParams();if(params instanceof ViewGroup.MarginLayoutParams)top+=((ViewGroup.MarginLayoutParams)params).topMargin;}return top;}
     private void settingRow(FrameLayout panel,String name,String value,int y,Runnable action){
-        FrameLayout row=new FrameLayout(this);ui.at(panel,row,22,y,594,38);Button button=ui.button(row,"",0,0,594,38,action);tag(button,"setting-option-"+y);button.setContentDescription(name+"，"+value);button.setOnFocusChangeListener((v,focused)->{if(focused)settingsFocus.put(settingsCategory,(String)v.getTag());});
-        TextView title=ui.text(row,name,14,TvUi.INK,0,0,300,38);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);TextView current=ui.text(row,value,14,0xffc5b8ff,300,0,262,38);current.setSingleLine();current.setEllipsize(TextUtils.TruncateAt.END);ui.text(row,"›",14,TvUi.MUTED,574,0,20,38);
+        FrameLayout row=new FrameLayout(this);ui.at(panel,row,22,y+(ui.largeText()?12:0),594,ui.largeText()?42:38);Button button=ui.button(row,"",0,0,594,ui.largeText()?42:38,action);tag(button,"setting-option-"+y);button.setContentDescription(name+"，"+value);button.setOnFocusChangeListener((v,focused)->{if(focused)settingsFocus.put(settingsCategory,(String)v.getTag());});
+        TextView title=ui.text(row,name,14,TvUi.INK,0,0,300,ui.largeText()?42:38);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);TextView current=ui.text(row,value,14,0xffc5b8ff,300,0,262,ui.largeText()?42:38);current.setSingleLine();current.setEllipsize(TextUtils.TruncateAt.END);ui.text(row,"›",14,TvUi.MUTED,574,0,20,ui.largeText()?42:38);
     }
     private String languageLabel(String code){return code.equals("zh")?"中文":code.equals("en")?"英语":code.equals("off")?"关闭":"跟随媒体";}
     private void applyVideoAspect(){if(video==null)return;String aspect=prefs.getString("video_aspect",prefs.getBoolean("fill_video",false)?"zoom":"fit");video.setResizeMode(aspect.equals("zoom")?androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM:aspect.equals("stretch")?androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL:androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT);}
@@ -829,7 +855,7 @@ public final class LiveActivity extends Activity {
     @Override public void onBackPressed(){back();}
     @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&root!=null)immersive();if(!focus)cancelFavoriteGesture();}
     @Override protected void onResume(){
-        super.onResume();resumed=true;if(player==null||store==null)return;resumeReady();
+        super.onResume();resumed=true;if(player==null||store==null)return;if(playerReleasedForLibrary)createLivePlayer();resumeReady();
     }
     private void resumeReady(){
         String saved=prefs.getString("config","{}");boolean configChanged=!saved.equals(lastConfig);if(configChanged){loadConfig();schedules=new ConcurrentHashMap<>();scheduleAt=new ConcurrentHashMap<>();if(source.builtin()){playGeneration++;player.stop();player.clearMediaItems();playingCode="";playingSource="";}}
@@ -848,5 +874,5 @@ public final class LiveActivity extends Activity {
         state.putString("favorite_focus",new JSONObject(favoriteFocus).toString());state.putString("settings_focus",new JSONObject(settingsFocus).toString());state.putString("page_focus",new JSONObject(focusMemory).toString());
         try{JSONObject positions=new JSONObject();for(Map.Entry<String,int[]> entry:favoriteScroll.entrySet())positions.put(entry.getKey(),new JSONArray().put(entry.getValue()[0]).put(entry.getValue()[1]));state.putString("favorite_scroll",positions.toString());}catch(Exception ignored){}
     }
-    @Override protected void onDestroy(){dead=true;playGeneration++;if(startupRotation!=null)startupRotation.cancel();handler.removeCallbacksAndMessages(null);worker.shutdownNow();diskWorker.shutdownNow();streamWorker.shutdownNow();JellyLiveBridge.releaseLiveStreams();if(player!=null)player.release();super.onDestroy();}
+    @Override protected void onDestroy(){dead=true;playGeneration++;if(startupRotation!=null)startupRotation.cancel();handler.removeCallbacksAndMessages(null);worker.shutdownNow();diskWorker.shutdownNow();streamWorker.shutdownNow();JellyLiveBridge.releaseLiveStreams();if(player!=null&&!playerReleasedForLibrary)player.release();super.onDestroy();}
 }

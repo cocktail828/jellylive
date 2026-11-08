@@ -36,7 +36,11 @@ public final class TvUi {
     public TextView text(FrameLayout p,String s,int size,int color,float x,float y,float w,float h){return at(p,text(s,size,color),x,y,w,h);}
     public TextView title(FrameLayout p,String s,float x,float y,float w,float h){TextView t=text(p,s,21,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}
     public TextView heading(FrameLayout p,String s,int size,float x,float y,float w,float h){TextView t=text(p,s,size,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}
-    public Button button(String s,Runnable click){Button b=new Button(activity);b.setId(View.generateViewId());b.setAllCaps(false);b.setTextColor(INK);b.setTextSize(TypedValue.COMPLEX_UNIT_PX,14*scale*fontScale);b.setTypeface(null,Typeface.BOLD);b.setGravity(Gravity.CENTER);b.setPadding(px(10),0,px(10),0);b.setMinHeight(0);b.setMinimumHeight(0);b.setMinWidth(0);b.setMinimumWidth(0);b.setBackground(focusBackground(TILE));b.setOnClickListener(v->click.run());TvIcons.text(b,s);return b;}
+    public Button button(String s,Runnable click){Button b=new Button(activity);
+        // Material's default StateListAnimator raises a Button above its later label siblings.
+        // These TV controls draw their own focus background and must stay in child draw order.
+        b.setStateListAnimator(null);b.setElevation(0);b.setTranslationZ(0);b.setFocusable(true);
+        b.setId(View.generateViewId());b.setAllCaps(false);b.setTextColor(INK);b.setTextSize(TypedValue.COMPLEX_UNIT_PX,14*scale*fontScale);b.setTypeface(null,Typeface.BOLD);b.setGravity(Gravity.CENTER);b.setPadding(px(10),0,px(10),0);b.setMinHeight(0);b.setMinimumHeight(0);b.setMinWidth(0);b.setMinimumWidth(0);b.setBackground(focusBackground(TILE));b.setOnClickListener(v->click.run());TvIcons.text(b,s);return b;}
     public Button button(FrameLayout p,String s,float x,float y,float w,float h,Runnable click){return at(p,button(s,click),x,y,w,h);}
     public EditText input(FrameLayout p,String hint,String value,float x,float y,float w,boolean password){
         EditText e=new EditText(activity);e.setId(View.generateViewId());e.setSingleLine(true);e.setTextSize(TypedValue.COMPLEX_UNIT_PX,15*scale*fontScale);e.setTextColor(INK);e.setHintTextColor(MUTED);e.setHint(hint);e.setText(value);e.setPadding(px(14),0,px(14),0);e.setBackground(focusBackground(0xff20263e));e.setInputType(android.text.InputType.TYPE_CLASS_TEXT|(password?android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD:android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));return at(p,e,x,y,w,40);

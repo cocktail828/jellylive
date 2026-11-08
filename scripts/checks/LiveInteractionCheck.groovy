@@ -72,7 +72,7 @@ class Channel { String code; String optString(String key){code} }
 def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute'].collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
-    boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false
+    boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false,playerReleasedForLibrary=false
     String route='home',returnFromFull='home',guideReturn='home',guideFullReturn='home',requestedCode='a',liveErrorTitle='',lastHomeFocus='channel-list',playingSource='',playingCode='',resumeSource='',resumeCode=''
     int playGeneration=5
     long lastInputAt=0
@@ -299,6 +299,11 @@ check('recovery_restores_last_visible_action') {
 check('stale_recovery_action_falls_back_to_retry') {
     def h=fresh();h.lastRecoveryAction=loader.loadClass('View').newInstance();h.lastRecoveryAction.attached=false;h.focusRecovery()
     assert h.recoveryRetry.focused && !h.lastRecoveryAction.focused
+}
+
+check('released_live_player_rejects_callbacks_while_library_is_open') {
+    def h=fresh();h.playerReleasedForLibrary=true
+    assert !h.validPlayback(5,'builtin','a')
 }
 
 def output=[javaSyntaxParsed:true,scope:'Production method bodies executed in Groovy with fake platform/clock; not Android compilation or TV execution',checks:results.size(),results:results]
