@@ -42,7 +42,7 @@ apk.parent.mkdir(parents=True,exist_ok=True);apk.write_bytes(b'fixture APK, not 
         return result,args
     def mounts(args):return [args[i+1] for i,x in enumerate(args) if x=='--mount' and ',dst=/bootstrap/' in args[i+1]]
     plain,args=run()
-    verify('no local files produces plain build',plain.returncode==0 and not mounts(args) and (project/'dist/BestvLive-v0.1.1.apk').exists())
+    verify('no local files produces plain build',plain.returncode==0 and not mounts(args) and (project/'dist/jellylive+v0.1.1.apk').exists())
     bootstrap=project/'.local-build/bootstrap'
     box=bootstrap/'bestv-bootstrap.json';library=bootstrap/'jellyfin-bootstrap.json'
     box.write_text('{"user_id":"fixture-live"}');library.write_text('{"address":"http://fixture.invalid","username":"fixture-user","password":"fixture-password"}')
@@ -50,7 +50,7 @@ apk.parent.mkdir(parents=True,exist_ok=True);apk.write_bytes(b'fixture APK, not 
     configured,args=run()
     verify('default local files injected read-only',configured.returncode==0 and len(mounts(args))==2 and all(x.endswith(',readonly') for x in mounts(args)))
     verify('configured flag reaches container',any('JELLYLIVE_CONFIGURED=-configured'==x for x in args))
-    apk=project/'private/BestvLive-v0.1.1-configured.apk'
+    apk=project/'private/jellylive+v0.1.1.apk'
     verify('configured APK stays private',apk.exists() and stat.S_IMODE(apk.stat().st_mode)==0o600)
     verify('source assets never receive credentials',not list((project/'app/src/main/assets').iterdir()))
     verify('inputs unchanged',initial=={p.name:p.read_bytes() for p in bootstrap.iterdir()})

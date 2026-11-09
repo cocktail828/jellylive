@@ -18,7 +18,7 @@ sh scripts/build-container.sh
 
 只使用已有构建容器。若缓存放在别处，可设置 `JELLYLIVE_GRADLE_CACHE`。配置以只读文件挂入容器，由 Gradle 作为额外 assets 合并，构建前后都不会写入 `app/src/main/assets/`。不经过此脚本的普通 Gradle 构建默认不带配置。
 
-带配置的 APK 输出到忽略的 `private/BestvLive-v版本-configured.apk`，文件权限为 600；未带配置的 APK 输出到 `dist/`。APK 会包含这些连接信息，请仅用于自己的设备。
+带配置的 APK 输出到忽略的 `private/jellylive+v版本.apk`，文件权限为 600；未带配置的 APK 输出到 `dist/`。APK 会包含这些连接信息，请仅用于自己的设备。
 
 ```sh
 # 明确生成不带任何内置连接配置的 APK（即使本地文件存在）

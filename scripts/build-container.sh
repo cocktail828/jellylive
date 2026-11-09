@@ -68,7 +68,7 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GRADLE_U
     /opt/android-sdk-linux/build-tools/36.0.0/apksigner verify \
       "app/build/outputs/apk/debug/jellyfin-androidtv-v$BESTV_BUILD_VERSION-debug.apk"
   '
-output_path="$output_dir/BestvLive-v$version$output_suffix.apk"
+output_path="$output_dir/jellylive+v$version.apk"
 cp "$client_dir/app/build/outputs/apk/debug/jellyfin-androidtv-v$version-debug.apk" "$output_path.tmp"
 if test -n "$output_suffix"; then chmod 600 "$output_path.tmp"; else chmod 644 "$output_path.tmp"; fi
 mv -f "$output_path.tmp" "$output_path"
