@@ -1,6 +1,0 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@android:color/transparent" />
-    <item>
-        <bitmap android:src="@drawable/jellylive_startup" android:gravity="fill" android:filter="true" />
-    </item>
-</layer-list>

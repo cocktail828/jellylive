@@ -9,6 +9,8 @@ public final class PlaybackLayout {
     public static final float ACTION_Y=32, ACTION_WIDTH=96, ACTION_HEIGHT=30, ACTION_GAP=8;
     public static final float DRAWER_X=680, DRAWER_WIDTH=280, DRAWER_CONTENT_X=16, DRAWER_CONTENT_WIDTH=214;
     public static float actionX(int index){if(index<0||index>2)throw new IllegalArgumentException("action index");return 576+index*104;}
+    public static float mediaActionX(int index){if(index<0||index>3)throw new IllegalArgumentException("media action index");return 520+index*100;}
+    public static final float MEDIA_ACTION_WIDTH=92;
     public static String value(String role,String value){
         if(value==null||value.trim().isEmpty()||java.util.Arrays.asList("关闭","默认","自动","跟随媒体","跟随频道","不可用","off","none","default","auto").contains(value.toLowerCase(java.util.Locale.ROOT)))return role;
         return value;
