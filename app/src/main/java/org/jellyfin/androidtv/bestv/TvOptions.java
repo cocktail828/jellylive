@@ -22,16 +22,17 @@ public final class TvOptions {
         for(int i=0;i<names.length;i++){float measured=measure.getPaint().measureText(names[i]);if(!sourceTypes&&details!=null&&i<details.length&&!details[i].isEmpty())measured+=ui.px(20)+measure.getPaint().measureText(details[i]);width=Math.max(width,measured/ui.scale+45);}
         width=Math.min(maxWidth,width);
         float heading=groupMenu||sourceTypes?7:title==null||title.isEmpty()?10:title.equals("倍速")?40:32;
+        float titleHeight=Math.max(27,21*ui.fontScale);if(title!=null&&!title.isEmpty())heading=Math.max(heading,titleHeight+8);
         float height=Math.min(400,heading+names.length*rowHeight+(groupMenu?5:sourceTypes?6:9));
         FrameLayout panel=new FrameLayout(activity);panel.setBackground(ui.glass(TvUi.PANEL));
         AlertDialog popup=new AlertDialog.Builder(activity).create();popup.setView(panel,0,0,0,0);popup.setCanceledOnTouchOutside(true);
-        if(title!=null&&!title.isEmpty())ui.heading(panel,title,15,13,4,width-26,27);
+        if(title!=null&&!title.isEmpty())ui.heading(panel,title,15,13,4,width-26,titleHeight);
         ScrollView scroll=new ScrollView(activity);scroll.setVerticalScrollBarEnabled(false);LinearLayout rows=new LinearLayout(activity);rows.setOrientation(LinearLayout.VERTICAL);scroll.addView(rows);ui.at(panel,scroll,8,heading,width-16,height-heading-8);
         View guard=new View(activity);guard.setBackgroundColor(OverlayContrast.OPTION_GUARD);ui.at(panel,guard,4,heading,width-8,height-heading-4);scroll.bringToFront();
         Button focused=null;
         for(int i=0;i<names.length;i++){
             final int index=i;FrameLayout row=new FrameLayout(activity);Button action=ui.button("",()->{popup.dismiss();chosen.select(index);});rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(rowHeight)));ui.at(row,action,0,1,width-16,rowHeight-2);
-            android.graphics.drawable.StateListDrawable background=new android.graphics.drawable.StateListDrawable();background.addState(new int[]{android.R.attr.state_focused},ui.surface(TvUi.TILE,true));background.addState(new int[]{android.R.attr.state_selected},ui.surface(TvUi.TILE,true));background.addState(new int[]{},new ColorDrawable(Color.TRANSPARENT));action.setBackground(background);action.setSelected(i==selected);
+            android.graphics.drawable.StateListDrawable background=new android.graphics.drawable.StateListDrawable();background.addState(new int[]{android.R.attr.state_focused},ui.surface(TvUi.TILE,true));background.addState(new int[]{android.R.attr.state_selected},ui.surface(0xff36305c,false));background.addState(new int[]{},new ColorDrawable(Color.TRANSPARENT));action.setBackground(background);action.setSelected(i==selected);
             String detail=details!=null&&i<details.length?details[i]:"";
             float detailWidth=detail.isEmpty()?0:Math.min(width*.52f,measure.getPaint().measureText(detail)/ui.scale+4);
             if(sourceTypes){
@@ -60,6 +61,6 @@ public final class TvOptions {
         y=Math.max(27,Math.min(513-height,y));
         popup.show();Window window=popup.getWindow();if(window!=null){window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));window.getDecorView().setPadding(0,0,0,0);window.getDecorView().setSystemUiVisibility(activity.getWindow().getDecorView().getSystemUiVisibility());window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);window.setGravity(Gravity.TOP|Gravity.LEFT);WindowManager.LayoutParams attributes=window.getAttributes();attributes.x=ui.px(x);attributes.y=ui.px(y);window.setAttributes(attributes);window.setLayout(ui.px(width),ui.px(height));}
         TvGlass.apply(activity,ui,panel,x,y,width,height);
-        if(focused!=null)focused.requestFocus();return popup;
+        if(focused!=null){Button target=focused;target.setFocusableInTouchMode(true);target.requestFocus();target.post(()->{if(popup.isShowing())target.requestFocus();});}return popup;
     }
 }

@@ -46,6 +46,7 @@ object JellyLiveBridge : KoinComponent {
     }
     @JvmStatic fun mediaDataSourceFactory(context: android.content.Context): androidx.media3.datasource.DataSource.Factory = androidx.media3.datasource.DefaultDataSource.Factory(context.applicationContext,dataSourceFactory())
     @JvmStatic fun isConnected() = LibraryRepository().connected
+    @JvmStatic fun serverName(): String = LibraryRepository().serverName
     @JvmStatic fun serverKey(): String = LibraryRepository().sessions.currentSession.value?.serverId?.toString().orEmpty()
     @JvmStatic fun loadSource(callback: Callback<Snapshot>) {
         run(callback) {

@@ -115,7 +115,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".bestv.BoxConfigActivity" android:exported="false"
-            android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar"
+            android:screenOrientation="landscape" android:theme="@style/Theme.JellyLive.BoxConfig"
             android:enableOnBackInvokedCallback="false" />
         <activity android:name=".bestv.JellyLibraryActivity" android:exported="false"
             android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar"

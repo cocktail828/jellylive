@@ -101,6 +101,7 @@ class InteractionHost {
     void hideControls(){controlsVisible=false;events.add('hide-controls')}
     void hideDrawer(){drawerVisible=false;events.add('hide-drawer')}
     void render(boolean restore){events.add('render:'+route)}
+    boolean settingsBack(){false} // Android settings focus itself is covered by the native driver.
     void rememberFocus(){events.add('remember-focus')}
     void exitDialog(){events.add('exit-confirm')}
     void toast(String value){events.add('toast')}

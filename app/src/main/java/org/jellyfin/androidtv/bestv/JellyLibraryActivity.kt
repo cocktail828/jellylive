@@ -74,6 +74,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private var playbackFailure=false
     private var retryPosition=0L
     private var buffering: FrameLayout?=null
+    private var connectionCancel: (() -> Boolean)?=null
     private val showBuffering=Runnable {if(pageName=="player"&&!playbackFailure&&player?.playbackState==Player.STATE_BUFFERING)buffering?.visibility=View.VISIBLE}
     private var playerHeading: FrameLayout? = null
     private var playerWallClock: TextView?=null
@@ -258,68 +259,94 @@ class JellyLibraryActivity : FragmentActivity() {
         centerState("连接成功，还没有媒体内容。","请在 Jellyfin 服务器添加媒体库，再回来刷新。",listOf("刷新媒体库" to retry,"▷ 返回看直播" to { finish() }))
     }
     private fun connection(push: Boolean=true) {
-        fresh("connection",push); header("连接 Jellyfin","媒体库为可选功能，不影响直播")
-        val summary=label(if(repo.connected) "已连接 · ${repo.serverName}" else "尚未连接",64f,101f,540f,30f,13)
-        val addressLabel=label("服务器地址",64f,151f,540f,24f,14,true)
+        fresh("connection",push)
+        ui.heading(page,"连接媒体库",23,50f,46f,700f,42f);ui.text(page,"JellyLive",15,0xffb9b0ef.toInt(),810f,46f,102f,40f)
+        val summary=label("Jellyfin 或兼容媒体服务器",50f,86f,840f,34f,15,true)
         val preset=bootstrap
-        val initialAddress=repo.address.ifEmpty { local.getString("last_address","").orEmpty() }.ifEmpty { preset?.address.orEmpty() }
-        val initialUsername=local.getString("last_username","").orEmpty().ifEmpty { if(preset?.matchesAddress(initialAddress)==true) preset.username else "" }
-        val address=ui.input(page,"http://服务器地址:8096",initialAddress,64f,181f,540f,false)
-        val usernameLabel=label("用户名",64f,237f,540f,24f,14,true)
-        val username=ui.input(page,"输入用户名",initialUsername,64f,267f,540f,false)
-        val passwordLabel=label("密码",64f,322f,540f,24f,14,true)
-        val password=ui.input(page,"输入密码",if(preset?.matches(initialAddress,initialUsername)==true) preset.password else "",64f,352f,540f,true)
-        val clearForeignPassword=object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if(preset!=null && !preset.matches(address.text.toString(),username.text.toString())) password.setText("")
-            }
-            override fun afterTextChanged(s: android.text.Editable?) = Unit
+        val initialAddress=repo.address.ifEmpty {local.getString("last_address","").orEmpty()}.ifEmpty {preset?.address.orEmpty()}
+        val initialUsername=local.getString("last_username","").orEmpty().ifEmpty {if(preset?.matchesAddress(initialAddress)==true)preset.username else ""}
+        val addressLabel=label("服务器地址",50f,117f,540f,28f,15)
+        val address=TvFormField(this,ui,"http://服务器地址:8096",initialAddress,false);ui.at(page,address,50f,146f,540f,48f)
+        val usernameLabel=label("用户名",50f,205f,540f,28f,15)
+        val username=TvFormField(this,ui,"输入用户名",initialUsername,false);ui.at(page,username,50f,232f,540f,48f)
+        val passwordLabel=label("密码",50f,291f,540f,28f,15)
+        val password=TvFormField(this,ui,"输入密码",if(preset?.matches(initialAddress,initialUsername)==true)preset.password else "",true);ui.at(page,password,50f,318f,540f,48f)
+        val fields=listOf(address,username,password)
+        val clearForeignPassword=object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int)=Unit
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){password.setText("")}
+            override fun afterTextChanged(s:android.text.Editable?)=Unit
         }
         address.addTextChangedListener(clearForeignPassword);username.addTextChangedListener(clearForeignPassword)
-        label("连接后可以",655f,164f,257f,32f,18)
-        label("✓  浏览电影和剧集\n\n✓  同步继续观看进度\n\n✓  使用服务器提供的直播",655f,201f,257f,150f,14,true)
-        val status=label("",64f,394f,540f,25f,12,true)
-        if(bootstrapFailure) status.text="自动连接未成功，可检查网络后重试"
-        lateinit var submit: Button
-        submit=ui.button(page,"检测并连接",64f,420f,150f,39f) {
-            val a=address.text.toString().trim(); val u=username.text.toString().trim()
-            if (a.isEmpty() || u.isEmpty()) { status.text="请填写服务器地址和用户名"; return@button }
-            val normalized=if(a.contains("://")) a else "http://$a"
-            if (!normalized.startsWith("http://") && !normalized.startsWith("https://")) {status.text="请输入 http 或 https 服务器地址";return@button}
-            submit.isEnabled=false; status.text="正在验证服务器并登录…"
-            val stamp=generation
+        label("连接提示",640f,234f,260f,35f,17)
+        label("使用媒体服务器账号。\n\n更换地址或账号后重新登录。\n\n媒体库与电视直播独立使用。",640f,273f,260f,minOf(225f,maxOf(140f,140f*ui.fontScale)),14,true)
+        val status=label(if(bootstrapFailure)"自动连接未成功，可检查网络后重试" else "",50f,370f,540f,40f,13,true)
+        var connecting=false;var discovering=false;lateinit var submit:Button;lateinit var discover:Button
+        fun cancelConnection(){val pending=task;status.text="正在取消…";pending?.cancel();val stamp=generation;pending?.invokeOnCompletion {runOnUiThread {if(stamp==generation){connecting=false;discovering=false;fields.forEach {it.isEnabled=true;it.isFocusable=true};discover.isEnabled=true;discover.isFocusable=true;submit.text="检测并连接";status.text="已取消，原连接未改变。";submit.requestFocus()}}}}
+        fun busy(value:Boolean){connecting=value;fields.forEach {it.isEnabled=!value;it.isFocusable=!value};discover.isEnabled=!value;discover.isFocusable=!value;submit.text=if(value)"正在连接…" else "检测并连接";submit.contentDescription=if(value)"正在连接，请稍候" else "检测并连接"}
+        submit=ui.button(page,"检测并连接",50f,418f,250f,44f) {
+            if(submit.tag=="ime-done"){fields.forEach {it.finishEditing()};submit.requestFocus();return@button}
+            if(connecting||discovering)return@button
+            fields.forEach {it.finishEditing()}
+            val a=address.text.toString().trim();val u=username.text.toString().trim()
+            if(a.isEmpty()||u.isEmpty()){status.text="请填写服务器地址和用户名";(if(a.isEmpty())address else username).requestFocus();return@button}
+            val normalized=if(a.contains("://"))a else "http://$a"
+            val valid=runCatching {java.net.URI(normalized).let {it.scheme in listOf("http","https")&&!it.host.isNullOrBlank()}}.getOrDefault(false)
+            if(!valid){status.text="请输入有效的 http 或 https 服务器地址";address.requestFocus();return@button}
+            val secret=password.text.toString();val stamp=generation;val previous=repo.sessions.currentSession.value
+            submit.requestFocus();busy(true);status.text="正在验证服务器与账号…"
             task=lifecycleScope.launch {
+                var accepted=false
                 try {
-                    repo.login(normalized,u,password.text.toString())
-                    password.setText("");local.edit().putString("last_address",normalized).putString("last_username",u).putBoolean("bootstrap_consumed",true).apply()
-                    if(stamp==generation) { history.clear();launchDestination() }
-                } catch(e: CancellationException) { if (e is TimeoutCancellationException && stamp==generation) status.text="连接超时，请检查服务器和网络" }
-                catch(e: Exception) { if(stamp==generation) status.text=e.message?.takeIf { it.length<100 } ?: "连接失败，请检查地址和账号" }
-                finally { if(stamp==generation) submit.isEnabled=true }
+                    repo.login(normalized,u,secret);ensureActive()
+                    if(stamp!=generation)throw CancellationException()
+                    accepted=true;password.setText("");local.edit().putString("last_address",normalized).putString("last_username",u).putBoolean("bootstrap_consumed",true).apply()
+                    history.clear();launchDestination()
+                }catch(e:CancellationException){if(e is TimeoutCancellationException&&stamp==generation)status.text="连接超时，请检查地址与网络。"}
+                catch(_:Exception){if(stamp==generation){status.text="连接未成功，请检查服务器地址、账号和密码。";password.requestFocus()}}
+                finally{
+                    if(!accepted&&repo.sessions.currentSession.value!=previous)withContext(NonCancellable){if(previous==null)repo.sessions.destroyCurrentSession()else repo.sessions.switchCurrentSession(previous.serverId,previous.userId)}
+                    if(stamp==generation){busy(false);if(status.text.contains("未成功"))password.requestFocus()}
+                }
             }
         }
-        ui.button(page,"取消",228f,420f,100f,39f) {back()}
-        val discover=ui.button(page,"发现局域网服务器",655f,374f,240f,39f) {
-            status.text="正在发现局域网服务器…"
-            val stamp=generation
+        val cancel=ui.button(page,"取消",314f,418f,130f,44f){if(connecting||discovering)cancelConnection()else back()}
+        discover=ui.button(page,"发现局域网服务器",640f,146f,260f,44f){
+            if(connecting||discovering)return@button
+            fields.forEach {it.finishEditing()};discovering=true;status.text="正在发现局域网服务器…";val stamp=generation
             task=lifecycleScope.launch {
-                try {
-                    val found=repo.discovery()
-                    if(stamp==generation) {
-                        status.text=if(found.isEmpty()) "未发现服务器，也可手动输入地址" else "选择服务器后输入账号密码"
-                        if(found.isNotEmpty()) choose("选择服务器",found.map { it.name },-1) { address.setText(found[it].address);username.requestFocus() }
+                try{
+                    val found=repo.discovery();if(stamp!=generation)return@launch
+                    status.text=if(found.isEmpty())"未发现服务器，可手动输入地址。" else "选择服务器后填写账号。"
+                    if(found.isNotEmpty()){
+                        val old=currentFocus;val viewport=FrameLayout(this@JellyLibraryActivity).apply {background=ui.surface(TvUi.PANEL,false)}
+                        ui.heading(viewport,"选择媒体服务器",21,24f,16f,796f,42f)
+                        val list=ScrollView(this@JellyLibraryActivity);val rows=LinearLayout(this@JellyLibraryActivity).apply {orientation=LinearLayout.VERTICAL};list.addView(rows);ui.at(viewport,list,24f,76f,796f,340f)
+                        val popup=AlertDialog.Builder(this@JellyLibraryActivity).create();popup.setView(viewport,0,0,0,0);dialog=popup
+                        val choices=found.map {server->
+                            val row=FrameLayout(this@JellyLibraryActivity);val h=maxOf(62f,52f*ui.fontScale)
+                            val button=ui.button(row,"",0f,0f,784f,h){address.setText(server.address);popup.dismiss();username.requestFocus()}
+                            ui.heading(row,server.name,17,16f,3f,748f,h/2).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                            ui.text(row,server.address,14,TvUi.MUTED,16f,h/2,748f,h/2).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                            rows.addView(row,LinearLayout.LayoutParams(-1,ui.px(h+8)));button
+                        }
+                        choices.forEachIndexed {i,b->b.nextFocusUpId=choices[(i-1).coerceAtLeast(0)].id;b.nextFocusDownId=choices[(i+1).coerceAtMost(choices.lastIndex)].id;b.nextFocusLeftId=b.id;b.nextFocusRightId=b.id}
+                        popup.setOnDismissListener {dialog=null;old?.takeIf {it.isAttachedToWindow}?.requestFocus()};popup.show();popup.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));popup.window?.setLayout(ui.px(844f),ui.px(440f));choices.first().requestFocus()
                     }
-                } catch (_: Exception) { if(stamp==generation) status.text="发现暂不可用，请手动输入地址" }
+                }catch(_:CancellationException){}catch(_:Exception){if(stamp==generation)status.text="发现暂不可用，请手动输入地址。"}
+                finally{if(stamp==generation)discovering=false}
             }
         }
-        address.nextFocusDownId=username.id;username.nextFocusDownId=password.id;password.nextFocusDownId=submit.id
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        val formScroll=scrollContent(490f)
-        TvImeForm(ui,page,formScroll,formScroll.getChildAt(0) as FrameLayout,listOf(address,username,password),listOf(addressLabel,usernameLabel,passwordLabel),summary,submit)
-        listOf(address,username,password).forEach {field->field.imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_NEXT}
-        password.imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_DONE
-        password.setOnEditorActionListener {_,action,_->if(action==android.view.inputmethod.EditorInfo.IME_ACTION_DONE){(getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(password.windowToken,0);submit.requestFocus();true}else false}
+        address.nextFocusUpId=address.id;address.nextFocusDownId=username.id;address.nextFocusRightId=discover.id;address.nextFocusLeftId=address.id
+        discover.nextFocusLeftId=address.id;discover.nextFocusRightId=discover.id;discover.nextFocusUpId=discover.id;discover.nextFocusDownId=username.id
+        username.nextFocusUpId=address.id;username.nextFocusDownId=password.id;username.nextFocusLeftId=username.id;username.nextFocusRightId=username.id
+        password.nextFocusUpId=username.id;password.nextFocusDownId=submit.id;password.nextFocusLeftId=password.id;password.nextFocusRightId=password.id
+        submit.nextFocusUpId=password.id;submit.nextFocusDownId=submit.id;submit.nextFocusLeftId=submit.id;submit.nextFocusRightId=cancel.id
+        cancel.nextFocusUpId=password.id;cancel.nextFocusDownId=cancel.id;cancel.nextFocusLeftId=submit.id;cancel.nextFocusRightId=cancel.id
+        val formScroll=scrollContent(510f)
+        TvImeForm(ui,page,formScroll,formScroll.getChildAt(0) as FrameLayout,fields,listOf(addressLabel,usernameLabel,passwordLabel),summary,submit)
+        fields.forEachIndexed {i,f->f.imeOptions=if(i==2)android.view.inputmethod.EditorInfo.IME_ACTION_DONE else android.view.inputmethod.EditorInfo.IME_ACTION_NEXT;f.setOnEditorActionListener {_,_,_->f.finishEditing();if(i<2)fields[i+1].requestFocus()else submit.requestFocus();true}}
+        connectionCancel={if(connecting||discovering){cancelConnection();true}else false}
         focus(address)
     }
 
@@ -910,6 +937,7 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun back() {
         if(dialog!=null){dialog?.dismiss();return}
+        if(pageName=="connection"){val field=currentFocus as? TvFormField;if(field?.isEditing==true){field.finishEditing();return};if(connectionCancel?.invoke()==true)return}
         if(pageName=="player") {if(playbackFailure){stopPlayer();backToSaved();return};if(nextCard!=null){cancelAutoNext();return};if(overlay.seeking){cancelSeek();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
         if(history.isEmpty())finish()else backToSaved()
     }
