@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">电影详情：系统大字号 1.5×</title><desc id="desc">系统1.5倍大字详情；三个操作仍等宽，按2+1排为两行以容纳续播时间，演职人员随内容滚动，所有动作保留。</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
+<linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#b18684"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="0" y="0" width="1920" height="1080" rx="0" fill="#101326" fill-opacity="0.92" stroke="none" stroke-width="1"/><text x="96" y="121" fill="#f6f5ff" font-size="63.0" font-weight="650">电影详情</text><text x="1540" y="105" fill="#b9b0ef" font-size="48.0" font-weight="600">JellyLive</text><svg x="96" y="214" width="280" height="420.0" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#b18684"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="96" y="214" width="280" height="420.0" rx="14" fill="none" stroke="#424862" stroke-width="1"/><text x="424" y="282" fill="#f6f5ff" font-size="96" font-weight="700">山河之间</text><text x="424" y="346" fill="#c4b7e8" font-size="42" font-weight="400">一段穿越山河的归途</text><text x="424" y="418" fill="#a9adc6" font-size="42" font-weight="400">评分 8.6 · 2025 · 中国大陆</text><text x="424" y="480" fill="#a9adc6" font-size="39" font-weight="400">01:48:00 · 4K · 剧情 / 旅行</text><text x="424" y="556" fill="#f6f5ff" font-size="45" font-weight="400">一封迟到的来信，开启了一段穿越山河的旅程。</text><text x="424" y="610" fill="#f6f5ff" font-size="45" font-weight="400">沿途的相遇，让归乡有了新的意义。</text><rect x="424" y="660" width="684" height="100" rx="14" fill="url(#purple)" stroke="#fff" stroke-width="4"/><text x="766" y="725" text-anchor="middle" fill="#f6f5ff" font-size="42" font-weight="600">继续播放 00:36:20</text><rect x="1132" y="660" width="684" height="100" rx="14" fill="#242a46" stroke="#363e5d" stroke-width="1"/><text x="1474" y="725" text-anchor="middle" fill="#f6f5ff" font-size="42" font-weight="600">从头播放</text><rect x="424" y="786" width="684" height="100" rx="14" fill="#242a46" stroke="#363e5d" stroke-width="1"/><text x="766" y="851" text-anchor="middle" fill="#f6f5ff" font-size="42" font-weight="600">标为已看</text><text x="96" y="966" fill="#f6f5ff" font-size="48" font-weight="600">演职人员</text></g></svg>

@@ -4,6 +4,8 @@
 
 基于 Jellyfin Android TV 0.19.10 修改，遵循 [GPL-2.0 许可证](LICENSE)。上游项目介绍见 [Jellyfin Android TV README](docs/upstream/README.md)。
 
+当前设计稿及交互规范见独立目录 [ui-design/](ui-design/README.md)。
+
 ## 界面预览
 
 以下为应用实际运行截图。频道、海报及观看进度随连接的直播源和媒体库变化。

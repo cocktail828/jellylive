@@ -1,0 +1,11 @@
+JellyLive启动标志使用Jellyfin的三角图形；本项目未改动标志形状，只设计了旋转和文字组合。
+图形路径来自工作区Jellyfin Android TV v0.19.10的app/src/main/res/drawable/app_logo.xml。
+上游：https://github.com/jellyfin/jellyfin-androidtv
+源代码与资源随上游GPL-2.0授权；许可证全文附于LICENSE-JELLYFIN.txt。
+Jellyfin名称和标志属于其各自权利人；本设计不是Jellyfin官方产品声明。
+
+图17电影详情与图19播放器参考本地仓库附图的布局和信息层次：
+fastlane/metadata/android/en-US/images/tvScreenshots/3.png（详情）及2.png（播放器）。
+当前设计采用JellyLive风格的中文可编辑SVG，不内嵌参考截图或其中影片画面。
+背景/海报风景和人物占位图为原创SVG；频道、片名、主创与媒体字段均为虚构示意，不是设备截图或NAS实测数据。
+此前直接使用上游英文截图的版本已经撤回，不能据旧说明误称当前图17/19为原生截图。

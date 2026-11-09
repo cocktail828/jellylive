@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><title>直播全屏长按收藏与取消收藏</title><rect width="1920" height="1080" fill="#101326"/><g font-family="Noto Sans CJK SC,Microsoft YaHei,sans-serif"><text x="64" y="86" fill="#f6f5ff" font-size="46" font-weight="650">直播全屏 · 长按确认收藏</text><text x="64" y="134" fill="#a9adc6" font-size="26" font-weight="400">仅在长按操作后显示结果，不自动弹说明</text><text x="248" y="190" fill="#f6f5ff" font-size="32" font-weight="600">01  收藏成功</text><svg xmlns="http://www.w3.org/2000/svg" width="560" height="315" viewBox="0 0 1920 1080" role="img" aria-labelledby="panel0-title panel0-desc" x="248" y="216">
+<title id="panel0-title">直播全屏：收藏结果提示</title><desc id="panel0-desc">长按只触发一次，松手不再触发短按；保存成功后底部小字提示约2秒，取消收藏显示已取消收藏。不中断播放、不弹确认对话框。</desc>
+<defs><linearGradient id="panel0-bg" x2="1" y2="1"><stop stop-color="#101326" /><stop offset="1" stop-color="#080c18" /></linearGradient>
+<linearGradient id="panel0-purple" x2="1" y2="1"><stop stop-color="#6652d5" /><stop offset="1" stop-color="#3a327d" /></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#panel0-bg)" /><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49" />
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15" />
+      <circle cx="760" cy="190" r="62" fill="#b18684" />
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b" />
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7" />
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32" />
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6" />
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624" />
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6" />
+    </svg><rect x="685" y="952" width="550" height="64" rx="16" fill="#101629dd" stroke="none" stroke-width="1" /><text x="960" y="994" text-anchor="middle" fill="#dce0ef" font-size="26">已收藏 · 体育现场</text></g></svg><rect x="248" y="216" width="560" height="315" rx="12" fill="none" stroke="#414a65" stroke-width="2"/><text x="248" y="584" fill="#a9adc6" font-size="24" font-weight="400">底部提示放大</text><rect x="248" y="610" width="560" height="80" rx="16" fill="#1b2038" stroke="#414a65" stroke-width="1"/><text x="528" y="660" text-anchor="middle" fill="#dce0ef" font-size="26">已收藏 · 体育现场</text><text x="248" y="752" fill="#a9adc6" font-size="25" font-weight="400">长按确认：收藏当前播放频道</text><text x="248" y="798" fill="#a9adc6" font-size="25" font-weight="400">保存成功后提示约2秒</text><text x="1112" y="190" fill="#f6f5ff" font-size="32" font-weight="600">02  取消收藏</text><svg xmlns="http://www.w3.org/2000/svg" width="560" height="315" viewBox="0 0 1920 1080" role="img" aria-labelledby="panel1-title panel1-desc" x="1112" y="216">
+<title id="panel1-title">直播全屏：取消收藏提示</title><desc id="panel1-desc">再次长按确认取消当前播放频道的收藏；保存成功后底部小字提示约2秒，列表同步更新，播放不中断。</desc>
+<defs><linearGradient id="panel1-bg" x2="1" y2="1"><stop stop-color="#101326" /><stop offset="1" stop-color="#080c18" /></linearGradient>
+<linearGradient id="panel1-purple" x2="1" y2="1"><stop stop-color="#6652d5" /><stop offset="1" stop-color="#3a327d" /></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#panel1-bg)" /><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49" />
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15" />
+      <circle cx="760" cy="190" r="62" fill="#b18684" />
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b" />
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7" />
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32" />
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6" />
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624" />
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6" />
+    </svg><rect x="685" y="952" width="550" height="64" rx="16" fill="#101629dd" stroke="none" stroke-width="1" /><text x="960" y="994" text-anchor="middle" fill="#dce0ef" font-size="26">已取消收藏 · 体育现场</text></g></svg><rect x="1112" y="216" width="560" height="315" rx="12" fill="none" stroke="#414a65" stroke-width="2"/><text x="1112" y="584" fill="#a9adc6" font-size="24" font-weight="400">底部提示放大</text><rect x="1112" y="610" width="560" height="80" rx="16" fill="#1b2038" stroke="#414a65" stroke-width="1"/><text x="1392" y="660" text-anchor="middle" fill="#dce0ef" font-size="26">已取消收藏 · 体育现场</text><text x="1112" y="752" fill="#a9adc6" font-size="25" font-weight="400">再次长按确认：取消收藏</text><text x="1112" y="798" fill="#a9adc6" font-size="25" font-weight="400">状态同步到收藏列表</text><g transform="translate(944 632) scale(0.8888888888888888)"><path d="M13 5 L26 18 L13 31" fill="none" stroke="#a9adc6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g><text x="64" y="916" fill="#f6f5ff" font-size="30" font-weight="600">短按确定：显示信息条    长按确定：切换收藏    Menu：不提供功能</text><text x="64" y="980" fill="#a9adc6" font-size="26" font-weight="400">按住只触发一次，松开不再触发短按；侧栏或弹层打开时不执行快捷收藏。</text></g></svg>

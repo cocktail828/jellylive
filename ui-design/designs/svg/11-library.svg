@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">媒体库首页</title><desc id="desc">上方继续观看、下方电影/剧集/最近添加入口，分类仅显示真实已知数量；最近添加按真实入库时间倒序，电影和剧集默认名称升序。示意数据不代表设备实测。</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
+<linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><text x="96" y="107" fill="#f6f5ff" font-size="42" font-weight="650">我的媒体库</text><text x="1628" y="105" fill="#b9b0ef" font-size="32" font-weight="600">JellyLive</text><text x="96" y="155" fill="#a9adc6" font-size="24" font-weight="400">客厅 Jellyfin · 已连接</text><rect x="1508" y="138" width="316" height="76" rx="14" fill="#242a46" stroke="#363e5d" stroke-width="1"/><g transform="translate(1532 160.0) scale(0.8888888888888888)"><path d="M25 15 A10 10 0 1 1 5 15 A10 10 0 1 1 25 15 M23 23 L33 33" fill="none" stroke="#f6f5ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g><text x="1578" y="186.0" fill="#f6f5ff" font-size="28" font-weight="600">搜索媒体</text><text x="96" y="231" fill="#f6f5ff" font-size="34" font-weight="600">继续观看</text><svg x="100" y="264" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#b18684"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="100" y="424" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="120" y="476" fill="#f6f5ff" font-size="30" font-weight="600">山河之间</text><text x="120" y="510" fill="#a9adc6" font-size="24" font-weight="400">继续播放 · 已观看 00:36:00</text><rect x="100" y="264" width="552" height="260" rx="14" fill="none" stroke="#fff" stroke-width="4"/><rect x="116" y="508" width="520" height="5" rx="2" fill="#414760" stroke="none" stroke-width="1"/><rect x="116" y="508" width="205" height="5" rx="2" fill="#ac9aff" stroke="none" stroke-width="1"/><svg x="684" y="264" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#153c42"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#c5b390" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#c5b390"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#2b605e"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#112d38"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="684" y="424" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="704" y="476" fill="#f6f5ff" font-size="30" font-weight="600">远方来信</text><text x="704" y="510" fill="#a9adc6" font-size="24" font-weight="400">继续播放 · 已观看 00:36:00</text><rect x="700" y="508" width="520" height="5" rx="2" fill="#414760" stroke="none" stroke-width="1"/><rect x="700" y="508" width="205" height="5" rx="2" fill="#ac9aff" stroke="none" stroke-width="1"/><svg x="1268" y="264" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#30274b"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#d39b86" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#d39b86"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#554863"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#211d3b"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="1268" y="424" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="1288" y="476" fill="#f6f5ff" font-size="30" font-weight="600">海岸日记</text><text x="1288" y="510" fill="#a9adc6" font-size="24" font-weight="400">继续播放 · 已观看 00:36:00</text><rect x="1284" y="508" width="520" height="5" rx="2" fill="#414760" stroke="none" stroke-width="1"/><rect x="1284" y="508" width="205" height="5" rx="2" fill="#ac9aff" stroke="none" stroke-width="1"/><text x="96" y="608" fill="#f6f5ff" font-size="34" font-weight="600">探索媒体库</text><svg x="100" y="642" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#153c42"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#c5b390" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#c5b390"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#2b605e"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#112d38"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="100" y="802" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="120" y="854" fill="#f6f5ff" font-size="30" font-weight="600">电影</text><text x="120" y="888" fill="#a9adc6" font-size="24" font-weight="400">86 部电影</text><svg x="684" y="642" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#30274b"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#d39b86" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#d39b86"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#554863"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#211d3b"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="684" y="802" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="704" y="854" fill="#f6f5ff" font-size="30" font-weight="600">剧集</text><text x="704" y="888" fill="#a9adc6" font-size="24" font-weight="400">12 部剧集</text><svg x="1268" y="642" width="552" height="260" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#b18684"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><rect x="1268" y="802" width="552" height="100" rx="0" fill="#10182b" stroke="none" stroke-width="1"/><text x="1288" y="854" fill="#f6f5ff" font-size="30" font-weight="600">最近添加</text><text x="1288" y="888" fill="#a9adc6" font-size="24" font-weight="400">98 项 · 按添加时间</text></g></svg>

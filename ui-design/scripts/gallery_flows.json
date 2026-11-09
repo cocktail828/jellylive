@@ -1,0 +1,27 @@
+{
+  "startup": [
+    {"id":"launch","title":"启动与初始化","figures":[1,2,24]}
+  ],
+  "live": [
+    {"id":"home","title":"主页与频道分组","figures":[3,4,30,31,25]},
+    {"id":"fullscreen","title":"全屏直播与播放选项","figures":[9,10,36,35,43,44,60]},
+    {"id":"favorites","title":"收藏与收藏反馈","figures":[6,7,8,33,34]},
+    {"id":"guide","title":"节目单与节目详情","figures":[11,12,26]},
+    {"id":"sources","title":"直播源管理","figures":[13,37,38,14]},
+    {"id":"box","title":"机顶盒配置入口与读取失败","figures":[87,88,89],"related":"settings.html#flow-settings-box","relatedTitle":"后续导入、修改、高级参数与保存流程"}
+  ],
+  "media": [
+    {"id":"home","title":"媒体库首页与观看历史","figures":[15,41,27,28]},
+    {"id":"browse","title":"浏览、搜索、筛选与排序","figures":[16,63,20,39,40,52,56,58]},
+    {"id":"details","title":"电影与剧集详情","figures":[17,62,18,55]},
+    {"id":"playback","title":"媒体播放、底栏与选项","figures":[86,49,19,85,45,47,48,50,46,57,61,64,51]},
+    {"id":"connection","title":"连接与访问异常","figures":[29,53,54],"related":"settings.html#flow-settings-connection","relatedTitle":"连接表单与服务器发现"}
+  ],
+  "settings": [
+    {"id":"playback","title":"播放设置与选择子菜单","figures":[21,67,65,66,80,81]},
+    {"id":"display","title":"显示、字号与侧栏透明度","figures":[22,68,69]},
+    {"id":"connection","title":"媒体库连接与输入","figures":[70,23,83,59,84,78]},
+    {"id":"box","title":"机顶盒配置完整流程","figures":[71,72,82,73,74,75,76,77],"related":"live.html#flow-live-box","relatedTitle":"直播源中的同一配置入口"},
+    {"id":"about","title":"关于","figures":[79]}
+  ]
+}

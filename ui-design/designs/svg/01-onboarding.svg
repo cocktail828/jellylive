@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">首次启动与初始化</title><desc id="desc">自动获取内置源不以 Jellyfin 登录为前置条件。</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
+<linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><text x="128" y="162" fill="#f6f5ff" font-size="64" font-weight="700">JellyLive</text><rect x="128" y="196" width="240" height="40" rx="20" fill="#2b2850" stroke="none" stroke-width="1"/><text x="146" y="224" fill="#b6a8ff" font-size="24" font-weight="400">电视，由你掌控</text><text x="128" y="340" fill="#f6f5ff" font-size="58" font-weight="650">打开，就是好节目。</text><text x="128" y="405" fill="#a9adc6" font-size="28" font-weight="400">正在获取内置直播源，无需先连接媒体库。</text><rect x="128" y="480" width="740" height="12" rx="6" fill="#272c44" stroke="none" stroke-width="1"/><rect x="128" y="480" width="510" height="12" rx="6" fill="#7561ed" stroke="none" stroke-width="1"/><text x="128" y="540" fill="#f6f5ff" font-size="28" font-weight="400">正在同步频道…  68%</text><rect x="128" y="655" width="290" height="76" rx="14" fill="url(#purple)" stroke="#ffffff" stroke-width="4"/><g transform="translate(152 677.0) scale(0.8888888888888888)"><path d="M18 5 V31 M5 18 H31" fill="none" stroke="#f6f5ff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g><text x="198" y="703.0" fill="#f6f5ff" font-size="28" font-weight="600">手动添加直播源</text><rect x="446" y="655" width="270" height="76" rx="14" fill="#242a46" stroke="#363e5d" stroke-width="1"/><text x="472" y="703.0" fill="#f6f5ff" font-size="28" font-weight="600">先进入主页</text><svg x="1010" y="160" width="780" height="650" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#152c49"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#b18684" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#b18684"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#25394b"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#121f32"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg></g></svg>
