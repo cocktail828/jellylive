@@ -277,16 +277,18 @@ def drawer_scene(menu=False,transparency=35):
     if menu:s+=frosted_backdrop(s,content_left,138,content_width,344)+source_menu(content_left,138,content_width,translucent=True)
     return s
 
-LIVE_ACTIONS=[(label,1216+i*208,192) for i,label in enumerate(['画面比例','音轨','字幕'])]
+LIVE_ACTIONS=[(label,1040+i*200,184) for i,label in enumerate(['画质','画面比例','音轨','字幕'])]
 MEDIA_ACTIONS=[(label,1040+i*200,184) for i,label in enumerate(['画面比例','倍速','音轨','字幕'])]
 
-def live_bar(active=None,ratio='原始',audio='普通话',subtitles='关闭'):
+def live_bar(active=None,ratio='原始',audio='普通话',subtitles='关闭',quality='高清',quality_available=True,channel='01  山野纪实'):
     s=scene(0,0,1920,1080)+player_bar()
     s+=rect(96,902,1728,6,'#3c465c',3)+rect(96,902,1037,6,'#afa0ff',3)
-    s+=text(96,976,'01  山野纪实',30,weight=600)
-    values={'画面比例':ratio,'音轨':audio,'字幕':subtitles}
+    s+=text(96,976,channel,30,weight=600)
+    values={'画质':quality,'画面比例':ratio,'音轨':audio,'字幕':subtitles}
     for i,(label,x,w) in enumerate(LIVE_ACTIONS):
-        s+=quiet_action(x,936,w,option_label(label,values[label]),active is None and i==0,active==label,name=label)
+        disabled=label=='画质' and not quality_available
+        focus=(active==label if active else i==(0 if quality_available else 1)) and not disabled
+        s+=('<g opacity=".5" data-disabled="true">' if disabled else '')+quiet_action(x,936,w,option_label(label,values[label]),focus,name=label)+('</g>' if disabled else '')
     return s
 
 def live_option_popover(kind,ratio='原始',audio='普通话',subtitles='关闭'):
@@ -663,6 +665,8 @@ from settings_tv_designs import install as install_settings
 SETTINGS_TV_VARIANTS=install_settings(globals())
 from playback_box_designs import install as install_playback_box
 PLAYBACK_BOX_VARIANTS=install_playback_box(globals())
+from live_quality_designs import install as install_live_quality
+LIVE_QUALITY_VARIANTS=install_live_quality(globals())
 
 if __name__=='__main__':
     (OUT/'svg').mkdir(parents=True,exist_ok=True)
@@ -692,6 +696,7 @@ if __name__=='__main__':
     TV_AUDIT_VARIANTS()
     SETTINGS_TV_VARIANTS()
     PLAYBACK_BOX_VARIANTS()
+    LIVE_QUALITY_VARIANTS()
     favorite_flow()
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:

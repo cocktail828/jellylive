@@ -1,8 +1,8 @@
 {
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
-  "slots": 89,
-  "active": 86,
-  "textCount": 1443,
+  "slots": 93,
+  "active": 90,
+  "textCount": 1479,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -1232,12 +1232,24 @@
     },
     {
       "figure": 9,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 9,
       "text": "原始",
       "size": 26.0,
       "bounds": [
-        1286.0,
+        1306.0,
         953.0,
-        1338.0,
+        1358.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -1247,9 +1259,9 @@
       "text": "普通话",
       "size": 26.0,
       "bounds": [
-        1482.0,
+        1494.0,
         953.0,
-        1558.0,
+        1570.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -1259,9 +1271,9 @@
       "text": "字幕",
       "size": 26.0,
       "bounds": [
-        1703.0,
+        1707.0,
         953.0,
-        1754.0,
+        1758.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -7208,12 +7220,24 @@
     },
     {
       "figure": 35,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 35,
       "text": "原始",
       "size": 26.0,
       "bounds": [
-        1286.0,
+        1306.0,
         953.0,
-        1338.0,
+        1358.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -7223,9 +7247,9 @@
       "text": "普通话",
       "size": 26.0,
       "bounds": [
-        1482.0,
+        1494.0,
         953.0,
-        1558.0,
+        1570.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -7235,9 +7259,9 @@
       "text": "字幕",
       "size": 26.0,
       "bounds": [
-        1703.0,
+        1707.0,
         953.0,
-        1754.0,
+        1758.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9332,12 +9356,24 @@
     },
     {
       "figure": 43,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 43,
       "text": "原始",
       "size": 26.0,
       "bounds": [
-        1286.0,
+        1306.0,
         953.0,
-        1338.0,
+        1358.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9347,9 +9383,9 @@
       "text": "原声",
       "size": 26.0,
       "bounds": [
-        1494.0,
+        1506.0,
         953.0,
-        1545.0,
+        1557.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9359,9 +9395,9 @@
       "text": "字幕",
       "size": 26.0,
       "bounds": [
-        1703.0,
+        1707.0,
         953.0,
-        1754.0,
+        1758.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9371,9 +9407,9 @@
       "text": "音轨",
       "size": 30.0,
       "bounds": [
-        1291.0,
+        1299.0,
         674.0,
-        1350.0,
+        1358.0,
         704.0
       ],
       "clippedIntentionally": false
@@ -9383,9 +9419,9 @@
       "text": "普通话",
       "size": 26.0,
       "bounds": [
-        1323.0,
+        1331.0,
         730.0,
-        1399.0,
+        1407.0,
         756.0
       ],
       "clippedIntentionally": false
@@ -9395,9 +9431,9 @@
       "text": "AAC · 双声道",
       "size": 24.0,
       "bounds": [
-        1439.0,
+        1447.0,
         732.0,
-        1588.0,
+        1596.0,
         756.0
       ],
       "clippedIntentionally": false
@@ -9407,9 +9443,9 @@
       "text": "原声",
       "size": 26.0,
       "bounds": [
-        1322.0,
+        1330.0,
         788.0,
-        1373.0,
+        1381.0,
         814.0
       ],
       "clippedIntentionally": false
@@ -9419,9 +9455,9 @@
       "text": "AAC · 双声道",
       "size": 24.0,
       "bounds": [
-        1439.0,
+        1447.0,
         790.0,
-        1588.0,
+        1596.0,
         814.0
       ],
       "clippedIntentionally": false
@@ -9440,12 +9476,24 @@
     },
     {
       "figure": 44,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 44,
       "text": "原始",
       "size": 26.0,
       "bounds": [
-        1286.0,
+        1306.0,
         953.0,
-        1338.0,
+        1358.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9455,9 +9503,9 @@
       "text": "普通话",
       "size": 26.0,
       "bounds": [
-        1482.0,
+        1494.0,
         953.0,
-        1558.0,
+        1570.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -9467,9 +9515,9 @@
       "text": "简体中文",
       "size": 26.0,
       "bounds": [
-        1677.0,
+        1680.0,
         953.0,
-        1780.0,
+        1784.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -11636,12 +11684,24 @@
     },
     {
       "figure": 60,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 60,
       "text": "原始",
       "size": 26.0,
       "bounds": [
-        1286.0,
+        1306.0,
         953.0,
-        1338.0,
+        1358.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -11651,9 +11711,9 @@
       "text": "普通话",
       "size": 26.0,
       "bounds": [
-        1482.0,
+        1494.0,
         953.0,
-        1558.0,
+        1570.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -11663,9 +11723,9 @@
       "text": "字幕",
       "size": 26.0,
       "bounds": [
-        1703.0,
+        1707.0,
         953.0,
-        1754.0,
+        1758.0,
         979.0
       ],
       "clippedIntentionally": false
@@ -17319,6 +17379,378 @@
         433.0,
         758.0,
         462.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "01  CCTV-1高清",
+      "size": 30.0,
+      "bounds": [
+        97.0,
+        950.0,
+        309.0,
+        980.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "原始",
+      "size": 26.0,
+      "bounds": [
+        1306.0,
+        953.0,
+        1358.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "普通话",
+      "size": 26.0,
+      "bounds": [
+        1494.0,
+        953.0,
+        1570.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "字幕",
+      "size": 26.0,
+      "bounds": [
+        1707.0,
+        953.0,
+        1758.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "画质",
+      "size": 30.0,
+      "bounds": [
+        923.0,
+        674.0,
+        981.0,
+        704.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        955.0,
+        730.0,
+        1005.0,
+        756.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "CCTV-1高清",
+      "size": 24.0,
+      "bounds": [
+        1071.0,
+        732.0,
+        1195.0,
+        756.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "CCTV-1",
+      "size": 26.0,
+      "bounds": [
+        955.0,
+        792.0,
+        1038.0,
+        811.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 90,
+      "text": "画质未标注",
+      "size": 24.0,
+      "bounds": [
+        1078.0,
+        790.0,
+        1196.0,
+        814.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 91,
+      "text": "01  纪实频道",
+      "size": 30.0,
+      "bounds": [
+        97.0,
+        950.0,
+        266.0,
+        980.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 91,
+      "text": "画质",
+      "size": 26.0,
+      "bounds": [
+        1108.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 91,
+      "text": "原始",
+      "size": 26.0,
+      "bounds": [
+        1306.0,
+        953.0,
+        1358.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 91,
+      "text": "普通话",
+      "size": 26.0,
+      "bounds": [
+        1494.0,
+        953.0,
+        1570.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 91,
+      "text": "字幕",
+      "size": 26.0,
+      "bounds": [
+        1707.0,
+        953.0,
+        1758.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "01  CCTV-1高清",
+      "size": 30.0,
+      "bounds": [
+        97.0,
+        950.0,
+        309.0,
+        980.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "原始",
+      "size": 26.0,
+      "bounds": [
+        1306.0,
+        953.0,
+        1358.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "普通话",
+      "size": 26.0,
+      "bounds": [
+        1494.0,
+        953.0,
+        1570.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "字幕",
+      "size": 26.0,
+      "bounds": [
+        1707.0,
+        953.0,
+        1758.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 92,
+      "text": "画质切换失败，继续播放原画质",
+      "size": 28.0,
+      "bounds": [
+        766.0,
+        803.0,
+        1155.0,
+        832.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "01  CCTV-1高清",
+      "size": 30.0,
+      "bounds": [
+        97.0,
+        950.0,
+        309.0,
+        980.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "高清",
+      "size": 26.0,
+      "bounds": [
+        1107.0,
+        953.0,
+        1157.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "原始",
+      "size": 26.0,
+      "bounds": [
+        1306.0,
+        953.0,
+        1358.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "普通话",
+      "size": 26.0,
+      "bounds": [
+        1494.0,
+        953.0,
+        1570.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "字幕",
+      "size": 26.0,
+      "bounds": [
+        1707.0,
+        953.0,
+        1758.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "画质",
+      "size": 45.0,
+      "bounds": [
+        756.0,
+        593.0,
+        843.0,
+        638.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "高清",
+      "size": 39.0,
+      "bounds": [
+        817.0,
+        678.5,
+        892.0,
+        717.5
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "CCTV-1高清",
+      "size": 36.0,
+      "bounds": [
+        1008.0,
+        680.5,
+        1195.0,
+        716.5
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "CCTV-1",
+      "size": 39.0,
+      "bounds": [
+        817.0,
+        770.5,
+        942.0,
+        799.5
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 93,
+      "text": "画质未标注",
+      "size": 36.0,
+      "bounds": [
+        1019.0,
+        767.5,
+        1195.0,
+        803.5
       ],
       "clippedIntentionally": false
     }

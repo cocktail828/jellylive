@@ -159,7 +159,7 @@ def install(g):
 
     def track_popover(kind,options,selected,anchor_right,background,large=False):
         fs=1.5 if large else 1;font=26*fs;step=58*fs;heading=64*fs
-        width=max(280,min(620 if large else 520,math.ceil(max(g['estimated_text_width'](a,font)+g['estimated_text_width'](b,24*fs)+118 for a,b in options)/8)*8))
+        width=max(280,min(620 if large else 520,math.ceil(max(g['estimated_text_width'](a,font)+g['estimated_text_width'](b,24*fs)+118*fs for a,b in options)/8)*8))
         height=heading+len(options)*step+18;x=min(anchor_right,1820)-width;y=852-height
         s=g['frosted_backdrop'](background,x,y,width,height)+rect(x,y,width,height,'#191f34',18,'#59627d',1,fill_opacity=.65)
         s+=rect(x+8,y+heading,width-16,height-heading-8,'#080d1c',10,fill_opacity=.22)+text(x+26,y+46*fs,kind,30*fs,INK,650)

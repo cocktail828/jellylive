@@ -4,7 +4,7 @@ from pathlib import Path
 from render_designs import new,render,surface,context,write,destroy,finish,unref,bind,cairo
 ROOT=Path(__file__).resolve().parents[1];D=ROOT/'designs';OUT=D/'adaptations';OUT.mkdir(exist_ok=True)
 scale=bind(cairo,'cairo_scale',[__import__('ctypes').c_void_p,__import__('ctypes').c_double,__import__('ctypes').c_double],None)
-targets=[('12-library-grid','普通字号 · 六张海报'),('12-library-large-text','系统1.5倍 · 五张海报'),('05-live-bright','亮色视频 · 文字保护'),('13-movie-large-text','系统1.5倍 · 等宽两行操作'),('17-settings','设置 · 普通字号'),('17-settings-large','设置 · 系统1.5倍字号'),('18-jellyfin','媒体库连接 · TV表单'),('17-settings-box-edit','机顶盒配置 · 常用信息'),('15-media-player','媒体播放器 · 四项功能'),('15-media-aspect','媒体播放器 · 比例选项'),('09-box-config','直播源 · 机顶盒配置'),('09-box-config-large','机顶盒配置 · 系统1.5倍字号')]
+targets=[('12-library-grid','普通字号 · 六张海报'),('12-library-large-text','系统1.5倍 · 五张海报'),('05-live-bright','亮色视频 · 文字保护'),('13-movie-large-text','系统1.5倍 · 等宽两行操作'),('17-settings','设置 · 普通字号'),('17-settings-large','设置 · 系统1.5倍字号'),('18-jellyfin','媒体库连接 · TV表单'),('17-settings-box-edit','机顶盒配置 · 常用信息'),('15-media-player','媒体播放器 · 四项功能'),('15-media-aspect','媒体播放器 · 比例选项'),('09-box-config','直播源 · 机顶盒配置'),('09-box-config-large','机顶盒配置 · 系统1.5倍字号'),('05-live-quality','直播 · 真实画质菜单'),('05-live-quality-large','直播 · 画质菜单大字号')]
 sections=[]
 for slug,title in targets:
     images=[]

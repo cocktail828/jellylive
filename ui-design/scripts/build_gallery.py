@@ -82,7 +82,7 @@ document.querySelector('#prev').onclick=()=>step(-1);document.querySelector('#ne
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(f=>f.setAttribute('aria-pressed',String(f===b)));document.querySelectorAll('.card').forEach(c=>c.hidden=b.dataset.filter!=='all'&&c.dataset.kind!==b.dataset.filter);document.querySelectorAll('.flow-group,.design-part').forEach(part=>part.hidden=![...part.querySelectorAll('.card')].some(c=>!c.hidden))}));
 </script></html>'''
 for current_part in [None,*[key for key,_,_ in PARTS],'tv-review']:
-    review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,90)}
+    review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,94)}
     review=current_part=='tv-review'
     selected=[screen for screen in screens if (screen['number'] in review_numbers if review else current_part is None or screen['part']==current_part)]
     navigation=part_navigation.replace(f'href="{current_part or "index"}.html"',f'href="{current_part or "index"}.html" aria-current="page"')
