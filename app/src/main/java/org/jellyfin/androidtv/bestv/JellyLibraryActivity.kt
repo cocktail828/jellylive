@@ -108,6 +108,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private var reportStarted = false
     private var lastReport = 0L
     private var lastPersist = 0L
+    private var searchKeyboardReturn: View?=null
     private var searchInput: EditText? = null
     private var searchResults: LinearLayout? = null
     private var searchJob: Job? = null
@@ -682,22 +683,48 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun search(initial: String="",push: Boolean=true,parent: UUID?=null,kind: BaseItemKind?=null) {
         mediaSearchScope=MediaSearchScope(repo.sessionKey,parent,kind)
-        fresh("search",push);header("搜索媒体","${repo.serverName} · ${when(kind){BaseItemKind.MOVIE->"电影";BaseItemKind.SERIES->"剧集";else->"电影和剧集"}}")
-        val input=ui.input(page,"输入片名、剧集名",initial,50f,100f,350f,false);searchInput=input
-        val body=LinearLayout(this);body.orientation=LinearLayout.VERTICAL;searchResults=body
-        val sc=ScrollView(this);sc.addView(body);ui.at(page,sc,415f,105f,497f,354f)
-        val chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        chars.forEachIndexed {index,c ->ui.button(page,c.toString(),50f+(index%6)*58f,159f+(index/6)*39f,51f,32f) {input.append(c.toString());runSearch(input.text.toString())}}
-        ui.button(page,"中文／拼音",50f,405f,107f,39f) {input.requestFocus();(getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showSoftInput(input,InputMethodManager.SHOW_IMPLICIT)}
-        ui.button(page,"退格",171f,405f,107f,39f) {if(input.length()>0)input.text.delete(input.length()-1,input.length());runSearch(input.text.toString())}
-        ui.button(page,"清除",292f,405f,107f,39f) {input.setText("");runSearch("")}
-        input.setOnEditorActionListener {_,_,_ ->(getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(input.windowToken,0);runSearch(input.text.toString());true}
-        input.addTextChangedListener(object: android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?,start: Int,count: Int,after: Int) {}
-            override fun onTextChanged(s: CharSequence?,start: Int,before: Int,count: Int) {runSearch(s.toString())}
-            override fun afterTextChanged(s: android.text.Editable?) {}
+        fresh("search",push);header("媒体搜索","${repo.serverName} · ${when(kind){BaseItemKind.MOVIE->"电影";BaseItemKind.SERIES->"剧集";else->"电影和剧集"}}")
+        val input=TvFormField(this,ui,"输入片名、剧集名",initial,false);ui.at(page,input,50f,100f,350f,43f);input.setSelection(input.length());searchInput=input
+        val body=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL};searchResults=body
+        val results=ScrollView(this).apply {isHorizontalScrollBarEnabled=false;addView(body)};ui.at(page,results,415f,105f,497f,394f)
+        val keyboard=ScrollView(this).apply {isFocusable=false;isVerticalScrollBarEnabled=true}
+        val keys=FrameLayout(this);val actionHeight=maxOf(41f,32f*ui.fontScale)
+        keyboard.addView(keys,FrameLayout.LayoutParams(ui.px(350f),ui.px(264f+actionHeight*2+9f)));ui.at(page,keyboard,50f,150f,350f,357f)
+        fun resultTarget(view:View):View? {if(view.isFocusable&&view.isEnabled&&view.isShown)return view;if(view is ViewGroup)for(i in 0 until view.childCount)resultTarget(view.getChildAt(i))?.let {return it};return null}
+        fun insert(value:String){val at=input.selectionStart.coerceIn(0,input.length());input.text.insert(at,value);input.setSelection(at+value.length)}
+        val rows=mutableListOf<List<Button>>()
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".chunked(6).forEachIndexed {row,letters->rows+=letters.mapIndexed {col,c->ui.button(keys,c.toString(),col*58f,row*42f,50f,38f){insert(c.toString())}}}
+        val languageWidth=if(ui.largeText())200f else 122f
+        val language=ui.button(keys,"中文 / 英文",0f,264f,languageWidth,actionHeight){input.beginEditing()}
+        val space=ui.button(keys,"空格",languageWidth+8f,264f,342f-languageWidth,actionHeight){insert(" ")}
+        val delete=ui.button(keys,"删除",0f,273f+actionHeight,164f,actionHeight){val at=input.selectionStart.coerceIn(0,input.length());if(at>0){input.text.delete(at-1,at);input.setSelection(at-1)}}
+        val clear=ui.button(keys,"清除",176f,273f+actionHeight,164f,actionHeight){input.setText("")}
+        rows+=listOf(language,space);rows+=listOf(delete,clear)
+        fun middle(v:View):Int {val p=v.layoutParams as FrameLayout.LayoutParams;return p.leftMargin+p.width/2}
+        rows.forEachIndexed {row,line->line.forEachIndexed {col,b->
+            b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,15f*ui.scale*ui.fontScale);b.setSingleLine();b.contentDescription=when(b){delete->"删除光标前一个字符";clear->"清除全部查询";else->b.text}
+            b.nextFocusUpId=if(row==0)input.id else rows[row-1].minBy {kotlin.math.abs(middle(it)-middle(b))}.id
+            b.nextFocusDownId=if(row==rows.lastIndex)b.id else rows[row+1].minBy {kotlin.math.abs(middle(it)-middle(b))}.id
+            b.nextFocusLeftId=line.getOrNull(col-1)?.id ?: b.id;b.nextFocusRightId=line.getOrNull(col+1)?.id ?: b.id
+            b.setOnFocusChangeListener {_,focused->if(focused){searchKeyboardReturn=b;input.nextFocusDownId=b.id}}
+            if(col==line.lastIndex)b.setOnKeyListener {_,key,event->if(key==KeyEvent.KEYCODE_DPAD_RIGHT&&event.action==KeyEvent.ACTION_DOWN){resultTarget(body)?.requestFocus();true}else false}
+        }}
+        input.nextFocusUpId=input.id;input.nextFocusDownId=rows[0][0].id;input.nextFocusLeftId=input.id;input.nextFocusRightId=input.id;searchKeyboardReturn=rows[0][0]
+        input.imeOptions=android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+        input.setOnEditorActionListener {_,_,_->input.finishEditing();searchKeyboardReturn?.requestFocus();true}
+        var wasIme=false
+        page.getViewTreeObserver().addOnGlobalLayoutListener {
+            input.keyboardLayout();val bounds=android.graphics.Rect();page.getWindowVisibleDisplayFrame(bounds)
+            val shown=resources.displayMetrics.heightPixels-bounds.bottom>ui.px(100f)
+            keyboard.visibility=if(shown)View.GONE else View.VISIBLE
+            if(wasIme&&!shown)searchKeyboardReturn?.post {searchKeyboardReturn?.takeIf {it.isAttachedToWindow}?.requestFocus()};wasIme=shown
+        }
+        input.addTextChangedListener(object:android.text.TextWatcher {
+            override fun beforeTextChanged(s:CharSequence?,start:Int,count:Int,after:Int)=Unit
+            override fun onTextChanged(s:CharSequence?,start:Int,before:Int,count:Int){runSearch(s.toString())}
+            override fun afterTextChanged(s:android.text.Editable?)=Unit
         })
-        runSearch(initial);focus(input)
+        runSearch(initial);focus(rows[0][0])
     }
     private fun runSearch(query: String) {
         searchJob?.cancel();val serial=++mediaSearchSerial;val stamp=generation;val scope=mediaSearchScope ?: return;val resultBody=searchResults ?: return
@@ -714,7 +741,7 @@ class JellyLibraryActivity : FragmentActivity() {
                 resultBody.removeAllViews();section(resultBody,"媒体 · ${result.size}")
                 if(result.isEmpty())resultBody.addView(ui.text("没有找到相关媒体，试试其他关键词。",14,TvUi.MUTED))
                 if(result.size>60)resultBody.addView(ui.text("结果较多，先显示前 60 项；可补充关键词缩小范围。",12,TvUi.MUTED))
-                result.take(60).forEach {item -> resultBody.addView(tile(item.name ?: "未命名媒体",meta(item),490,112,item) {detail(item)},LinearLayout.LayoutParams(-1,ui.px(112f)).apply {bottomMargin=ui.px(12f)})}
+                result.take(60).forEach {item -> val card=tile(item.name ?: "未命名媒体",meta(item),490,112,item) {detail(item)};card.setOnKeyListener {_,key,event->if(key==KeyEvent.KEYCODE_DPAD_LEFT&&event.action==KeyEvent.ACTION_DOWN){searchKeyboardReturn?.requestFocus();true}else false};resultBody.addView(card,LinearLayout.LayoutParams(-1,ui.px(112f)).apply {bottomMargin=ui.px(12f)})}
             } catch(e: CancellationException) {if(e is TimeoutCancellationException && isCurrent()){resultBody.removeAllViews();resultBody.addView(ui.text("搜索超时，关键词已保留。",14,TvUi.MUTED))}}
             catch(_: Exception) {if(isCurrent()){resultBody.removeAllViews();resultBody.addView(ui.text("暂时无法搜索，请重试或检查连接。",14,TvUi.MUTED))}}
         }
