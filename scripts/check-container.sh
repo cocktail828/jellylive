@@ -25,4 +25,6 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
     java -cp "$check_lib/*" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler -no-stdlib -no-reflect -jvm-target 17 \
       -classpath "$check_lib/kotlin-stdlib-2.2.0.jar" -d /tmp/numeric-version-check /tmp/NumericVersionCheck.kt
     java -cp "/tmp/numeric-version-check:$check_lib/kotlin-stdlib-2.2.0.jar" NumericVersionCheckKt
+    javac -proc:none -d /tmp/live-quality-check app/src/main/java/org/jellyfin/androidtv/bestv/LiveQuality.java scripts/checks/LiveQualityCheck.java
+    java -cp /tmp/live-quality-check LiveQualityCheck
   '

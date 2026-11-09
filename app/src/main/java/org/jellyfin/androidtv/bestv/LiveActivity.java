@@ -56,8 +56,16 @@ public final class LiveActivity extends Activity {
     private ListView list;
     private LinearLayout sourceRowsHost;
     private List<JSONObject> shown=new ArrayList<>();
-    private Button groupButton,previewButton,aspectAction,audioAction,subtitleAction;
+    private Button groupButton,previewButton,qualityAction,aspectAction,audioAction,subtitleAction;
     private boolean playerReleasedForLibrary;
+    private final Map<String,String> qualityChoices=new HashMap<>();
+    private String qualityPendingKey="",qualityPendingCode="";
+    private static final class LiveStream {
+        final String url,id,code;final int generation;final DataSource.Factory data;
+        LiveStream(String u,String i,String c,int g,DataSource.Factory d){url=u;id=i;code=c;generation=g;data=d;}
+    }
+    private LiveStream activeLiveStream,preparedLiveStream,qualityRollback;
+
     private View drawerShade;
     private Button recoveryRetry,recoverySources;
     private View lastRecoveryAction;
@@ -132,7 +140,7 @@ public final class LiveActivity extends Activity {
             settingsCategory=state.getString("settings_category","播放设置");guideReturn=state.getString("guide_return","home");guideFullReturn=state.getString("guide_full_return","home");guideChannel=state.getString("guide_channel","");guideSourceId=state.getString("guide_source","");guidePage=state.getInt("guide_page",0);
             resumeSource=state.getString("resume_source","");resumeCode=state.getString("resume_code","");resumePlayback=state.getBoolean("resume_playback",false);
             ArrayList<String> savedStack=state.getStringArrayList("back_stack");if(savedStack!=null)backStack.addAll(savedStack);
-            restoreStringMap(state,"favorite_focus",favoriteFocus);restoreStringMap(state,"settings_focus",settingsFocus);restoreStringMap(state,"page_focus",focusMemory);
+            restoreStringMap(state,"quality_choices",qualityChoices);restoreStringMap(state,"favorite_focus",favoriteFocus);restoreStringMap(state,"settings_focus",settingsFocus);restoreStringMap(state,"page_focus",focusMemory);
             try{JSONObject positions=new JSONObject(state.getString("favorite_scroll","{}"));Iterator<String> keys=positions.keys();while(keys.hasNext()){String key=keys.next();JSONArray value=positions.optJSONArray(key);if(value!=null)favoriteScroll.put(key,new int[]{value.optInt(0),value.optInt(1)});}}catch(Exception ignored){}
         }
         if(!sourceScope.isEmpty()&&!sourceScope.equals(LiveSourceStore.BUILTIN))sourceScope=LiveFilter.OTHERS;
@@ -150,7 +158,7 @@ public final class LiveActivity extends Activity {
     }
     private void createLivePlayer(){
         player=new ExoPlayer.Builder(this).setRenderersFactory(new DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)).build();
-        playerReleasedForLibrary=false;video.setPlayer(player);applyPlayerSettings();
+        playerReleasedForLibrary=false;activeLiveStream=null;preparedLiveStream=null;qualityRollback=null;qualityPendingKey="";qualityPendingCode="";video.setPlayer(player);applyPlayerSettings();
     }
     private void releaseLivePlayerForLibrary(){
         if(player==null||playerReleasedForLibrary)return;
@@ -317,21 +325,48 @@ public final class LiveActivity extends Activity {
     private JSONObject requestedChannel(){JSONObject c=findChannel(requestedCode);return c==null?currentChannel():c;}
     private JSONObject currentChannel(){JSONObject c=playingSource.equals(source.id)?findChannel(playingCode):null;if(c==null)c=findChannel(requestedCode);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);return c;}
     private void restoreLastChannel(){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");JSONObject c=findChannel(code);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);if(c!=null)play(c,true);}
-    private void play(JSONObject ch,boolean fresh){
+    private List<JSONObject> qualityVariants(JSONObject channel){
+        if(channel==null)return Collections.emptyList();LiveSourceStore.Source owner=owner(channel);List<JSONObject> result=new ArrayList<>();Set<String> codes=new HashSet<>();
+        for(JSONObject candidate:owner.channels)if(LiveQuality.sameStation(channel.optString("ChannelName"),candidate.optString("ChannelName"))&&codes.add(candidate.optString("ChannelCode")))result.add(candidate);
+        if(result.isEmpty())result.add(channel);result.sort((a,b)->Integer.compare(LiveQuality.rank(a.optString("ChannelName")),LiveQuality.rank(b.optString("ChannelName"))));return result;
+    }
+    private String qualityKey(JSONObject channel){return owner(channel).id+"/"+LiveQuality.station(channel.optString("ChannelName"));}
+    private JSONObject preferredQuality(JSONObject channel){
+        List<JSONObject> variants=qualityVariants(channel);if(variants.isEmpty())return channel;List<String> names=new ArrayList<>(),codes=new ArrayList<>();for(JSONObject item:variants){names.add(item.optString("ChannelName"));codes.add(item.optString("ChannelCode"));}
+        int at=LiveQuality.preferred(names,codes,channel.optString("ChannelCode"),qualityChoices.get(qualityKey(channel)));return variants.get(at);
+    }
+    private void selectQuality(){
+        if(!qualityPendingKey.isEmpty()){toast("正在切换画质…");return;}JSONObject current=actualPlayingChannel();if(current==null)return;List<JSONObject> variants=qualityVariants(current);if(variants.size()<2)return;
+        String[] names=new String[variants.size()],details=new String[names.length];int selected=0;
+        for(int i=0;i<variants.size();i++){JSONObject item=variants.get(i);String name=item.optString("ChannelName"),grade=LiveQuality.label(name);names[i]=grade.equals("画质")?name:grade;details[i]=grade.equals("画质")?"画质未标注":name;if(item.optString("ChannelCode").equals(playingCode))selected=i;}
+        liveOptions("画质",names,details,selected,false,164,260,29,n->playResolved(variants.get(n),true,true));
+    }
+    private boolean restoreQuality(){
+        LiveStream previous=qualityRollback;if(previous==null)return false;qualityRollback=null;qualityPendingKey="";qualityPendingCode="";
+        for(LiveSourceStore.Source candidate:store.channelSnapshots())if(candidate.id.equals(previous.id)){source=candidate;break;}
+        requestedCode=previous.code;resumeCode=previous.code;resumeSource=previous.id;openingChannel=false;int gen=++playGeneration;
+        if(source.jellyfin()){JSONObject channel=findChannel(previous.code);if(channel!=null)playResolved(channel,true,false);}
+        else if(player.getPlaybackState()==Player.STATE_READY&&playingCode.equals(previous.code))bindPlaybackListener(gen,previous.id,previous.code);
+        else{recoveryUsed=true;installStream(previous.url,previous.id,previous.code,gen,previous.data);}
+        if(videoMessage!=null)videoMessage.setVisibility(View.GONE);if(controlsVisible)updateControlLabels();toast("画质切换失败，继续播放原画质。");return true;
+    }
+    private void play(JSONObject ch,boolean fresh){if(ch!=null)playResolved(preferredQuality(ch),fresh,false);}
+    private void playResolved(JSONObject ch,boolean fresh,boolean manualQuality){
         if(playerReleasedForLibrary)return;
         if(ch==null||!resumed||!isLiveRoute())return;
-        cancelFavoriteGesture();cancelPreviewSwitch();LiveSourceStore.Source targetSource=owner(ch);
+        cancelFavoriteGesture();cancelPreviewSwitch();qualityRollback=null;qualityPendingKey="";qualityPendingCode="";LiveSourceStore.Source targetSource=owner(ch);
+        if(manualQuality){qualityPendingKey=qualityKey(ch);qualityPendingCode=ch.optString("ChannelCode");if(player.getPlaybackState()==Player.STATE_READY)qualityRollback=activeLiveStream;}
         if(!targetSource.id.equals(source.id)){source=targetSource;requestedCode="";failedChannels.clear();final String selectedId=source.id;diskTask(()->store.activate(selectedId),()->{});}
         String code=ch.optString("ChannelCode");final String id=source.id;final boolean builtin=source.builtin();final int gen=++playGeneration;final BestvApi activeApi=api;
         requestedCode=code;resumeSource=id;resumeCode=code;playerSuspended=false;resumePlayback=true;
         if(fresh)recoveryUsed=false;
-        if(fresh&&id.equals(playingSource)&&code.equals(playingCode)&&player.getPlaybackState()==Player.STATE_READY){openingChannel=false;bindPlaybackListener(gen,id,code);removeVideoError();player.play();return;}
-        openingChannel=true;
-        removeVideoError();message("正在打开频道…");
+        if(fresh&&id.equals(playingSource)&&code.equals(playingCode)&&player.getPlaybackState()==Player.STATE_READY){if(manualQuality)qualityChoices.put(qualityPendingKey,code);qualityPendingKey="";qualityPendingCode="";qualityRollback=null;openingChannel=false;bindPlaybackListener(gen,id,code);removeVideoError();player.play();return;}
+        openingChannel=true;if(controlsVisible)updateControlLabels();
+        removeVideoError();message(manualQuality?"正在切换画质…":"正在打开频道…");
         if(source.jellyfin()){
             JellyLiveBridge.playbackUrl(this,source.url,code,new JellyLiveBridge.Callback<String>(){
-                public void success(String url){if(!validPlayback(gen,id,code))return;try{LiveSourceStore.validateUrl(url);openingChannel=false;installStream(url,id,code,gen,JellyLiveBridge.mediaDataSourceFactory(LiveActivity.this));}catch(Exception e){openingChannel=false;showVideoError("Jellyfin 直播暂不可用","可返回独立直播，或检查媒体库连接。");}}
-                public void failure(String message){if(validPlayback(gen,id,code)){openingChannel=false;showVideoError("Jellyfin 直播暂不可用",message);}}
+                public void success(String url){if(!validPlayback(gen,id,code))return;try{LiveSourceStore.validateUrl(url);openingChannel=false;installStream(url,id,code,gen,JellyLiveBridge.mediaDataSourceFactory(LiveActivity.this));}catch(Exception e){openingChannel=false;if(restoreQuality())return;showVideoError("Jellyfin 直播暂不可用","可返回独立直播，或检查媒体库连接。");}}
+                public void failure(String message){if(validPlayback(gen,id,code)){openingChannel=false;if(restoreQuality())return;showVideoError("Jellyfin 直播暂不可用",message);}}
             });return;
         }
         streamWorker.execute(()->{if(gen!=playGeneration||dead)return;try{String url=builtin?activeApi.play(code):ch.getString("Url");LiveSourceStore.validateUrl(url);Map<String,String> headers=new HashMap<>();JSONObject h=ch.optJSONObject("Headers");if(h!=null){Iterator<String> keys=h.keys();while(keys.hasNext()){String k=keys.next();headers.put(k,h.optString(k));}}
@@ -339,7 +374,7 @@ public final class LiveActivity extends Activity {
                     DefaultHttpDataSource.Factory http=new DefaultHttpDataSource.Factory().setUserAgent("JellyLive/0.1 AndroidTV").setConnectTimeoutMs(12000).setReadTimeoutMs(20000).setDefaultRequestProperties(headers);
                     openingChannel=false;installStream(url,id,code,gen,new DefaultDataSource.Factory(this,http));ensureEpg(ch);
                 });
-            }catch(Exception e){onUi(()->{if(!validPlayback(gen,id,code))return;openingChannel=false;failedChannels.add(code);if(player.getPlaybackState()==Player.STATE_READY&&!playingSource.isEmpty()&&(!id.equals(playingSource)||!playingCode.equals(code))){
+            }catch(Exception e){onUi(()->{if(!validPlayback(gen,id,code))return;openingChannel=false;if(restoreQuality())return;failedChannels.add(code);if(player.getPlaybackState()==Player.STATE_READY&&!playingSource.isEmpty()&&(!id.equals(playingSource)||!playingCode.equals(code))){
                     for(LiveSourceStore.Source previous:store.channelSnapshots())if(previous.id.equals(playingSource)){source=previous;break;}
                     requestedCode=playingCode;resumeCode=playingCode;resumeSource=playingSource;final String restored=playingSource;diskTask(()->store.activate(restored),()->{});bindPlaybackListener(gen,playingSource,playingCode);if(videoMessage!=null)videoMessage.setVisibility(View.GONE);toast("无法打开此频道，继续播放原频道。");return;}showVideoError(failedChannels.size()>=source.channels.size()?"当前来源的频道暂不可用":"无法打开此频道",builtin&&config.optString("user_id").isEmpty()?"请先导入机顶盒配置，或添加第三方直播源。":"请检查网络、授权或来源；也可选择其他频道。");});}
         });
@@ -352,6 +387,8 @@ public final class LiveActivity extends Activity {
             @Override public void onPlaybackStateChanged(int state){
                 if(state!=Player.STATE_READY||!current())return;
                 playingSource=id;playingCode=code;failedChannels.remove(code);removeVideoError();
+                if(preparedLiveStream!=null&&preparedLiveStream.generation==generation)activeLiveStream=preparedLiveStream;
+                if(code.equals(qualityPendingCode)){qualityChoices.put(qualityPendingKey,code);qualityPendingKey="";qualityPendingCode="";qualityRollback=null;}
                 diskWorker.execute(()->{try{store.remember(id,code);}catch(Exception ignored){}});
                 if(videoMessage!=null)videoMessage.setVisibility(View.GONE);
                 updateRows();if(controlsVisible)updateControlLabels();ensureEpg(findChannel(code));
@@ -359,6 +396,7 @@ public final class LiveActivity extends Activity {
             @Override public void onTracksChanged(Tracks tracks){if(current()&&controlsVisible)updateControlLabels();}
             @Override public void onPlayerError(PlaybackException error){
                 if(!current())return;
+                if(restoreQuality())return;
                 JSONObject channel=findChannel(code);if(!recoveryUsed&&channel!=null){recoveryUsed=true;play(channel,false);return;}
                 failedChannels.add(code);showVideoError(failedChannels.size()>=source.channels.size()?"当前来源的频道暂不可用":"此频道暂时无法播放","可重试此频道，或选择其他频道、检查直播源。");
             }
@@ -368,6 +406,7 @@ public final class LiveActivity extends Activity {
     private void installStream(String url,String id,String code,int generation,DataSource.Factory data){
         if(!validPlayback(generation,id,code))return;
         if(playbackListener!=null){player.removeListener(playbackListener);playbackListener=null;}
+        preparedLiveStream=new LiveStream(url,id,code,generation,data);
         MediaItem item=new MediaItem.Builder().setUri(url).setMediaId(id+":"+code).build();
         player.setMediaSource(new DefaultMediaSourceFactory(data).createMediaSource(item));bindPlaybackListener(generation,id,code);player.prepare();player.play();
     }
@@ -375,6 +414,7 @@ public final class LiveActivity extends Activity {
     private void showVideoEmpty(){showVideoError("还没有可用频道", "添加第三方直播源，或配置内置机顶盒来源。");}
     private void removeVideoError(){liveErrorTitle="";liveErrorDetail="";if(videoFrame!=null)videoFrame.setVisibility(View.VISIBLE);if(errorPanel!=null){boolean focused=errorPanel.hasFocus();TvUi.detach(errorPanel);errorPanel=null;recoveryRetry=null;recoverySources=null;lastRecoveryAction=null;if(previewButton!=null){previewButton.setVisibility(View.VISIBLE);if(focused)focusPreview();}else if(focused&&route.equals("full")&&videoFrame!=null&&!drawerVisible)videoFrame.requestFocus();}}
     private void showVideoError(String title,String detail){
+        qualityPendingKey="";qualityPendingCode="";qualityRollback=null;
         if(!isLiveRoute())return;
         if(videoShell==null){liveErrorTitle=title;liveErrorDetail=detail;return;}removeVideoError();liveErrorTitle=title;liveErrorDetail=detail;if(videoMessage!=null)videoMessage.setVisibility(View.GONE);
         errorPanel=new FrameLayout(this);errorPanel.setBackgroundColor(0xf0101629);videoShell.addView(errorPanel,new FrameLayout.LayoutParams(-1,-1));
@@ -406,18 +446,19 @@ public final class LiveActivity extends Activity {
     private void renderControls(){
         if(controls!=null)TvUi.detach(controls);controls=new FrameLayout(this);controls.setBackground(ui.glass(TvUi.PANEL));ui.at(page,controls,PlaybackLayout.BAR_X,PlaybackLayout.BAR_Y,PlaybackLayout.BAR_WIDTH,PlaybackLayout.BAR_HEIGHT);
         ui.protectControls(controls);
-        JSONObject channel=currentChannel();TextView channelName=ui.text(controls,channel==null?"暂无频道":channel.optString("ChannelNo")+"  "+channel.optString("ChannelName"),15,TvUi.INK,16,32,530,30);channelName.setSingleLine();channelName.setEllipsize(TextUtils.TruncateAt.END);tag(channelName,"control-name");
+        JSONObject channel=currentChannel();TextView channelName=ui.text(controls,channel==null?"暂无频道":channel.optString("ChannelNo")+"  "+channel.optString("ChannelName"),15,TvUi.INK,16,32,440,30);channelName.setSingleLine();channelName.setEllipsize(TextUtils.TruncateAt.END);tag(channelName,"control-name");
         View track=new View(this);track.setBackgroundColor(0xff4b5268);ui.at(controls,track,16,15,864,3);
         View fill=new View(this);fill.setBackgroundColor(0xffb9a6ff);tag(fill,"control-progress");ui.at(controls,fill,16,15,0,3);
-        aspectAction=ui.quietButton(aspectLabel(),"画面比例",()->selectAspect());ui.at(controls,aspectAction,PlaybackLayout.actionX(0),32,96,30);
-        audioAction=ui.quietButton(MediaTracks.value(player,C.TRACK_TYPE_AUDIO),"音轨",()->selectTrack(C.TRACK_TYPE_AUDIO));ui.at(controls,audioAction,PlaybackLayout.actionX(1),32,96,30);
-        subtitleAction=ui.quietButton(MediaTracks.value(player,C.TRACK_TYPE_TEXT),"字幕",()->selectTrack(C.TRACK_TYPE_TEXT));ui.at(controls,subtitleAction,PlaybackLayout.actionX(2),32,96,30);
-        Button[] actions={aspectAction,audioAction,subtitleAction};for(int i=0;i<3;i++){Button action=actions[i];action.setNextFocusLeftId(actions[Math.max(0,i-1)].getId());action.setNextFocusRightId(actions[Math.min(2,i+1)].getId());action.setNextFocusDownId(action.getId());action.setNextFocusUpId(action.getId());}
-        updateControlLabels();aspectAction.requestFocus();resetControlsTimer();TvGlass.apply(this,ui,controls,32,436,896,72);
+        qualityAction=ui.quietButton("画质","画质",()->selectQuality());ui.at(controls,qualityAction,PlaybackLayout.actionX(0),32,92,30);
+        aspectAction=ui.quietButton(aspectLabel(),"画面比例",()->selectAspect());ui.at(controls,aspectAction,PlaybackLayout.actionX(1),32,92,30);
+        audioAction=ui.quietButton(MediaTracks.value(player,C.TRACK_TYPE_AUDIO),"音轨",()->selectTrack(C.TRACK_TYPE_AUDIO));ui.at(controls,audioAction,PlaybackLayout.actionX(2),32,92,30);
+        subtitleAction=ui.quietButton(MediaTracks.value(player,C.TRACK_TYPE_TEXT),"字幕",()->selectTrack(C.TRACK_TYPE_TEXT));ui.at(controls,subtitleAction,PlaybackLayout.actionX(3),32,92,30);
+        updateControlLabels();(qualityAction.isEnabled()?qualityAction:aspectAction).requestFocus();resetControlsTimer();TvGlass.apply(this,ui,controls,32,436,896,72);
     }
     private void updateControlLabels(){
         if(controls==null)return;JSONObject channel=currentChannel();TextView name=controls.findViewWithTag("control-name");if(name!=null)name.setText(channel==null?"暂无频道":channel.optString("ChannelNo")+"  "+channel.optString("ChannelName"));
         LiveSourceStore.Program now=nowProgram(channel);float progress=now==null||now.end<=now.start?0:Math.max(0,Math.min(1,(System.currentTimeMillis()-now.start)/(float)(now.end-now.start)));View fill=controls.findViewWithTag("control-progress");if(fill!=null){FrameLayout.LayoutParams params=(FrameLayout.LayoutParams)fill.getLayoutParams();params.width=ui.px(864*progress);fill.setLayoutParams(params);}
+        if(qualityAction!=null){JSONObject actual=actualPlayingChannel();String label=actual==null?"画质":LiveQuality.label(actual.optString("ChannelName"));ui.value(qualityAction,"画质",label);boolean enabled=actual!=null&&qualityVariants(actual).size()>1;qualityAction.setEnabled(enabled);qualityAction.setFocusable(enabled);qualityAction.setAlpha(enabled?1f:.5f);List<Button> actions=new ArrayList<>();for(Button button:new Button[]{qualityAction,aspectAction,audioAction,subtitleAction})if(button!=null&&button.isEnabled())actions.add(button);for(int i=0;i<actions.size();i++){Button button=actions.get(i);button.setNextFocusLeftId(actions.get(Math.max(0,i-1)).getId());button.setNextFocusRightId(actions.get(Math.min(actions.size()-1,i+1)).getId());button.setNextFocusUpId(button.getId());button.setNextFocusDownId(button.getId());}}
         if(aspectAction!=null)ui.value(aspectAction,"画面比例",aspectLabel());if(audioAction!=null)ui.value(audioAction,"音轨",MediaTracks.value(player,C.TRACK_TYPE_AUDIO));if(subtitleAction!=null)ui.value(subtitleAction,"字幕",MediaTracks.value(player,C.TRACK_TYPE_TEXT));
     }
     private String aspectLabel(){int mode=video.getResizeMode();return mode==androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM?"填充":mode==androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL?"拉伸":"原始";}
@@ -909,6 +950,7 @@ public final class LiveActivity extends Activity {
     @Override protected void onSaveInstanceState(Bundle state){rememberFocus();super.onSaveInstanceState(state);state.putBoolean("pending_jellyfin_add",pendingJellyfinAdd);state.putString("route",route);state.putString("group",group);state.putString("source_scope",sourceScope);state.putBoolean("favorites_only",favoritesOnly);state.putString("return_full",returnFromFull);state.putString("query",searchQuery);state.putString("home_focus",lastHomeFocus);if(editor!=null)try{state.putString("editor",editor.json().toString());}catch(Exception ignored){}
         state.putString("settings_category",settingsCategory);state.putString("guide_return",guideReturn);state.putString("guide_full_return",guideFullReturn);state.putString("guide_channel",guideChannel);state.putString("guide_source",guideSourceId);state.putInt("guide_page",guidePage);state.putStringArrayList("back_stack",new ArrayList<>(backStack));
         state.putString("resume_source",resumeSource);state.putString("resume_code",resumeCode);state.putBoolean("resume_playback",resumePlayback);
+        state.putString("quality_choices",new JSONObject(qualityChoices).toString());
         state.putString("favorite_focus",new JSONObject(favoriteFocus).toString());state.putString("settings_focus",new JSONObject(settingsFocus).toString());state.putString("page_focus",new JSONObject(focusMemory).toString());
         try{JSONObject positions=new JSONObject();for(Map.Entry<String,int[]> entry:favoriteScroll.entrySet())positions.put(entry.getKey(),new JSONArray().put(entry.getValue()[0]).put(entry.getValue()[1]));state.putString("favorite_scroll",positions.toString());}catch(Exception ignored){}
     }
