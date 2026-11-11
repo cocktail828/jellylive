@@ -90,9 +90,10 @@ def install(g):
         status={'connected':'已连接','empty':'未连接','offline':'未连接','checking':'检查中…'}[state]
         name='尚未添加媒体库' if state=='empty' else '客厅媒体库'
         color='#bfe2d2' if state=='connected' else '#f2b4bb' if state=='offline' else MUTED
-        s+=tx(548,354,status,30,color,600)+tx(548,426,name,44,weight=650)
+        prefix=status+' · '
+        s+=tx(548,400,prefix,36,color,600)+tx(548+text_width(prefix,36),400,fit(name,36,1240-text_width(prefix,36)),36,weight=650)
         info={'connected':'当前账号：示例账号','empty':'添加后即可浏览电影与剧集。','offline':'暂时无法连接，请检查网络或切换媒体库。','checking':'正在验证服务器与当前账号…'}[state]
-        s+=tx(548,484,info,28,MUTED)
+        s+=tx(548,464,info,28,MUTED)
         s+=row(554,'新增媒体库',focus=True)+row(666,'切换媒体库',disabled=state=='empty')
         return s
     def media_switch(state='ready',large=False):

@@ -12716,25 +12716,25 @@
     },
     {
       "figure": 70,
-      "text": "已连接",
-      "size": 30.0,
+      "text": "已连接 · ",
+      "size": 36.0,
       "bounds": [
-        550.0,
-        328.0,
-        638.0,
-        358.0
+        551.0,
+        368.0,
+        687.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 70,
       "text": "客厅媒体库",
-      "size": 44.0,
+      "size": 36.0,
       "bounds": [
-        549.0,
-        387.0,
-        767.0,
-        431.0
+        708.0,
+        368.0,
+        887.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
@@ -12744,9 +12744,9 @@
       "size": 28.0,
       "bounds": [
         551.0,
-        459.0,
+        439.0,
         799.0,
-        487.0
+        467.0
       ],
       "clippedIntentionally": false
     },
@@ -16856,25 +16856,25 @@
     },
     {
       "figure": 94,
-      "text": "未连接",
-      "size": 30.0,
+      "text": "未连接 · ",
+      "size": 36.0,
       "bounds": [
         548.0,
-        328.0,
-        638.0,
-        358.0
+        368.0,
+        687.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 94,
       "text": "尚未添加媒体库",
-      "size": 44.0,
+      "size": 36.0,
       "bounds": [
-        552.0,
-        387.0,
-        855.0,
-        431.0
+        711.0,
+        368.0,
+        959.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
@@ -16884,9 +16884,9 @@
       "size": 28.0,
       "bounds": [
         549.0,
-        459.0,
+        439.0,
         894.0,
-        487.0
+        467.0
       ],
       "clippedIntentionally": false
     },
@@ -17036,25 +17036,25 @@
     },
     {
       "figure": 95,
-      "text": "未连接",
-      "size": 30.0,
+      "text": "未连接 · ",
+      "size": 36.0,
       "bounds": [
         548.0,
-        328.0,
-        638.0,
-        358.0
+        368.0,
+        687.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 95,
       "text": "客厅媒体库",
-      "size": 44.0,
+      "size": 36.0,
       "bounds": [
-        549.0,
-        387.0,
-        767.0,
-        431.0
+        708.0,
+        368.0,
+        887.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
@@ -17064,9 +17064,9 @@
       "size": 28.0,
       "bounds": [
         549.0,
-        459.0,
+        439.0,
         1062.0,
-        488.0
+        468.0
       ],
       "clippedIntentionally": false
     },
@@ -17216,25 +17216,25 @@
     },
     {
       "figure": 96,
-      "text": "检查中…",
-      "size": 30.0,
+      "text": "检查中… · ",
+      "size": 36.0,
       "bounds": [
         548.0,
-        328.0,
-        666.0,
-        358.0
+        368.0,
+        723.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 96,
       "text": "客厅媒体库",
-      "size": 44.0,
+      "size": 36.0,
       "bounds": [
-        549.0,
-        387.0,
-        767.0,
-        431.0
+        744.0,
+        368.0,
+        923.0,
+        404.0
       ],
       "clippedIntentionally": false
     },
@@ -17244,9 +17244,9 @@
       "size": 28.0,
       "bounds": [
         549.0,
-        459.0,
+        439.0,
         910.0,
-        487.0
+        467.0
       ],
       "clippedIntentionally": false
     },
