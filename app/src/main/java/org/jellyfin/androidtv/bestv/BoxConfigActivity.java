@@ -54,14 +54,21 @@ public final class BoxConfigActivity extends Activity {
     }
     private void header(String title,String subtitle){ui.heading(page,title,23,48,46,740,42);ui.text(page,"JellyLive",15,0xffb9b0ef,810,46,102,40);ui.text(page,subtitle,14,TvUi.MUTED,50,92,840,38);}
     private Button action(FrameLayout host,String title,float x,float y,float w,Runnable click){Button b=ui.button(host,title,x,y,w,Math.max(44,32*ui.fontScale),()->{if(!busy)click.run();});actions.add(b);return b;}
-    private Button listRow(LinearLayout rows,String title,String desc,Runnable click){float h=Math.max(56,52*ui.fontScale);FrameLayout row=new FrameLayout(this);rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(h+8)));Button b=ui.button(row,"",0,0,rows.getTag()!=null?512:844,h,()->{if(!busy)click.run();});actions.add(b);float w=rows.getTag()!=null?512:844;ui.heading(row,title,16,16,4,w-65,h/2-2).setSingleLine();TextView d=ui.text(row,desc,13,TvUi.MUTED,16,h/2,w-65,h/2-4);d.setSingleLine();d.setEllipsize(android.text.TextUtils.TruncateAt.END);ui.text(row,"›",18,TvUi.INK,w-30,0,20,h);b.setContentDescription(title+"，"+desc);return b;}
+    private Button listRow(LinearLayout rows,String title,String desc,Runnable click){
+        float h=Math.max(48,40*ui.fontScale),w=rows.getTag()!=null?512:844;boolean fieldValue=route.equals("group")&&!title.startsWith("按安徽版");
+        FrameLayout row=new FrameLayout(this);rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(h+8)));Button b=ui.button(row,"",0,0,w,h,()->{if(!busy)click.run();});actions.add(b);
+        TextView name=ui.heading(row,title,16,16,0,fieldValue?230:w-65,h);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        if(fieldValue){TextView value=ui.text(row,desc,14,0xffc5b8ff,260,0,w-310,h);value.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);value.setSingleLine();value.setEllipsize(android.text.TextUtils.TruncateAt.END);}
+        ui.text(row,"›",18,TvUi.INK,w-30,0,20,h);b.setContentDescription(title+(fieldValue?"，"+desc:""));return b;
+    }
     private LinearLayout scrollRows(FrameLayout host,float x,float y,float w,float h){ScrollView scroll=new ScrollView(this);scroll.setFocusable(false);LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);scroll.addView(rows);ui.at(host,scroll,x,y,w,h);return rows;}
     private void menu(){
         FrameLayout panel=new FrameLayout(this);panel.setBackground(ui.surface(TvUi.PANEL,false));ui.at(page,panel,200,70,560,400);ui.heading(panel,"机顶盒配置",20,24,14,510,40);
         ui.text(panel,notice.isEmpty()?(draft.optString("user_id").isEmpty()?"尚未配置，导入或填写设备资料。":"已保存配置，无需重复填写。"):notice,14,TvUi.MUTED,24,55,512,ui.largeText()?48:30);
-        float top=ui.largeText()?98:92;LinearLayout rows=scrollRows(panel,24,top,524,382-top);rows.setTag("menu");
+        float top=ui.largeText()?98:92;LinearLayout rows=scrollRows(panel,24,top,524,370-top);rows.setTag("menu");
         String[] names={"从机顶盒导入","导入配置文件","手动修改","导出配置文件"};String[] desc={"读取设备资料，核对后再保存。","选择已有的 JSON 配置文件。","常用信息与高级参数分步查看。","文件包含账号资料，请妥善保存。"};
         for(int i=0;i<names.length;i++){final int n=i;Button b=listRow(rows,names[i],desc[i],()->{menuIndex=n;notice="";if(n==0)show("import");else if(n==1)importFile();else if(n==2)show("edit");else exportConfig();});b.setOnFocusChangeListener((v,focused)->{if(focused)menuIndex=n;});}
+        ui.text(panel,"导出文件包含账号资料，请妥善保存。",13,TvUi.MUTED,24,374,512,26);
     }
     private void editField(String key,String parent){editKey=key;editParent=parent;show("field");}
     private Button fieldButton(String key,float y){ui.heading(page,fieldName(key),15,50,y,540,35);Button b=action(page,value(key),50,y+36,540,()->editField(key,"edit"));b.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);fieldActions.put(key,b);return b;}

@@ -46,10 +46,9 @@ def install(g):
     def drawer_scene(menu=False,transparency=35):
         s=scene(0,0,1920,1080);alpha=1-transparency/100
         # Background can reach the edge; foreground and its focus frame remain in the safe area.
-        x,w=1392,428;guard=max(0,(.76-alpha)/(1-alpha)) if alpha<1 else 0
+        x,w=1392,428
         s+='<defs><linearGradient id="drawer-fade"><stop stop-color="#101629" stop-opacity="0"/><stop offset="1" stop-color="#101629" stop-opacity="'+str(alpha)+'"/></linearGradient></defs>'
         s+=rect(1264,0,96,1080,'url(#drawer-fade)',0)+rect(1360,0,560,1080,'#101629',0,fill_opacity=alpha)
-        s+=rect(x-8,136,w+16,882,'#101629',12,fill_opacity=guard)
         s+=g['source_tabs'](x,60,w,overlay=True)
         for i,(name,program) in enumerate(g['CHANNELS']+[('少儿天地','奇妙世界'),('人文历史','文明的足迹'),('科学探索','探索未知')]):
             y=152+i*96;focused=i==2 and not menu
@@ -57,7 +56,7 @@ def install(g):
             s+=text(x+20,y+37,f'{i+1:02}',26,INK,600)+text(x+92,y+37,name,30,INK,600)+text(x+92,y+73,program,24,secondary)
             if i==0:s+=icon('play',x+w-48,y+31,28,'#cebcff')
         if menu:s+=g['frosted_backdrop'](s,x,138,w,344)+g['source_menu'](x,138,w,translucent=True)
-        return s
+        return s.replace('<text ','<text stroke="#080c18" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke" ')
 
     def library_home(empty=False):
         s=header('我的媒体库','客厅 Jellyfin · 已连接')+button(1508,138,316,'搜索媒体',False,'search')+text(96,231,'继续观看',34,weight=600)

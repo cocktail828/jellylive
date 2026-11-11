@@ -25,6 +25,12 @@ class PreferencesRepository(
 		return store
 	}
 
+    fun invalidateSession() {
+        liveTvPreferences.clearCache()
+        userSettingPreferences.clearCache()
+        libraryPreferences.clear()
+    }
+
 	suspend fun onSessionChanged() {
 		// Note: Do not run parallel as the server can't deal with that
 		// Relevant server issue: https://github.com/jellyfin/jellyfin/issues/5261

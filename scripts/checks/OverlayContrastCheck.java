@@ -14,7 +14,11 @@ public final class OverlayContrastCheck {
         verify("track detail on white video",ratio(0xfff6f5ff,composite(OverlayContrast.OPTION_GUARD,base)));
         verify("popover heading on white video",ratio(0xfff6f5ff,base));
         verify("next episode secondary on white video",ratio(OverlayContrast.SECONDARY,composite(OverlayContrast.OPTION_GUARD,base)));
-        for(int transparency=0;transparency<=80;transparency+=5){int alpha=OverlayContrast.drawerBaseAlpha(transparency);double[] drawer=composite((alpha<<24)|0x111629,color(0xffffffff));verify("drawer "+transparency+"% transparency",ratio(OverlayContrast.SECONDARY,composite((OverlayContrast.drawerGuardAlpha(alpha)<<24)|0x101629,drawer)));}
+        verify("drawer white text against glyph edge",ratio(0xfff6f5ff,color(OverlayContrast.DRAWER_TEXT_EDGE)));
+        verify("drawer secondary against glyph edge",ratio(OverlayContrast.SECONDARY,color(OverlayContrast.DRAWER_TEXT_EDGE)));
+        double last=-1;
+        for(int transparency=0;transparency<=80;transparency+=5){double brightness=luminance(composite(OverlayContrast.drawerColor(transparency),color(0xffffffff)));if(brightness<=last)throw new AssertionError("Drawer setting must change the rendered fill: "+transparency);if(OverlayContrast.drawerGuardAlpha(OverlayContrast.drawerBaseAlpha(transparency))!=0)throw new AssertionError("A second scrim overrides transparency");last=brightness;checks++;}
+        if(OverlayContrast.drawerColor(-20)!=OverlayContrast.drawerColor(0)||OverlayContrast.drawerColor(100)!=OverlayContrast.drawerColor(80))throw new AssertionError("Transparency clamps");checks++;
         System.out.println(checks+" actual overlay contrast checks passed");
     }
 }

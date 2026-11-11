@@ -264,11 +264,11 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun connection(push: Boolean=true) {
         fresh("connection",push)
-        ui.heading(page,"连接媒体库",23,50f,46f,700f,42f);ui.text(page,"JellyLive",15,0xffb9b0ef.toInt(),810f,46f,102f,40f)
+        ui.heading(page,if(intent.getBooleanExtra("add_library",false))"新增媒体库" else "连接媒体库",23,50f,46f,700f,42f);ui.text(page,"JellyLive",15,0xffb9b0ef.toInt(),810f,46f,102f,40f)
         val summary=label("Jellyfin 或兼容媒体服务器",50f,86f,840f,34f,15,true)
         val preset=bootstrap
-        val initialAddress=repo.address.ifEmpty {local.getString("last_address","").orEmpty()}.ifEmpty {preset?.address.orEmpty()}
-        val initialUsername=local.getString("last_username","").orEmpty().ifEmpty {if(preset?.matchesAddress(initialAddress)==true)preset.username else ""}
+        val initialAddress=if(intent.getBooleanExtra("add_library",false))"" else repo.address.ifEmpty {local.getString("last_address","").orEmpty()}.ifEmpty {preset?.address.orEmpty()}
+        val initialUsername=if(intent.getBooleanExtra("add_library",false))"" else local.getString("last_username","").orEmpty().ifEmpty {if(preset?.matchesAddress(initialAddress)==true)preset.username else ""}
         val addressLabel=label("服务器地址",50f,117f,540f,28f,15)
         val address=TvFormField(this,ui,"http://服务器地址:8096",initialAddress,false);ui.at(page,address,50f,146f,540f,48f)
         val usernameLabel=label("用户名",50f,205f,540f,28f,15)
@@ -305,7 +305,7 @@ class JellyLibraryActivity : FragmentActivity() {
                     repo.login(normalized,u,secret);ensureActive()
                     if(stamp!=generation)throw CancellationException()
                     accepted=true;password.setText("");local.edit().putString("last_address",normalized).putString("last_username",u).putBoolean("bootstrap_consumed",true).apply()
-                    history.clear();launchDestination()
+                    history.clear();if(intent.getBooleanExtra("settings_origin",false)){setResult(RESULT_OK);finish()}else launchDestination()
                 }catch(e:CancellationException){if(e is TimeoutCancellationException&&stamp==generation)status.text="连接超时，请检查地址与网络。"}
                 catch(_:Exception){if(stamp==generation){status.text="连接未成功，请检查服务器地址、账号和密码。";password.requestFocus()}}
                 finally{
@@ -328,10 +328,10 @@ class JellyLibraryActivity : FragmentActivity() {
                         val list=ScrollView(this@JellyLibraryActivity);val rows=LinearLayout(this@JellyLibraryActivity).apply {orientation=LinearLayout.VERTICAL};list.addView(rows);ui.at(viewport,list,24f,76f,796f,340f)
                         val popup=AlertDialog.Builder(this@JellyLibraryActivity).create();popup.setView(viewport,0,0,0,0);dialog=popup
                         val choices=found.map {server->
-                            val row=FrameLayout(this@JellyLibraryActivity);val h=maxOf(62f,52f*ui.fontScale)
+                            val row=FrameLayout(this@JellyLibraryActivity);val h=maxOf(52f,44f*ui.fontScale)
                             val button=ui.button(row,"",0f,0f,784f,h){address.setText(server.address);popup.dismiss();username.requestFocus()}
-                            ui.heading(row,server.name,17,16f,3f,748f,h/2).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-                            ui.text(row,server.address,14,TvUi.MUTED,16f,h/2,748f,h/2).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                            ui.heading(row,server.name,17,16f,0f,344f,h).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                            ui.text(row,server.address,14,TvUi.MUTED,380f,0f,384f,h).apply {maxLines=1;gravity=Gravity.CENTER_VERTICAL or Gravity.END;ellipsize=android.text.TextUtils.TruncateAt.END}
                             rows.addView(row,LinearLayout.LayoutParams(-1,ui.px(h+8)));button
                         }
                         choices.forEachIndexed {i,b->b.nextFocusUpId=choices[(i-1).coerceAtLeast(0)].id;b.nextFocusDownId=choices[(i+1).coerceAtMost(choices.lastIndex)].id;b.nextFocusLeftId=b.id;b.nextFocusRightId=b.id}

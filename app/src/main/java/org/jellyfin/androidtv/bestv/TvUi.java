@@ -33,6 +33,7 @@ public final class TvUi {
         FrameLayout.LayoutParams p=new FrameLayout.LayoutParams(w<0?(int)w:px(w),h<0?(int)h:px(h),Gravity.TOP|Gravity.START);p.leftMargin=px(x);p.topMargin=px(y);parent.addView(v,p);return v;
     }
     public TextView text(String s,int size,int color){TextView t=new TextView(activity);t.setTextColor(color);t.setTextSize(TypedValue.COMPLEX_UNIT_PX,size*scale*fontScale);t.setGravity(Gravity.CENTER_VERTICAL);t.setFontFeatureSettings("kern");t.setIncludeFontPadding(false);TvIcons.text(t,s);return t;}
+    public TextView overlayText(String value,int size,int color){TextView text=new OutlinedTextView(activity,px(.65f));text.setTextColor(color);text.setTextSize(TypedValue.COMPLEX_UNIT_PX,size*scale*fontScale);text.setGravity(Gravity.CENTER_VERTICAL);text.setIncludeFontPadding(false);text.setText(value);return text;}
     public TextView text(FrameLayout p,String s,int size,int color,float x,float y,float w,float h){return at(p,text(s,size,color),x,y,w,h);}
     public TextView title(FrameLayout p,String s,float x,float y,float w,float h){TextView t=text(p,s,21,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}
     public TextView heading(FrameLayout p,String s,int size,float x,float y,float w,float h){TextView t=text(p,s,size,INK,x,y,w,h);t.setTypeface(null,Typeface.BOLD);return t;}

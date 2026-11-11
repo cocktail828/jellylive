@@ -1,6 +1,7 @@
 /* JellyLive optional media library. GPL-2.0. */
 package org.jellyfin.androidtv.bestv
 
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -27,23 +28,26 @@ class LibraryRepository : KoinComponent {
     val api by inject<ApiClient>()
     val sessions by inject<SessionRepository>()
     val servers by inject<ServerRepository>()
-    private val authentication by inject<AuthenticationRepository>()
+    private val authenticationStore by inject<org.jellyfin.androidtv.auth.store.AuthenticationStore>()
+    private val jellyfin by inject<org.jellyfin.sdk.Jellyfin>()
     val connected get() = sessions.currentSession.value != null && api.baseUrl != null
     val serverName get() = servers.currentServer.value?.name ?: "Jellyfin"
     val address get() = servers.currentServer.value?.address.orEmpty()
 
     suspend fun restore() { if (!connected) withTimeout(20_000) { sessions.restoreSession(false) } }
     suspend fun login(address: String, username: String, password: String) = withTimeout(25_000) {
+        val previous=sessions.currentSession.value
         val result = servers.addServer(address).first { it is ConnectedState || it is UnableToConnectState }
         val id = (result as? ConnectedState)?.id ?: error("无法连接服务器，请检查地址和网络")
         val server = servers.getServer(id) ?: error("服务器不可用")
-        when (val state = authentication.authenticate(server, CredentialAuthenticateMethod(username, password))
-            .first { it !is AuthenticatingState }) {
-            AuthenticatedState -> Unit
-            is ServerVersionNotSupported -> error("服务器版本不受支持")
-            is ApiClientErrorLoginState -> error("登录未成功，请检查账号、密码或服务器授权")
-            else -> error("登录未成功，请检查服务器和账号")
-        }
+        // Stage credentials in an isolated client; publishing a new session is the last suspending step.
+        val candidate=jellyfin.createApi(server.address,deviceInfo=api.deviceInfo)
+        val authenticated=withContext(Dispatchers.IO){candidate.userApi.authenticateUserByName(username,password).content}
+        val user=requireNotNull(authenticated.user){"服务器未返回账号信息"}
+        val token=requireNotNull(authenticated.accessToken){"服务器未返回登录凭据"}
+        coroutineContext.ensureActive();check(sessions.currentSession.value==previous){"媒体库已切换"}
+        authenticationStore.putUser(server.id,user.id,AuthenticationStoreUser(name=user.name ?: username,imageTag=user.primaryImage?.tag,accessToken=token))
+        check(sessions.switchCurrentSession(server.id,user.id)){"登录未成功，请检查服务器授权"}
     }
     suspend fun discovery(): List<Server> {
         servers.loadStoredServers()

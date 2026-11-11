@@ -60,11 +60,10 @@ def install(g):
     def preview(y=640,h=300):
         # Reuse the established video artwork; compare readable channel text against a real scene.
         s=f'<defs><clipPath id="settings-preview"><rect x="548" y="{y}" width="1240" height="{h}" rx="14"/></clipPath></defs><g clip-path="url(#settings-preview)">'
-        s+=g['scene'](548,y,1240,h)+rect(1270,y,518,h,'#101629',0,fill_opacity=.65)
-        s+=rect(1286,y+16,486,h-32,'#101629',10,fill_opacity=.34)
+        s+=g['scene'](548,y,1240,h)+rect(1270,y,518,h,'#111629',0,fill_opacity=.65)
         s+=tx(1310,y+67,'频道列表',28,MUTED,600)+rect(1294,y+91,470,72,'#36305c',10)
         s+=tx(1310,y+139,'01  新闻频道',32,weight=600)+tx(1310,y+207,'02  纪实频道',32)+tx(1310,y+266,'节目名称与频道信息',26,MUTED)
-        return s+'</g>'
+        return (s+'</g>').replace('<text ','<text stroke="#080c18" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke" ')
     def main(selected=0,focus_menu=True,large=False):
         s=frame(selected,nav_focus=focus_menu,large=large)
         if selected==0:

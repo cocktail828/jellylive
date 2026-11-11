@@ -57,6 +57,7 @@ abstract class DisplayPreferencesStore(
 	}
 
 	override suspend fun update(): Boolean {
+        val origin=api.baseUrl;val token=api.accessToken
 		try {
 			val result = withContext(Dispatchers.IO) {
 				api.displayPreferencesApi.getDisplayPreferences(
@@ -64,6 +65,7 @@ abstract class DisplayPreferencesStore(
 					client = app
 				).content
 			}
+            if(api.baseUrl!=origin || api.accessToken!=token)return false
 			displayPreferencesDto = result
 			cachedPreferences = result.customPrefs.toMutableMap()
 
@@ -71,6 +73,7 @@ abstract class DisplayPreferencesStore(
 		} catch (err: ApiClientException) {
 			Timber.e(err, "Unable to retrieve displaypreferences. (displayPreferencesId=$displayPreferencesId, app=$app)")
 
+            if(api.baseUrl!=origin || api.accessToken!=token)return false
 			if (displayPreferencesDto == null) {
 				Timber.i("Creating an empty DisplayPreferencesDto for next commit.")
 				displayPreferencesDto = DisplayPreferencesDto.empty()

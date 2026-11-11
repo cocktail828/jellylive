@@ -1,5 +1,8 @@
 package org.jellyfin.androidtv.auth.repository
 
+import kotlinx.coroutines.*
+import kotlin.coroutines.coroutineContext
+import org.jellyfin.sdk.Jellyfin
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,8 +59,11 @@ class SessionRepositoryImpl(
 	private val userRepository: UserRepository,
 	private val serverRepository: ServerRepository,
 	private val telemetryPreferences: TelemetryPreferences,
+	private val jellyfin: Jellyfin,
 ) : SessionRepository {
 	private val currentSessionMutex = Mutex()
+	private val preferenceScope = CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
+	private var preferenceRefresh: Job? = null
 	private val _currentSession = MutableStateFlow<Session?>(null)
 	override val currentSession = _currentSession.asStateFlow()
 	private val _state = MutableStateFlow(SessionRepositoryState.READY)
@@ -87,27 +93,14 @@ class SessionRepositoryImpl(
 		}
 	}
 
-	override suspend fun switchCurrentSession(serverId: UUID, userId: UUID): Boolean {
-		// No change in user - don't switch
-		if (currentSession.value?.userId == userId) {
-			Timber.d("Current session user is the same as the requested user")
-			return false
-		}
-
-		_state.value = SessionRepositoryState.SWITCHING_SESSION
-		Timber.i("Switching current session to user $userId")
-
-		val session = createUserSession(serverId, userId)
-		if (session == null) {
-			Timber.w("Could not switch to non-existing session for user $userId")
-			_state.value = SessionRepositoryState.READY
-			return false
-		}
-
-		val switched = setCurrentSession(session)
-		_state.value = SessionRepositoryState.READY
-		return switched
-	}
+	override suspend fun switchCurrentSession(serverId: UUID, userId: UUID): Boolean = currentSessionMutex.withLock {
+        _state.value = SessionRepositoryState.SWITCHING_SESSION
+        try {
+            val session = createUserSession(serverId, userId) ?: return@withLock false
+            // A refreshed token for the same server/user must still be applied.
+            setCurrentSession(session)
+        } finally { _state.value = SessionRepositoryState.READY }
+    }
 
 	override fun destroyCurrentSession() {
 		Timber.i("Destroying current session")
@@ -118,53 +111,38 @@ class SessionRepositoryImpl(
 		_state.value = SessionRepositoryState.READY
 	}
 
-	private suspend fun setCurrentSession(session: Session?): Boolean {
-		var server: Server? = null
-
-		if (session != null) {
-			// No change in session - don't switch
-			if (currentSession.value?.userId == session.userId) return true
-
-			// Update last active user
-			authenticationPreferences[AuthenticationPreferences.lastServerId] = session.serverId.toString()
-			authenticationPreferences[AuthenticationPreferences.lastUserId] = session.userId.toString()
-
-			// Check if server version is supported
-			server = serverRepository.getServer(session.serverId, true)
-			if (server == null || !server.versionSupported) return false
-		}
-
-		// Update session after binding the apiclient settings
-		val deviceInfo = session?.let { defaultDeviceInfo.forUser(it.userId) } ?: defaultDeviceInfo
-		Timber.i("Updating current session. userId=${session?.userId} server=${server?.serverVersion}")
-
-		val applied = userApiClient.applySession(session, deviceInfo)
-		if (applied && session != null) {
-			try {
-				val user = withContext(Dispatchers.IO) {
-					userApiClient.userApi.getCurrentUser().content
-				}
-				userRepository.setCurrentUser(user)
-				serverRepository.setCurrentServer(server)
-			} catch (err: ApiClientException) {
-				Timber.e(err, "Unable to authenticate: bad response when getting user info")
-				destroyCurrentSession()
-				return false
-			}
-
-			// Update crash reporting URL
-			val crashReportUrl = userApiClient.clientLogApi.logFileUrl()
-			telemetryPreferences[TelemetryPreferences.crashReportUrl] = crashReportUrl
-			telemetryPreferences[TelemetryPreferences.crashReportToken] = session.accessToken
-		} else {
-			userRepository.setCurrentUser(null)
-			serverRepository.setCurrentServer(null)
-		}
-		preferencesRepository.onSessionChanged()
-		_currentSession.value = session
-
-		return true
-	}
+    private suspend fun setCurrentSession(session: Session?): Boolean {
+        if(session==null){destroyCurrentSession();userApiClient.applySession(null);return true}
+        val previous=currentSession.value
+        val server=serverRepository.getServer(session.serverId,true) ?: return false
+        if(!server.versionSupported)return false
+        val deviceInfo=defaultDeviceInfo.forUser(session.userId)
+        // Authenticate with an isolated client. Failure/cancellation cannot modify the active origin/token.
+        val candidate=jellyfin.createApi(server.address,accessToken=session.accessToken,deviceInfo=deviceInfo)
+        val user=try {withContext(Dispatchers.IO){candidate.userApi.getCurrentUser().content}}
+        catch(error:ApiClientException){Timber.w("Unable to verify candidate session");return false}
+        coroutineContext.ensureActive()
+        return withContext(Dispatchers.Main.immediate) {
+            ensureActive()
+            if(currentSession.value!=previous)return@withContext false
+            // No suspensions between applying the new API binding and publishing the verified session.
+            if(!userApiClient.applySession(session,deviceInfo))return@withContext false
+            preferenceRefresh?.cancel();preferencesRepository.invalidateSession()
+            userRepository.setCurrentUser(user);serverRepository.setCurrentServer(server)
+            authenticationPreferences[AuthenticationPreferences.lastServerId]=session.serverId.toString()
+            authenticationPreferences[AuthenticationPreferences.lastUserId]=session.userId.toString()
+            telemetryPreferences[TelemetryPreferences.crashReportUrl]=userApiClient.clientLogApi.logFileUrl()
+            telemetryPreferences[TelemetryPreferences.crashReportToken]=session.accessToken
+            _currentSession.value=session
+            // Display preference reads are optional and never delay or undo a successful connection.
+            preferenceRefresh=preferenceScope.launch {
+                try {preferencesRepository.onSessionChanged()}
+                catch(error:CancellationException){throw error}
+                catch(_:Exception){Timber.w("Unable to refresh optional display preferences")}
+            }
+            true
+        }
+    }
 
 	private fun createLastUserSession(): Session? {
 		val lastUserId = authenticationPreferences[AuthenticationPreferences.lastUserId].toUUIDOrNull()
