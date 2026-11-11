@@ -141,9 +141,12 @@ def install(g):
             if i==0:s+=tx(1728,y+73,'当前连接',28,anchor='end')
         return s
     def about():
-        s=frame(4,nav_focus=True)+tx(548,370,'JellyLive',52,weight=650)+tx(548,432,'v0.1.3',32,VALUE)
-        s+=para(548,548,'基于 Jellyfin Android TV / Media3。\n使用 GPL-2.0 许可证。',1200,30)
-        s+=para(548,714,'节目与影视来自已配置的服务，实际内容与权限由来源提供。\n当前不包含回看、时移或录制。',1200,28)
+        s=frame(4,nav_focus=True)+rect(548,320,1252,680,'#171c32',16,'#363e5d',1)
+        s+='<defs><linearGradient id="about-mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
+        s+=f'<svg x="1110" y="366" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
+        s+=tx(1174,560,'JellyLive',52,weight=650,anchor='middle')+tx(1174,626,'v0.1.3',32,VALUE,anchor='middle')
+        s+=tx(1174,704,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,750,'使用 GPL-2.0 许可证。',30,anchor='middle')
+        s+=para(662,828,'节目与影视来自已配置的服务，实际内容与权限由来源提供。\n当前不包含回看、时移或录制。',1024,30)
         return s
     def selector_scene(kind,large=False):
         if kind=='音轨语言':return choice(kind,[('跟随媒体','使用媒体的默认音轨。'),('中文','优先选择中文音轨。'),('英语','优先选择英语音轨。')],large=large)
