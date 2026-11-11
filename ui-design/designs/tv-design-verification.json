@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 100,
   "active": 94,
-  "textCount": 1488,
+  "textCount": 1486,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -12716,22 +12716,22 @@
     },
     {
       "figure": 70,
-      "text": "已连接 · ",
+      "text": "客厅媒体库",
       "size": 36.0,
       "bounds": [
-        551.0,
+        548.0,
         368.0,
-        687.0,
+        727.0,
         404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 70,
-      "text": "客厅媒体库",
+      "text": " · 已连接",
       "size": 36.0,
       "bounds": [
-        708.0,
+        749.0,
         368.0,
         887.0,
         404.0
@@ -14544,9 +14544,9 @@
       "size": 52.0,
       "bounds": [
         1061.0,
-        518.0,
+        614.0,
         1287.0,
-        572.0
+        668.0
       ],
       "clippedIntentionally": false
     },
@@ -14556,9 +14556,9 @@
       "size": 32.0,
       "bounds": [
         1129.5,
-        603.0,
+        699.0,
         1216.5,
-        626.0
+        722.0
       ],
       "clippedIntentionally": false
     },
@@ -14568,9 +14568,9 @@
       "size": 30.0,
       "bounds": [
         931.0,
-        678.0,
+        774.0,
         1399.0,
-        711.0
+        807.0
       ],
       "clippedIntentionally": false
     },
@@ -14580,33 +14580,9 @@
       "size": 30.0,
       "bounds": [
         1024.0,
-        724.0,
+        820.0,
         1305.0,
-        754.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 79,
-      "text": "节目与影视来自已配置的服务，实际内容与权限由来源提供。",
-      "size": 30.0,
-      "bounds": [
-        663.0,
-        802.0,
-        1453.0,
-        833.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 79,
-      "text": "当前不包含回看、时移或录制。",
-      "size": 30.0,
-      "bounds": [
-        665.0,
-        848.5,
-        1063.0,
-        878.5
+        850.0
       ],
       "clippedIntentionally": false
     },
@@ -16856,22 +16832,22 @@
     },
     {
       "figure": 94,
-      "text": "未连接 · ",
+      "text": "尚未添加媒体库",
       "size": 36.0,
       "bounds": [
-        548.0,
+        551.0,
         368.0,
-        687.0,
+        799.0,
         404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 94,
-      "text": "尚未添加媒体库",
+      "text": " · 未连接",
       "size": 36.0,
       "bounds": [
-        711.0,
+        821.0,
         368.0,
         959.0,
         404.0
@@ -17036,22 +17012,22 @@
     },
     {
       "figure": 95,
-      "text": "未连接 · ",
+      "text": "客厅媒体库",
       "size": 36.0,
       "bounds": [
         548.0,
         368.0,
-        687.0,
+        727.0,
         404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 95,
-      "text": "客厅媒体库",
+      "text": " · 未连接",
       "size": 36.0,
       "bounds": [
-        708.0,
+        749.0,
         368.0,
         887.0,
         404.0
@@ -17216,24 +17192,24 @@
     },
     {
       "figure": 96,
-      "text": "检查中… · ",
+      "text": "客厅媒体库",
       "size": 36.0,
       "bounds": [
         548.0,
         368.0,
-        723.0,
+        727.0,
         404.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 96,
-      "text": "客厅媒体库",
+      "text": " · 检查中…",
       "size": 36.0,
       "bounds": [
-        744.0,
+        749.0,
         368.0,
-        923.0,
+        921.0,
         404.0
       ],
       "clippedIntentionally": false

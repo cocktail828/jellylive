@@ -90,8 +90,9 @@ def install(g):
         status={'connected':'已连接','empty':'未连接','offline':'未连接','checking':'检查中…'}[state]
         name='尚未添加媒体库' if state=='empty' else '客厅媒体库'
         color='#bfe2d2' if state=='connected' else '#f2b4bb' if state=='offline' else MUTED
-        prefix=status+' · '
-        s+=tx(548,400,prefix,36,color,600)+tx(548+text_width(prefix,36),400,fit(name,36,1240-text_width(prefix,36)),36,weight=650)
+        suffix=' · '+status
+        label=fit(name,36,1240-text_width(suffix,36))
+        s+=tx(548,400,label,36,weight=650)+tx(548+text_width(label,36),400,suffix,36,color,600)
         info={'connected':'当前账号：示例账号','empty':'添加后即可浏览电影与剧集。','offline':'暂时无法连接，请检查网络或切换媒体库。','checking':'正在验证服务器与当前账号…'}[state]
         s+=tx(548,464,info,28,MUTED)
         s+=row(554,'新增媒体库',focus=True)+row(666,'切换媒体库',disabled=state=='empty')
@@ -168,10 +169,9 @@ def install(g):
     def about():
         s=frame(4,nav_focus=True)+rect(548,320,1252,680,'#171c32',16,'#363e5d',1)
         s+='<defs><linearGradient id="about-mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
-        s+=f'<svg x="1110" y="366" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
-        s+=tx(1174,560,'JellyLive',52,weight=650,anchor='middle')+tx(1174,626,'v0.1.3',32,VALUE,anchor='middle')
-        s+=tx(1174,704,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,750,'使用 GPL-2.0 许可证。',30,anchor='middle')
-        s+=para(662,828,'节目与影视来自已配置的服务，实际内容与权限由来源提供。\n当前不包含回看、时移或录制。',1024,30)
+        s+=f'<svg x="1110" y="462" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
+        s+=tx(1174,656,'JellyLive',52,weight=650,anchor='middle')+tx(1174,722,'v0.1.3',32,VALUE,anchor='middle')
+        s+=tx(1174,800,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,846,'使用 GPL-2.0 许可证。',30,anchor='middle')
         return s
     def selector_scene(large=False):
         return choice('字号',['跟随系统','加大字号'],large=large)
