@@ -41,52 +41,71 @@ def install(g):
         return rect(x,y,w,h,'#151a2b' if disabled else FOCUS if focus else '#242a46',14,'#fff' if focus else '#363e5d',4 if focus else 1)+tx(x+w/2,y+h/2+12,label,30,color,weight=600,anchor='middle')
     def switch(x,y,on):
         return rect(x,y,80,42,'#7561ed' if on else '#444b64',21)+f'<circle cx="{x+(58 if on else 22)}" cy="{y+21}" r="15" fill="{INK}"/>'
-    def row(y,title,value='',desc='',focus=False,kind='choice',checked=False,large=False):
-        fs=1.5 if large else 1;h=156 if large else 112;s=f'<g data-role="settings-row" data-title="{escape(title)}" data-kind="{kind}">'
-        s+=rect(548,y,1240,h,FOCUS if focus else SURFACE,14,'#fff' if focus else 'none',4 if focus else 0)
-        s+=tx(574,y+(53 if large else 43),fit(title,32*fs,800),32*fs,weight=600)
-        if desc:s+=tx(574,y+(120 if large else 86),fit(desc,24*fs,1168 if kind=='read' else 860),24*fs,INK if focus else MUTED)
+    def row(y,title,value='',focus=False,kind='choice',checked=False,large=False,disabled=False):
+        # One line per action; preserve generous TV focus targets and actual font sizes.
+        fs=1.5 if large else 1;h=132 if large else 96
+        s=f'<g data-role="settings-row" data-title="{escape(title)}" data-kind="{kind}" data-disabled="{str(disabled).lower()}">'
+        s+=rect(548,y,1240,h,'#151a2b' if disabled else FOCUS if focus else SURFACE,14,'#fff' if focus else 'none',4 if focus else 0)
+        baseline=y+h/2+12*fs
+        s+=tx(574,baseline,fit(title,32*fs,870 if kind=='radio' else 820),32*fs,MUTED if disabled else INK,600)
         if kind=='toggle':
-            s+=tx(1650,y+h/2+12,'开启' if checked else '关闭',28*fs,INK if focus else VALUE,anchor='end')+switch(1684,y+h/2-21,checked)
+            s+=tx(1650,baseline,'开启' if checked else '关闭',28*fs,INK if focus else VALUE,anchor='end')+switch(1684,y+h/2-21,checked)
         elif kind=='radio':
             if checked:s+=icon('check',1722,y+h/2-18,36,INK)
         elif kind!='read':
-            s+=tx(1722,y+h/2+12,fit(value,28*fs,320),28*fs,INK if focus else VALUE,anchor='end')+icon('forward',1742,y+h/2-15,30,INK if focus else MUTED)
+            s+=tx(1722,baseline,fit(value,28*fs,320),28*fs,MUTED if disabled else INK if focus else VALUE,anchor='end')
+            if not disabled:s+=icon('forward',1742,y+h/2-15,30,INK if focus else MUTED)
         return s+'</g>'
-    playback=[('启动时自动播放直播','','进入主页后，续播上次观看的频道。','toggle',True),('画面比例','原始','完整显示画面，必要时保留黑边。','choice',False),('音轨语言','跟随媒体','优先选择指定语言，实际以媒体提供的音轨为准。','choice',False),('字幕语言','关闭','选择默认字幕语言，播放时仍可临时切换。','choice',False),('剧集自动播放下集','','自然播完后倒计时5秒，可取消自动播放。','toggle',True)]
+    playback=['启动时自动播放直播','剧集自动播放下集']
+    def preview(y=640,h=300):
+        # Reuse the established video artwork; compare readable channel text against a real scene.
+        s=f'<defs><clipPath id="settings-preview"><rect x="548" y="{y}" width="1240" height="{h}" rx="14"/></clipPath></defs><g clip-path="url(#settings-preview)">'
+        s+=g['scene'](548,y,1240,h)+rect(1270,y,518,h,'#101629',0,fill_opacity=.65)
+        s+=rect(1286,y+16,486,h-32,'#101629',10,fill_opacity=.34)
+        s+=tx(1310,y+67,'频道列表',28,MUTED,600)+rect(1294,y+91,470,72,'#36305c',10)
+        s+=tx(1310,y+139,'01  新闻频道',32,weight=600)+tx(1310,y+207,'02  纪实频道',32)+tx(1310,y+266,'节目名称与频道信息',26,MUTED)
+        return s+'</g>'
     def main(selected=0,focus_menu=True,large=False):
         s=frame(selected,nav_focus=focus_menu,large=large)
         if selected==0:
-            visible=playback if not large else playback[1:]
-            for i,(a,b,c,k,on) in enumerate(visible):s+=row(320+i*(168 if large else 124),a,b,c,not focus_menu and i==(len(visible)-1 if large else 0),k,on,large)
-            if large:s+=rect(1810,320,5,650,'#30364e',2)+rect(1810,456,5,514,'#b9bfd0',2)
+            for i,title in enumerate(playback):s+=row(320+i*(156 if large else 112),title,focus=not focus_menu and i==0,kind='toggle',checked=True,large=large)
         elif selected==1:
-            s+=row(320,'字号','跟随系统','跟随电视系统字号，也可额外加大文字。',not focus_menu)
-            s+=row(444,'频道侧栏透明度','35%','只调整背景透明度，文字和焦点保持清晰。')
-            s+=tx(548,642,'显示预览',28,MUTED,600)+rect(548,676,1240,254,'#101629',14)
-            s+=tx(584,748,'新闻频道',36,weight=600)+tx(584,803,'节目名称与频道信息',28,MUTED)+tx(584,876,'示例内容',24,MUTED)
+            s+=row(320,'字号','跟随系统',focus=not focus_menu)
+            s+=row(432,'频道侧栏透明度','35%')
+            s+=tx(548,602,'显示预览',28,MUTED,600)+preview()
         return s
     def choice(title,options,current=0,focus=None,large=False):
         focus=current if focus is None else focus;s=frame(1 if title=='字号' else 0,title,large=large)
-        for i,(name,desc) in enumerate(options):s+=row(332+i*(180 if large else 132),name,desc=desc,focus=i==focus,kind='radio',checked=i==current,large=large)
+        for i,name in enumerate(options):s+=row(332+i*(156 if large else 112),name,focus=i==focus,kind='radio',checked=i==current,large=large)
         return s
     def transparency():
         s=frame(1,'频道侧栏透明度')+tx(548,337,'背景透明度',28,MUTED)
         s+=rect(548,368,1240,154,FOCUS,14,'#fff',4)+tx(1168,440,'35%',76,weight=650,anchor='middle')+line(598,440,634,440,INK,3)+icon('plus',1704,422,36,INK)
         s+=line(704,462,1632,462,'#b9bfd0',8)+line(704,462,1110,462,'#e1d7ff',8)+f'<circle cx="1110" cy="462" r="17" fill="{INK}"/>'
         s+=tx(704,565,'0%',26,MUTED)+tx(1632,565,'80%',26,MUTED,anchor='end')
-        s+=tx(548,637,'侧栏预览',28,MUTED,600)+rect(548,670,1240,262,'#d3dbe5',14)+rect(548,670,650,262,'#8396aa',14)+tx(873,795,'背景画面',30,'#101629',500,'middle')
-        s+=rect(1270,670,518,262,'#101629',14,fill_opacity=.65)+rect(1286,686,486,228,'#101629',10,fill_opacity=.34)
-        s+=tx(1310,752,'01  新闻频道',30,weight=600)+tx(1310,799,'节目名称',26,MUTED)+tx(1310,868,'02  纪实频道',30,weight=600)
+        s+=tx(548,637,'侧栏预览',28,MUTED,600)+preview(670,300)
         return s
-    def media_summary():
-        s=frame(2)+tx(548,355,'当前媒体库',28,MUTED)+tx(548,427,'客厅媒体库',44,weight=650)+tx(548,485,'已连接',30,'#bfe2d2')
-        s+=para(548,564,'播放和浏览使用当前账号的访问权限。',1160)
-        s+=row(650,'连接或更换媒体库',desc='选择服务器并登录后切换连接。',focus=True)
-        s+=row(774,'打开媒体库',desc='返回当前媒体库首页。')
+    def media_summary(state='connected'):
+        s=frame(2)
+        status={'connected':'已连接','empty':'未连接','offline':'未连接','checking':'检查中…'}[state]
+        name='尚未添加媒体库' if state=='empty' else '客厅媒体库'
+        color='#bfe2d2' if state=='connected' else '#f2b4bb' if state=='offline' else MUTED
+        s+=tx(548,354,status,30,color,600)+tx(548,426,name,44,weight=650)
+        info={'connected':'当前账号：示例账号','empty':'添加后即可浏览电影与剧集。','offline':'暂时无法连接，请检查网络或切换媒体库。','checking':'正在验证服务器与当前账号…'}[state]
+        s+=tx(548,484,info,28,MUTED)
+        s+=row(554,'新增媒体库',focus=True)+row(666,'切换媒体库',disabled=state=='empty')
+        return s
+    def media_switch(state='ready',large=False):
+        s=frame(2,'切换媒体库',large=large);fs=1.5 if large else 1
+        for i,name in enumerate(['客厅媒体库 · 示例账号','家庭影音 · 访客账号','书房媒体库 · 示例账号']):
+            if large and i==1:name='家庭影音服务器的较长名称 · 访客账号'
+            s+=row(332+i*(156 if large else 112),name,focus=i==1,kind='radio',checked=i==0,large=large)
+        y=900 if large else 758
+        if state=='switching':s+=tx(548,y,'正在连接家庭影音…',28,MUTED)
+        elif state=='error':s+=para(548,y,'无法连接家庭影音，请检查网络后重试。\n当前仍使用客厅媒体库。',1200,28,'#f2b4bb')
         return s
     def connection(error=False,loading=False):
-        s=top('连接媒体库')+tx(96,202,'Jellyfin 或兼容媒体服务器',28,MUTED)
+        s=top('新增媒体库')+tx(96,202,'Jellyfin 或兼容媒体服务器',28,MUTED)
         for i,(label,value) in enumerate([('服务器地址','http://media.example:8096'),('用户名','示例账号'),('密码','••••••••')]):
             y=240+i*172;s+=tx(100,y+29,label,30,weight=600)+rect(100,y+52,1080,96,'#20263e',14,'#fff' if (i==2 and error) or (i==0 and not error and not loading) else '#363e5d',4 if (i==2 and error) or (i==0 and not error and not loading) else 1)+tx(128,y+112,value,32,MUTED if loading else INK)
         if error:s+=tx(100,786,'账号或密码不正确，请检查后重试。',28,'#ffb4bc')
@@ -95,7 +114,7 @@ def install(g):
         s+=action(1280,292,520,'发现局域网服务器',disabled=loading)+tx(1280,498,'连接提示',34,weight=650)
         for y,value in [(570,'使用服务器上的媒体账号。'),(658,'切换地址或账号后需重新登录。'),(746,'媒体库与电视直播独立使用。')]:s+=para(1280,y,value,520,28)
         return s
-    def keyboard(title='连接媒体库',label='密码',value='••••••••'):
+    def keyboard(title='新增媒体库',label='密码',value='••••••••'):
         s=top(title)+tx(100,232,label,32,weight=600)+rect(100,268,1260,96,'#20263e',14)+tx(128,330,value,36)+action(1400,268,388,'完成')
         s+=rect(0,470,1920,610,'#1b2033',0)+tx(100,542,'输入'+label,30,weight=600)
         for i,letters in enumerate(['QWERTYUIOP','ASDFGHJKL','ZXCVBNM']):
@@ -105,7 +124,8 @@ def install(g):
         return s
     def box_summary():
         s=frame(3)+tx(548,332,'已保存配置 · 安徽移动百视通',28,MUTED)
-        for i,(title,desc) in enumerate([('从机顶盒导入','读取原机顶盒资料，核对后再保存。'),('导入配置文件','选择已有的 JSON 配置文件。'),('手动修改','修改常用信息，其他参数按类别查看。'),('导出配置文件','文件包含账号与密钥，请妥善保存。')]):s+=row(374+i*132,title,desc=desc,focus=i==0)
+        for i,title in enumerate(['从机顶盒导入','导入配置文件','手动修改','导出配置文件']):s+=row(374+i*132,title,focus=i==0)
+        s+=tx(548,950,'导出文件包含账号与密钥，请妥善保存。',26,MUTED)
         return s
     def box_import():
         s=top('从机顶盒导入')+tx(100,204,'机顶盒配置',28,MUTED)
@@ -127,7 +147,10 @@ def install(g):
         s=top('设备标识' if group else '高级参数')+tx(100,202,'设置 / 机顶盒配置 / '+('高级参数' if group else '手动修改'),26,MUTED)
         rows=[('TVID','示例设备标识'),('STBID','示例机顶盒标识'),('原机顶盒 IP','192.0.2.10'),('设备型号','导入的设备型号'),('设备版本描述','导入的版本信息')] if group else [('设备标识','TVID、STBID、IP、型号与版本'),('账号与授权','绑定账号、密码、认证密钥及用户分组'),('服务地址','登录地址、节目单地址'),('渠道参数','客户端渠道与标识')]
         for i,(title,value) in enumerate(rows):
-            y=280+i*130;s+=rect(100,y,1688,112,FOCUS if i==0 else SURFACE,14,'#fff' if i==0 else 'none',4 if i==0 else 0)+tx(128,y+45,title,32,weight=600)+tx(128,y+88,value,26,INK if i==0 else MUTED)+icon('forward',1728,y+42,28)
+            y=280+i*130
+            s+=rect(100,y,1688,112,FOCUS if i==0 else SURFACE,14,'#fff' if i==0 else 'none',4 if i==0 else 0)+tx(128,y+69,title,32,weight=600)
+            if group:s+=tx(1688,y+69,fit(value,28,1120),28,INK if i==0 else VALUE,anchor='end')
+            s+=icon('forward',1728,y+42,28)
         return s
     def discard():
         s=box_edit(focus=False)+rect(0,0,1920,1080,'#080c18',0,fill_opacity=.84)
@@ -137,8 +160,9 @@ def install(g):
     def discovery():
         s=top('选择媒体服务器')+tx(100,212,'发现的局域网服务',28,MUTED)
         for i,(name,address) in enumerate([('客厅媒体库','media.example:8096'),('家庭影音服务器','cinema.example:8096'),('书房媒体库','library.example:8096')]):
-            y=292+i*146;s+=rect(100,y,1688,124,FOCUS if i==0 else SURFACE,14,'#fff' if i==0 else 'none',4 if i==0 else 0)+tx(132,y+49,name,34,weight=600)+tx(132,y+96,address,28,INK if i==0 else MUTED)
-            if i==0:s+=tx(1728,y+73,'当前连接',28,anchor='end')
+            y=292+i*128
+            s+=rect(100,y,1688,104,FOCUS if i==0 else SURFACE,14,'#fff' if i==0 else 'none',4 if i==0 else 0)
+            s+=tx(132,y+65,name,34,weight=600)+tx(1728,y+65,address,28,INK if i==0 else VALUE,anchor='end')
         return s
     def about():
         s=frame(4,nav_focus=True)+rect(548,320,1252,680,'#171c32',16,'#363e5d',1)
@@ -148,24 +172,21 @@ def install(g):
         s+=tx(1174,704,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,750,'使用 GPL-2.0 许可证。',30,anchor='middle')
         s+=para(662,828,'节目与影视来自已配置的服务，实际内容与权限由来源提供。\n当前不包含回看、时移或录制。',1024,30)
         return s
-    def selector_scene(kind,large=False):
-        if kind=='音轨语言':return choice(kind,[('跟随媒体','使用媒体的默认音轨。'),('中文','优先选择中文音轨。'),('英语','优先选择英语音轨。')],large=large)
-        if kind=='字幕语言':return choice(kind,[('关闭','默认不显示字幕。'),('中文','优先选择中文字幕。'),('英语','优先选择英文字幕。')],focus=1)
-        if kind=='画面比例':return choice(kind,[('原始','完整显示画面，必要时保留黑边。'),('填充','保持比例裁剪，铺满屏幕。'),('拉伸','铺满屏幕，画面比例可能变化。')])
-        return choice('字号',[('跟随系统','使用电视系统设置的文字大小。'),('加大字号','在系统字号基础上额外放大文字。')],large=large)
+    def selector_scene(large=False):
+        return choice('字号',['跟随系统','加大字号'],large=large)
     def replace(slug,title,body):
         index=next(i for i,s in enumerate(g['SCREENS']) if s['id']==slug)
         g['SCREENS'].pop(index);g['emit'](slug,title,body);entry=g['SCREENS'].pop();g['SCREENS'].insert(index,entry)
     g['settings_page']=main
     g['box_import_design']=box_import
     def additional():
-        replace('18-jellyfin','连接媒体库：遥控器表单',connection())
-        replace('18-jellyfin-ime','连接媒体库：系统输入法',keyboard())
+        replace('18-jellyfin','新增媒体库：遥控器表单',connection())
+        replace('18-jellyfin-ime','新增媒体库：系统输入法',keyboard())
         cases=[
-            ('17-settings-audio','设置子菜单：音轨语言',selector_scene('音轨语言')),
-            ('17-settings-subtitle','设置子菜单：字幕语言',selector_scene('字幕语言')),
-            ('17-settings-aspect','设置子菜单：画面比例',selector_scene('画面比例')),
-            ('17-settings-font','设置子菜单：字号',selector_scene('字号')),
+            ('17-settings-audio','音轨默认设置（已取消）',None),
+            ('17-settings-subtitle','字幕默认设置（已取消）',None),
+            ('17-settings-aspect','画面比例默认设置（已取消）',None),
+            ('17-settings-font','设置子菜单：字号',selector_scene()),
             ('17-settings-transparency','设置子菜单：侧栏透明度',transparency()),
             ('17-settings-media','设置：媒体库连接状态',media_summary()),
             ('17-settings-box','设置：机顶盒配置入口',box_summary()),
@@ -177,11 +198,27 @@ def install(g):
             ('17-settings-box-discard','配置：放弃草稿确认',discard()),
             ('17-settings-connection-error','媒体库连接：错误保留输入',connection(error=True)),
             ('17-settings-about','设置：关于',about()),
-            ('17-settings-large','设置：150%字号与滚动',main(focus_menu=False,large=True)),
-            ('17-settings-choice-large','设置子菜单：150%字号',selector_scene('音轨语言',True)),
+            ('17-settings-large','设置：150%字号',main(focus_menu=False,large=True)),
+            ('17-settings-choice-large','设置子菜单：150%字号',selector_scene(True)),
             ('17-settings-box-ready','机顶盒配置：读取成功待保存',box_edit(True)),
             ('17-settings-discovery','媒体库连接：发现服务器',discovery()),
             ('17-settings-connection-loading','媒体库连接：验证中',connection(loading=True)),
         ]
-        for slug,title,body in cases:g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state' if any(k in slug for k in ['error','discard','loading','large','ready']) else 'main'
+        for slug,title,body in cases:
+            if body is None:
+                g['SCREENS'].append(dict(id=slug,title=title,note='已取消设置入口，请在各自播放器调整。',flow='播放器底部信息栏',kind='state',retired=True))
+            else:
+                g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state' if any(k in slug for k in ['error','discard','loading','large','ready']) else 'main'
+    def connection_states():
+        for slug,title,body in [
+            ('17-settings-media-empty','媒体库连接：尚未添加',media_summary('empty')),
+            ('17-settings-media-offline','媒体库连接：暂时未连接',media_summary('offline')),
+            ('17-settings-media-checking','媒体库连接：检查中',media_summary('checking')),
+            ('17-settings-media-switch','切换媒体库：已保存的账号',media_switch()),
+            ('17-settings-media-switching','切换媒体库：连接中',media_switch('switching')),
+            ('17-settings-media-switch-error','切换媒体库：失败保留原会话',media_switch('error')),
+            ('17-settings-media-switch-large','切换媒体库：150%字号与长名称',media_switch(large=True)),
+        ]:
+            g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state'
+    g['SETTINGS_CONNECTION_STATES']=connection_states
     return additional

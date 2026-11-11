@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
-<title id="title">媒体播放器：画面比例浮层</title><desc id="desc">底栏第一项显示当前比例，原始/填充/拉伸三项局部透明浮层，沿用直播的视觉。打开聚焦已选项，确认即时生效并回原按钮，返回不改值。媒体比例记忆独立于直播；首次未设置媒体偏好时继承全局默认。</desc>
+<title id="title">媒体播放器：画面比例浮层</title><desc id="desc">底栏第一项显示当前比例，原始/填充/拉伸三项局部透明浮层，沿用直播的视觉。打开聚焦已选项，确认即时生效并回原按钮，返回不改值。媒体比例记忆独立于直播；未设置时默认原始；保留已有播放器偏好，不再从设置页提供比例入口。</desc>
 <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
 <linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
 <g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">

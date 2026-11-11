@@ -40,20 +40,15 @@ def install(g):
         s += rect(400, 140, 1120, 800, '#171c32', 16, '#59627d', 1)
         s += text(448, 224 if large else 216, '机顶盒配置', 60 if large else 40, weight=650)
         s += text(448, 292 if large else 276, '已保存配置，无需重复填写。', 39 if large else 28, '#b9bfd0')
-        rows = [('从机顶盒导入', '读取设备资料，核对后再保存。'),
-                ('导入配置文件', '选择已有的 JSON 配置文件。'),
-                ('手动修改', '常用信息与高级参数分步查看。'),
-                ('导出配置文件', '文件包含账号资料，请妥善保存。')]
-        for i, (title, desc) in enumerate(rows[:3] if large else rows):
-            y = (336+i*180) if large else (324+i*140)
-            h = 156 if large else 120
+        rows = ['从机顶盒导入', '导入配置文件', '手动修改', '导出配置文件']
+        for i, title in enumerate(rows):
+            y = (336+i*140) if large else (324+i*120)
+            h = 124 if large else 100
             s += rect(448, y, 1024, h, 'url(#purple)' if i == 0 else '#20263e', 14,
                       '#fff' if i == 0 else 'none', 4 if i == 0 else 0)
-            s += text(480, y+(60 if large else 46), title, 48 if large else 32, weight=600)
-            s += text(480, y+(120 if large else 92), desc, 36 if large else 26, '#f6f5ff' if i == 0 else '#b9bfd0')
-            s += icon('forward', 1416, y+(62 if large else 46), 32)
-        if large:
-            s += rect(1490, 336, 6, 516, '#363e5d', 3)+rect(1490, 336, 6, 360, '#b9a6ff', 3)
+            s += text(480, y+(80 if large else 62), title, 48 if large else 32, weight=600)
+            s += icon('forward', 1416, y+h/2-16, 32)
+        s += text(448, 920 if large else 872, '导出文件包含账号资料，请妥善保存。', 26, '#b9bfd0')
         return s + '</g>'
 
     def box_import_error():
@@ -68,7 +63,7 @@ def install(g):
             ('15-media-aspect', '媒体播放器：画面比例浮层', media_aspect()),
             ('15-media-opening', '媒体播放：进入时统一缓冲提示', media_wait(opening=True)),
             ('09-box-config', '直播源：机顶盒配置', box_menu()),
-            ('09-box-config-large', '机顶盒配置：150%字号与滚动', box_menu(large=True)),
+            ('09-box-config-large', '机顶盒配置：150%字号', box_menu(large=True)),
             ('09-box-config-import-error', '机顶盒配置：读取失败保留输入', box_import_error()),
         ]:
             g['emit'](slug, title, body)

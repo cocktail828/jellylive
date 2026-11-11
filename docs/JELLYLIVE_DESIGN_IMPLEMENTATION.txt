@@ -1,7 +1,11 @@
-JellyLive 最新设计实施核对 · 2026-11-10
+JellyLive 设计实施基线核对 · 2026-11-10
+
+2026-11-11设计增量尚待实施：设置默认单行、播放设置移除比例/音轨/字幕、显示预览加背景、
+媒体库连接改状态与新增/切换（含图94–100）。当前100编号/94有效稿；详情见SETTINGS_TV_DESIGN.txt。
+下列90稿及原生通过项记录此前实现基线，不能代表本轮新设计已落地。
 
 基准与范围
-设计基准为仓库 ui-design/designs/INTERACTION_RULES.txt、manifest.json 与当前90张有效SVG
+此前实现的设计基准为仓库 ui-design/designs/INTERACTION_RULES.txt、manifest.json 与当前90张有效SVG
 （93个保留图号），按17个流程分组；当前原生验收见TV_UI_IMPLEMENTATION_VALIDATION.txt。图05、32、42继续停用；不恢复其入口。
 图号是画册序号，历史SVG文件名中的数字与画册序号不同，不能混用。
 本次使用既有Docker镜像与离线缓存；没有安装宿主工具，没有push或发布新版本。

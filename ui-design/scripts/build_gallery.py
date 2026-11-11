@@ -26,7 +26,7 @@ for screen in screens:
     screen['revision']=hashlib.sha256((OUT/'svg'/f"{screen['id']}.svg").read_bytes()).hexdigest()[:10]
 rules=json.loads((Path(__file__).parent/'design_rules.json').read_text())
 rule_cards=''.join('<article class="spec"><h3>'+escape(rule['title'])+'</h3>'+''.join('<p>'+escape(p)+'</p>' for p in rule['paragraphs'])+'</article>' for rule in rules)
-(OUT/'INTERACTION_RULES.txt').write_text('JellyLive 当前交互规则 · 2026-11-10\n\n'+'\n\n'.join(rule['title']+'\n'+'\n'.join(rule['paragraphs']) for rule in rules)+'\n')
+(OUT/'INTERACTION_RULES.txt').write_text('JellyLive 当前交互规则 · 2026-11-11\n\n'+'\n\n'.join(rule['title']+'\n'+'\n'.join(rule['paragraphs']) for rule in rules)+'\n')
 main_count=sum(s['kind']=='main' for s in screens)
 state_count=len(screens)-main_count
 cards=[]
@@ -62,7 +62,7 @@ template='''<!doctype html>
 @media print{body{background:white;color:black}header,main,footer{padding:15px}nav,.tip,.specs,dialog{display:none}.grid{display:block}.card{display:block;width:100%;break-inside:avoid;background:white;color:black;margin-bottom:25px}.caption p{color:#333}.card[hidden]{display:none}.thumbnail{max-height:60vh}.caption{padding:12px}.intro{color:#333}}
 </style>
 <header><div class="eyebrow">JELLYLIVE / CURRENT DESIGN / 2026.11.10</div><h1>打开电视，<span>回到观看。</span></h1>
-<p class="intro">当前设计 · 2026-11-10。按启动、直播、影视、设置四部分查看，保留原图号。直播与媒体使用同高两行信息栏，媒体新增画面比例；加载提示统一为正在缓冲；直播源配置使用电视大行弹窗。按钮只显示当前选项，字幕关闭时显示“字幕”。频道侧栏宽560px，音轨/字幕采用紧凑单行浮层，媒体列表为2:3竖版海报。图片与文字均为设计示意，原生实现与验收另见代码仓库文档。</p>
+<p class="intro">当前设计 · 2026-11-11。按启动、直播、影视、设置四部分查看，保留原图号。直播与媒体使用同高两行信息栏，媒体新增画面比例；加载提示统一为正在缓冲；直播源配置使用电视大行弹窗。按钮只显示当前选项，字幕关闭时显示“字幕”。频道侧栏宽560px，音轨/字幕采用紧凑单行浮层，媒体列表为2:3竖版海报。图片与文字均为设计示意，原生实现与验收另见代码仓库文档。</p>
 <div class="tags"><span>__MAIN__ 个主要界面 + __STATE__ 个状态界面</span><span>1920 × 1080</span><span>SVG 可编辑 / PNG 高清预览</span><span>遥控器优先</span><span>离线可浏览</span></div></header>
 <main><section aria-labelledby="pages"><h2 id="pages">按功能查看设计</h2>__PART_NAV__<nav aria-label="界面分类"><button class="filter" data-filter="all" aria-pressed="true">全部 __TOTAL__</button><button class="filter" data-filter="main" aria-pressed="false">主要界面 __MAIN__</button><button class="filter" data-filter="state" aria-pressed="false">状态界面 __STATE__</button><a class="utility" href="previews/05-live-playback-settings.png">画面比例浮层</a><a class="utility" href="previews/12-library-filter.png">筛选设计</a><a class="utility" href="previews/12-library-sort.png">排序设计</a><a class="utility" href="previews/15-media-speed.png">倍速浮层</a><a class="utility" href="previews/15-media-next.png">自动下一集</a><a class="utility" href="previews/11-library-empty-history.png">暂无观看历史</a><a class="utility" href="previews/06-channel-drawer.png">透明频道侧栏</a><a class="utility" href="startup-animation.html">播放启动动画</a><a class="utility" href="previews/live-favorite-flow.png">长按收藏反馈</a><a class="utility" href="#behavior">操作与状态规则</a><a class="utility" href="#relationships">页面关系图</a></nav>
 <p class="tip">点击图稿放大。放大后使用 ← → 浏览设计图，Esc 关闭；这不是 App 交互原型。</p>__PARTS__</section>
@@ -70,7 +70,7 @@ template='''<!doctype html>
 <section id="relationships"><h2>页面关系</h2><a href="svg/25-page-map.svg"><img class="flow" src="previews/25-page-map.png" alt="JellyLive 页面导航关系图" loading="lazy"></a></section>
 <section id="behavior"><h2>当前交互规则</h2><div class="specs">__RULE_CARDS__</div></section>
 <section><h2>已取消页面</h2><p>图05独立频道浏览、图32自动首次收藏说明、图42直播播放列表已取消，当前画册和设计包不含旧图像。原编号占位保留，其他图号不重排。</p></section><section><h2>视觉基准</h2><div class="swatches"><div class="swatch"><i style="background:#101326"></i>背景 #101326</div><div class="swatch"><i style="background:#171c32"></i>面板 #171C32</div><div class="swatch"><i style="background:#7561ed"></i>品牌 #7561ED</div><div class="swatch"><i style="background:#f6f5ff"></i>文字 #F6F5FF</div><div class="swatch"><i style="background:#a9adc6"></i>辅助 #A9ADC6</div></div></section>
-</main><footer>当前设计与交互说明更新于2026-11-10；设计规范与原生验收独立记录。图17/19参考 Jellyfin 的结构，以当前 JellyLive 风格重新绘制；场景、频道与媒体信息均为示意。矢量风景为原创素材。<br>原始设计：svg/ · 高清预览：previews/ · 页面清单：manifest.json · 生成方式见 README.txt。</footer>
+</main><footer>当前设计与交互说明更新于2026-11-11；设计规范与原生验收独立记录。图17/19参考 Jellyfin 的结构，以当前 JellyLive 风格重新绘制；场景、频道与媒体信息均为示意。矢量风景为原创素材。<br>原始设计：svg/ · 高清预览：previews/ · 页面清单：manifest.json · 生成方式见 README.txt。</footer>
 <dialog id="viewer" aria-labelledby="viewer-title"><div class="viewer-top"><h2 id="viewer-title"></h2><div class="viewer-actions"><button id="prev" aria-label="上一张">← 上一张</button><button id="next" aria-label="下一张">下一张 →</button><button id="close">关闭 Esc</button></div></div><img id="large" alt=""><p id="note"></p><p id="route"></p><div id="downloads"><a id="svg-link">打开 SVG 原稿</a><a id="png-link">打开高清 PNG</a></div></dialog>
 <script>
 const screens=__MANIFEST__;
@@ -82,7 +82,7 @@ document.querySelector('#prev').onclick=()=>step(-1);document.querySelector('#ne
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(f=>f.setAttribute('aria-pressed',String(f===b)));document.querySelectorAll('.card').forEach(c=>c.hidden=b.dataset.filter!=='all'&&c.dataset.kind!==b.dataset.filter);document.querySelectorAll('.flow-group,.design-part').forEach(part=>part.hidden=![...part.querySelectorAll('.card')].some(c=>!c.hidden))}));
 </script></html>'''
 for current_part in [None,*[key for key,_,_ in PARTS],'tv-review']:
-    review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,94)}
+    review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,101)}
     review=current_part=='tv-review'
     selected=[screen for screen in screens if (screen['number'] in review_numbers if review else current_part is None or screen['part']==current_part)]
     navigation=part_navigation.replace(f'href="{current_part or "index"}.html"',f'href="{current_part or "index"}.html" aria-current="page"')

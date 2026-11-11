@@ -697,6 +697,7 @@ if __name__=='__main__':
     SETTINGS_TV_VARIANTS()
     PLAYBACK_BOX_VARIANTS()
     LIVE_QUALITY_VARIANTS()
+    SETTINGS_CONNECTION_STATES()
     favorite_flow()
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:

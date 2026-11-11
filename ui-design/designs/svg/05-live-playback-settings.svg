@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
-<title id="title">直播：画面比例局部浮层</title><desc id="desc">比例按钮上方就近展开原始比例/适应屏幕/铺满画面，不加全屏暗幕。选择即时生效并收起，回到原按钮。侧栏透明度仍在全局播放设置中保留。信息栏及对应浮层使用35%透明背景，文字与焦点保持实色。</desc>
+<title id="title">直播：画面比例局部浮层</title><desc id="desc">比例按钮上方就近展开原始比例/适应屏幕/铺满画面，不加全屏暗幕。选择即时生效并收起，回到原按钮。侧栏透明度在设置的显示与操作中调整。信息栏及对应浮层使用35%透明背景，文字与焦点保持实色。</desc>
 <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
 <linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
 <g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
