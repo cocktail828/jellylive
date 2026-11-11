@@ -100,8 +100,10 @@ def install(g):
             x=text_end+24
             action_name='正在重试连接' if state=='checking' else '重试连接' if state=='offline' else '检查连接'
             s+=f'<g data-role="connection-retry" data-busy="{str(state=="checking").lower()}" aria-label="{action_name}">'
-            s+=rect(x,340,96,96,FOCUS if retry_focus else SURFACE,48,'#fff' if retry_focus else '#59627d',4 if retry_focus else 1)
-            s+=icon('refresh',x+30,370,36,INK if retry_focus else VALUE)+'</g>'
+            s+=rect(x,340,96,96,'none',0)
+            s+=icon('refresh',x+30,370,36,INK if retry_focus else VALUE)
+            if retry_focus:s+=line(x+26,422,x+70,422,INK,3)
+            s+='</g>'
         info={'connected':'当前账号：示例账号','empty':'添加后即可浏览电影与剧集。','offline':'暂时无法连接，请重试或切换媒体库。','checking':'正在连接服务器并验证当前账号…'}[state]
         s+=tx(548,482,info,28,MUTED)
         s+=row(554,'新增媒体库',focus=not retry_focus)+row(666,'切换媒体库',disabled=state=='empty')
