@@ -29,7 +29,6 @@ python3 scripts/build_designs.py
 python3 scripts/build_gallery.py
 python3 scripts/render_designs.py
 python3 scripts/build_motion.py
-python3 scripts/build_overview.py
 python3 scripts/export_tv_adaptations.py
 python3 scripts/verify_tv_designs.py
 ```
