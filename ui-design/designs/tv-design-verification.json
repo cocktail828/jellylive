@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 104,
   "active": 98,
-  "textCount": 1517,
+  "textCount": 1516,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -12740,25 +12740,13 @@
     },
     {
       "figure": 70,
-      "text": "当前账号：示例账号",
-      "size": 28.0,
-      "bounds": [
-        551.0,
-        457.0,
-        799.0,
-        485.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 70,
       "text": "新增媒体库",
       "size": 32.0,
       "bounds": [
         574.0,
-        586.0,
+        502.0,
         733.0,
-        618.0
+        534.0
       ],
       "clippedIntentionally": false
     },
@@ -12768,9 +12756,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        614.0,
+        530.0,
         1722.0,
-        614.0
+        530.0
       ],
       "clippedIntentionally": false
     },
@@ -12780,9 +12768,9 @@
       "size": 32.0,
       "bounds": [
         574.0,
-        698.0,
+        614.0,
         733.0,
-        730.0
+        646.0
       ],
       "clippedIntentionally": false
     },
@@ -12792,9 +12780,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        726.0,
+        642.0,
         1722.0,
-        726.0
+        642.0
       ],
       "clippedIntentionally": false
     },
