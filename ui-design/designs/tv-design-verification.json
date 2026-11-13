@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 104,
   "active": 98,
-  "textCount": 1516,
+  "textCount": 1514,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -16844,25 +16844,13 @@
     },
     {
       "figure": 94,
-      "text": "添加后即可浏览电影与剧集。",
-      "size": 28.0,
-      "bounds": [
-        549.0,
-        457.0,
-        894.0,
-        485.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 94,
       "text": "新增媒体库",
       "size": 32.0,
       "bounds": [
         574.0,
-        586.0,
+        502.0,
         733.0,
-        618.0
+        534.0
       ],
       "clippedIntentionally": false
     },
@@ -16872,9 +16860,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        614.0,
+        530.0,
         1722.0,
-        614.0
+        530.0
       ],
       "clippedIntentionally": false
     },
@@ -16884,9 +16872,9 @@
       "size": 32.0,
       "bounds": [
         574.0,
-        698.0,
+        614.0,
         733.0,
-        730.0
+        646.0
       ],
       "clippedIntentionally": false
     },
@@ -16896,9 +16884,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        726.0,
+        642.0,
         1722.0,
-        726.0
+        642.0
       ],
       "clippedIntentionally": false
     },
@@ -17024,25 +17012,13 @@
     },
     {
       "figure": 95,
-      "text": "暂时无法连接，请重试或切换媒体库。",
-      "size": 28.0,
-      "bounds": [
-        549.0,
-        457.0,
-        1006.0,
-        486.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 95,
       "text": "新增媒体库",
       "size": 32.0,
       "bounds": [
         574.0,
-        586.0,
+        502.0,
         733.0,
-        618.0
+        534.0
       ],
       "clippedIntentionally": false
     },
@@ -17052,9 +17028,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        614.0,
+        530.0,
         1722.0,
-        614.0
+        530.0
       ],
       "clippedIntentionally": false
     },
@@ -17064,9 +17040,9 @@
       "size": 32.0,
       "bounds": [
         574.0,
-        698.0,
+        614.0,
         733.0,
-        730.0
+        646.0
       ],
       "clippedIntentionally": false
     },
@@ -17076,9 +17052,21 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        726.0,
+        642.0,
         1722.0,
-        726.0
+        642.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 95,
+      "text": "暂时无法连接，请重试或切换媒体库。",
+      "size": 28.0,
+      "bounds": [
+        549.0,
+        721.0,
+        1006.0,
+        750.0
       ],
       "clippedIntentionally": false
     },
@@ -17204,25 +17192,13 @@
     },
     {
       "figure": 96,
-      "text": "正在连接服务器并验证当前账号…",
-      "size": 28.0,
-      "bounds": [
-        549.0,
-        457.0,
-        966.0,
-        485.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 96,
       "text": "新增媒体库",
       "size": 32.0,
       "bounds": [
         574.0,
-        586.0,
+        502.0,
         733.0,
-        618.0
+        534.0
       ],
       "clippedIntentionally": false
     },
@@ -17232,9 +17208,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        614.0,
+        530.0,
         1722.0,
-        614.0
+        530.0
       ],
       "clippedIntentionally": false
     },
@@ -17244,9 +17220,9 @@
       "size": 32.0,
       "bounds": [
         574.0,
-        698.0,
+        614.0,
         733.0,
-        730.0
+        646.0
       ],
       "clippedIntentionally": false
     },
@@ -17256,9 +17232,9 @@
       "size": 28.0,
       "bounds": [
         1722.0,
-        726.0,
+        642.0,
         1722.0,
-        726.0
+        642.0
       ],
       "clippedIntentionally": false
     },

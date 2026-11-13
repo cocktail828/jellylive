@@ -103,10 +103,8 @@ def install(g):
             s+=icon('refresh',x+30,370,36,INK if retry_focus else VALUE)
             if retry_focus:s+=line(x+26,422,x+70,422,INK,3)
             s+='</g>'
-        info={'empty':'添加后即可浏览电影与剧集。','offline':'暂时无法连接，请重试或切换媒体库。','checking':'正在连接服务器并验证当前账号…'}.get(state)
-        if info:s+=tx(548,482,info,28,MUTED)
-        menu_y=470 if state=='connected' else 554
-        s+=row(menu_y,'新增媒体库',focus=not retry_focus)+row(menu_y+112,'切换媒体库',disabled=state=='empty')
+        s+=row(470,'新增媒体库',focus=not retry_focus)+row(582,'切换媒体库',disabled=state=='empty')
+        if state=='offline':s+=tx(548,746,'暂时无法连接，请重试或切换媒体库。',28,MUTED)
         return s
     def media_switch(state='ready',large=False):
         s=frame(2,'切换媒体库',large=large);fs=1.5 if large else 1
