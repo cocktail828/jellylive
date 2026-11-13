@@ -321,6 +321,50 @@ public final class TvRegressionProbe extends Instrumentation {
             }
         }
     }
+    private void tap(View view)throws Exception{
+        int[] bounds=main(()->{int[] xy=new int[2];view.getLocationOnScreen(xy);return new int[]{xy[0],xy[1],view.getWidth(),view.getHeight()};});
+        long now=SystemClock.uptimeMillis();float x=bounds[0]+bounds[2]/2f,y=bounds[1]+bounds[3]/2f;
+        sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,x,y,0));sendPointerSync(MotionEvent.obtain(now,now+100,MotionEvent.ACTION_UP,x,y,0));waitForIdleSync();
+    }
+    private void settingsBackReview()throws Exception{
+        live=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.LiveActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        check("home loads",waitTag(live,"group",25));
+        for(int category:new int[]{0,1,4}){
+            main(()->{call(live,"navigate","settings");return null;});tap(tagged(live,"settings-"+category));
+            check("touch category enters content "+category,inSettings()&&main(()->root(live).isInTouchMode()));
+            if(category==1){tap(tagged(live,"font"));check("touch opens font submenu",main(()->"large_text".equals(field(live,"settingsSubmenu"))));key(KeyEvent.KEYCODE_BACK);check("touch Back restores original font row",tagOfFocus(live).equals("font"));}
+            key(KeyEvent.KEYCODE_BACK);check("system Back after touch reaches category "+category,tagOfFocus(live).equals("settings-"+category));
+            if(category==4)shot("about-no-panel-fill");
+            key(KeyEvent.KEYCODE_BACK);check("second system Back after touch leaves settings "+category,main(()->"home".equals(field(live,"route"))));
+            if(main(()->"settings".equals(field(live,"route"))))main(()->{call(live,"home");return null;});
+        }
+        main(()->{call(live,"navigate","settings");return null;});focusTag(live,"settings-1");key(KeyEvent.KEYCODE_DPAD_RIGHT);key(KeyEvent.KEYCODE_BACK);
+        check("remote Back still reaches category",tagOfFocus(live).equals("settings-1"));key(KeyEvent.KEYCODE_BACK);check("remote Back still leaves settings",main(()->"home".equals(field(live,"route"))));
+        final String[] firstPage={"missing"};
+        Application.ActivityLifecycleCallbacks observer=new Application.ActivityLifecycleCallbacks(){
+            public void onActivityPostCreated(Activity a,Bundle state){if(a.getClass().getName().endsWith(".JellyLibraryActivity"))firstPage[0]=(String)field(a,"pageName");}
+            public void onActivityCreated(Activity a,Bundle state){} public void onActivityStarted(Activity a){} public void onActivityResumed(Activity a){}
+            public void onActivityPaused(Activity a){} public void onActivityStopped(Activity a){} public void onActivitySaveInstanceState(Activity a,Bundle state){} public void onActivityDestroyed(Activity a){}
+        };
+        main(()->{call(live,"navigate","settings");return null;});focusTag(live,"settings-2");key(KeyEvent.KEYCODE_DPAD_RIGHT);
+        Object service=field(live,"libraryConnections");Object original=main(()->call(service,"currentKey"));focusTag(live,"media-add");
+        ActivityMonitor monitor=addMonitor("org.jellyfin.androidtv.bestv.JellyLibraryActivity",null,false);
+        main(()->{live.getApplication().registerActivityLifecycleCallbacks(observer);return null;});
+        try{key(KeyEvent.KEYCODE_DPAD_CENTER);library=waitForMonitorWithTimeout(monitor,5000);}finally{removeMonitor(monitor);main(()->{live.getApplication().unregisterActivityLifecycleCallbacks(observer);return null;});}
+        check("add opens form immediately without restoration screen","connection".equals(firstPage[0]));
+        check("add form is usable",library!=null&&waitPage("connection",25));
+        if(library!=null){List<EditText> fields=main(()->inputs(root(library)));check("all new library fields are empty",fields.size()==3&&main(()->fields.stream().allMatch(f->f.length()==0)));shot("add-library-direct-form");
+            java.util.concurrent.atomic.AtomicInteger backEvents=new java.util.concurrent.atomic.AtomicInteger();
+            Window.Callback originalCallback=main(()->library.getWindow().getCallback());
+            main(()->{library.getWindow().setCallback((Window.Callback)Proxy.newProxyInstance(getTargetContext().getClassLoader(),new Class<?>[]{Window.Callback.class},(proxy,method,args)->{if(method.getName().equals("dispatchKeyEvent")&&((KeyEvent)args[0]).getKeyCode()==KeyEvent.KEYCODE_BACK)backEvents.incrementAndGet();try{return method.invoke(originalCallback,args);}catch(InvocationTargetException e){throw e.getCause();}}));return null;});
+            key(KeyEvent.KEYCODE_BACK);
+            // Android may use the first Back to dismiss transient system navigation bars.
+            layers.put(new JSONObject().put("firstBackWindowEvents",backEvents.get()));
+            if(backEvents.get()==0)key(KeyEvent.KEYCODE_BACK);
+            for(int i=0;i<30&&!(tagOfFocus(live).equals("media-add")&&main(()->live.hasWindowFocus()));i++)SystemClock.sleep(100);
+            check("add Back reaches app and closes form",backEvents.get()>0&&main(()->library.isFinishing()||library.isDestroyed()));
+            library=null;check("cancel add keeps current library",main(()->Objects.equals(original,call(service,"currentKey"))));layers.put(new JSONObject().put("cancelAddFocus",tagOfFocus(live)).put("liveWindowFocus",main(()->live.hasWindowFocus())));check("cancel add returns to add row",tagOfFocus(live).equals("media-add")&&main(()->live.hasWindowFocus()));}
+    }
     private void opacityFocusReview()throws Exception{
         live=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.LiveActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));check("home",waitTag(live,"group",25));main(()->{call(live,"navigate","settings");return null;});focusTag(live,"settings-1");key(KeyEvent.KEYCODE_DPAD_RIGHT);focusTag(live,"transparency");key(KeyEvent.KEYCODE_DPAD_CENTER);
         SeekBar bar=main(()->(SeekBar)root(live).findViewWithTag("selected-option"));int[] xy=main(()->{int[] a=new int[2];bar.getLocationOnScreen(a);return a;});int w=main(()->bar.getWidth()),h=main(()->bar.getHeight());long now=SystemClock.uptimeMillis();sendPointerSync(MotionEvent.obtain(now,now,MotionEvent.ACTION_DOWN,xy[0]+w*.5f,xy[1]+h/2f,0));sendPointerSync(MotionEvent.obtain(now,now+100,MotionEvent.ACTION_UP,xy[0]+w*.5f,xy[1]+h/2f,0));waitForIdleSync();
@@ -424,7 +468,7 @@ public final class TvRegressionProbe extends Instrumentation {
         String phase=arguments.getString("phase","run").replaceAll("[^a-zA-Z0-9_-]","");output=new File(getTargetContext().getExternalFilesDir("tv-regression"),phase);output.mkdirs();
         String error="";
         try{
-            if("true".equals(arguments.getString("refreshStyleReview"))){refreshStyleReview();}else if("true".equals(arguments.getString("opacityFocusReview"))){opacityFocusReview();}else if("true".equals(arguments.getString("configuredReview"))){configuredReview();}else if("true".equals(arguments.getString("connectionReview"))){connectionReview();}else if("true".equals(arguments.getString("liveReview"))){liveReview();}else if("true".equals(arguments.getString("searchReview"))){searchReview();}else if("true".equals(arguments.getString("channelAudit"))){channelAudit();}else if("true".equals(arguments.getString("settingsReview"))){settingsReview();}else if("true".equals(arguments.getString("mediaReview"))){mediaReview();}else if("true".equals(arguments.getString("playbackAudit"))){playbackAudit();}else if("true".equals(arguments.getString("resumeAudit"))||"true".equals(arguments.getString("resumeVerify"))){resumeAudit();if("true".equals(arguments.getString("resumeVerify")))resumePlayback();}else {
+            if("true".equals(arguments.getString("settingsBackReview"))){settingsBackReview();}else if("true".equals(arguments.getString("refreshStyleReview"))){refreshStyleReview();}else if("true".equals(arguments.getString("opacityFocusReview"))){opacityFocusReview();}else if("true".equals(arguments.getString("configuredReview"))){configuredReview();}else if("true".equals(arguments.getString("connectionReview"))){connectionReview();}else if("true".equals(arguments.getString("liveReview"))){liveReview();}else if("true".equals(arguments.getString("searchReview"))){searchReview();}else if("true".equals(arguments.getString("channelAudit"))){channelAudit();}else if("true".equals(arguments.getString("settingsReview"))){settingsReview();}else if("true".equals(arguments.getString("mediaReview"))){mediaReview();}else if("true".equals(arguments.getString("playbackAudit"))){playbackAudit();}else if("true".equals(arguments.getString("resumeAudit"))||"true".equals(arguments.getString("resumeVerify"))){resumeAudit();if("true".equals(arguments.getString("resumeVerify")))resumePlayback();}else {
             if(!"true".equals(arguments.getString("mediaOnly"))){live=startActivitySync(new Intent().setClassName(getTargetContext().getPackageName(),"org.jellyfin.androidtv.bestv.LiveActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             check("live home starts",waitTag(live,"group",25));SystemClock.sleep(1000);groupAndSettings();livePlayer();}media();snapshotFallback();returnToLive();}
         }catch(Throwable e){failures++;error=e.toString();try{shot("fatal-state");}catch(Exception ignored){}}

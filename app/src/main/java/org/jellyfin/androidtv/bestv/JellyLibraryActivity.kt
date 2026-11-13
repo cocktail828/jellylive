@@ -148,6 +148,10 @@ class JellyLibraryActivity : FragmentActivity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         ui = TvUi(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { back() } })
+        if (intent.getBooleanExtra("add_library", false)) {
+            connection(false)
+            return
+        }
         fresh("loading", false)
         header("我的媒体库", "正在恢复连接…")
         restoreInitialConnection()

@@ -177,7 +177,7 @@ def install(g):
             s+=tx(132,y+65,name,34,weight=600)+tx(1728,y+65,address,28,INK if i==0 else VALUE,anchor='end')
         return s
     def about():
-        s=frame(4,nav_focus=True)+rect(548,320,1252,680,'#171c32',16,'#363e5d',1)
+        s=frame(4,nav_focus=True)
         s+='<defs><linearGradient id="about-mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
         s+=f'<svg x="1110" y="462" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
         s+=tx(1174,656,'JellyLive',52,weight=650,anchor='middle')+tx(1174,722,'v0.1.3',32,VALUE,anchor='middle')

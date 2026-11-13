@@ -64,5 +64,6 @@ phase 只接受字母、数字、下划线与连字符。字体/显示设置由�
   -e connectionReview true：两台设备内loopback合成服务，验证跨服同用户ID、失败/取消、三次上限；finally恢复原连接选择并删除临时记录。
   -e settingsReview true -e quick true：只跑本轮设置/返回/触摸与实际透明度，跳过旧配置/文件/IME全流程。
   -e opacityFocusReview true：仅定位触摸后返回的类别/原行焦点。
+  -e settingsBackReview true：仅验证触摸/系统返回层级、遥控返回，以及新增首帧直达空白表单和取消保留原库。
 保持当前字号1.0与3840×2160；本轮按用户要求不重复媒体库字号矩阵或整套回归。
 原生报告与当前APK范围见docs/SETTINGS_CONNECTION_UPDATE_VALIDATION.txt，loopback结果不冒充真实NAS结果。
