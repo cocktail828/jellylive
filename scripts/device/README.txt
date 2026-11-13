@@ -67,3 +67,7 @@ phase 只接受字母、数字、下划线与连字符。字体/显示设置由�
   -e settingsBackReview true：仅验证触摸/系统返回层级、遥控返回，以及新增首帧直达空白表单和取消保留原库。
 保持当前字号1.0与3840×2160；本轮按用户要求不重复媒体库字号矩阵或整套回归。
 原生报告与当前APK范围见docs/SETTINGS_CONNECTION_UPDATE_VALIDATION.txt，loopback结果不冒充真实NAS结果。
+
+媒体库入口增量（保持4K/当前字号）：
+  -e entryRecoveryReview true：居中/默认焦点、真实loopback503/401、当前库重试、切换失败/取消/成功与目标重新登录。finally恢复原选择、清理合成记录。
+  -e aboutReview true：关于两张实屏截图，以及通过正式入口打开真实媒体库、注入失败展示后重试当前库。

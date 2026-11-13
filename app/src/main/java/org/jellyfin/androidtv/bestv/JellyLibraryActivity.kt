@@ -38,6 +38,14 @@ import java.util.UUID
 /** Optional library: backing out always leaves independent live available. */
 class JellyLibraryActivity : FragmentActivity() {
     private val repo = LibraryRepository()
+    private val connections = LibraryConnections()
+    private var switchBusy=false
+    private var switchTarget=""
+    private var switchMessage=""
+    private var switchStatus: TextView?=null
+    private var loginEntry: LibraryConnections.Entry?=null
+    private var loginFromSwitch=false
+    private val switchValues=linkedMapOf<String,TextView>()
     private val playback by inject<PlaybackManager>()
     private val mediaHttpFactory by inject<org.jellyfin.sdk.api.okhttp.OkHttpFactory>()
     private val preferences by inject<UserPreferences>()
@@ -119,7 +127,6 @@ class JellyLibraryActivity : FragmentActivity() {
     private var mediaSearchScope: MediaSearchScope?=null
     private var mediaSearchSerial=0
     private var bootstrap: LibraryBootstrap? = null
-    private var bootstrapFailure = false
     private val hideControls = Runnable { if(overlay.expire(android.os.SystemClock.uptimeMillis()))applyControlsVisibility() }
     private val updatePlayer = object : Runnable {
         override fun run() {
@@ -147,59 +154,125 @@ class JellyLibraryActivity : FragmentActivity() {
         super.onCreate(state)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         ui = TvUi(this)
+        connections.prepare(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { back() } })
         if (intent.getBooleanExtra("add_library", false)) {
             connection(false)
             return
         }
-        fresh("loading", false)
-        header("我的媒体库", "正在恢复连接…")
         restoreInitialConnection()
     }
-    private fun restoreInitialConnection() {
-        val expected = generation
-        task = lifecycleScope.launch {
-            bootstrap = withContext(Dispatchers.IO) {
-                try {
-                    assets.open("jellyfin-bootstrap.json").use { input ->
-                        val value = org.json.JSONObject(LiveSourceStore.read(input, 64 * 1024))
-                        val address = LibraryBootstrap.normalize(value.optString("address"))
-                        val username = value.optString("username").trim()
-                        val password = value.optString("password")
-                        val uri = java.net.URI(address)
-                        if (uri.scheme !in listOf("http", "https") || uri.host.isNullOrBlank() || username.isBlank()) null
-                        else LibraryBootstrap(address, username, password)
-                    }
-                } catch (_: Exception) { null }
-            }
-            var restoreFailed = false
-            try { repo.restore() }
-            catch (error: CancellationException) { if (error !is TimeoutCancellationException) throw error; restoreFailed = true }
-            catch (_: Exception) { restoreFailed = true }
-            val preset = bootstrap
-            val savedAddress = repo.address.ifEmpty { local.getString("last_address", "").orEmpty() }
-            val savedUsername = local.getString("last_username", "").orEmpty()
-            val consumed = local.getBoolean("bootstrap_consumed", false)
-            val attempt = preset?.mayConnect(repo.connected, savedAddress, savedUsername, consumed) == true
-            // This is an initial default, never a rule that reselects the owner's NAS after switching/logout.
-            if (preset != null && !consumed) local.edit().putBoolean("bootstrap_consumed", true).apply()
-            if (attempt && preset != null) {
-                try {
-                    repo.login(preset.address, preset.username, preset.password)
-                    local.edit().putString("last_address", preset.address).putString("last_username", preset.username).apply()
-                } catch (error: CancellationException) {
-                    if (error !is TimeoutCancellationException) throw error
-                    bootstrapFailure = true
-                } catch (_: Exception) { bootstrapFailure = true }
-            }
-            if (expected != generation) return@launch
-            when {
-                intent.getBooleanExtra("connect", false) -> connection(false)
-                repo.connected -> launchDestination()
-                attempt -> connection(false)
-                restoreFailed -> offline(false)
-                else -> disconnected(false)
-            }
+    private fun entryName()=connections.current()?.name ?: "媒体库"
+    private fun centerEntryPage() {
+        val display=android.util.DisplayMetrics();windowManager.defaultDisplay.getRealMetrics(display)
+        val x=maxOf(0,(display.widthPixels-ui.px(960f))/2);val y=maxOf(0,(display.heightPixels-ui.px(540f))/2)
+        page.setPadding(x,y,x,y)
+    }
+    private fun connectionIcon(resource: Int,y: Float) {
+        val icon=ImageView(this);icon.setImageResource(resource);icon.importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        ui.at(page,icon,464f,y,32f,32f)
+    }
+    private fun centered(value: String,y: Float,height: Float,size: Int=14,color: Int=TvUi.INK): TextView =
+        ui.text(page,value,size,color,48f,y,864f,height).apply {gravity=Gravity.CENTER;maxLines=2}
+    private fun restoreInitialConnection(retry: Boolean=false) {
+        fresh("loading",false);centerEntryPage();header("我的媒体库")
+        connectionIcon(org.jellyfin.androidtv.R.drawable.library_connection_refresh,204f)
+        val name=centered(entryName(),241f,26f,15,TvUi.MUTED)
+        centered(if(retry)"正在重新连接…" else "正在恢复连接…",273f,32f,22).setTypeface(null,Typeface.BOLD)
+        centered("正在连接服务器并验证账号",307f,26f,14,TvUi.MUTED)
+        page.isFocusableInTouchMode=true;page.requestFocus()
+        val expected=generation
+        task=lifecycleScope.launch {
+            try {
+                bootstrap=withContext(Dispatchers.IO) {
+                    try {assets.open("jellyfin-bootstrap.json").use {input->
+                        val value=org.json.JSONObject(LiveSourceStore.read(input,64*1024));val address=LibraryBootstrap.normalize(value.optString("address"));val username=value.optString("username").trim();val uri=java.net.URI(address)
+                        if(uri.scheme !in listOf("http","https")||uri.host.isNullOrBlank()||username.isBlank())null else LibraryBootstrap(address,username,value.optString("password"))
+                    }}catch(error:CancellationException){throw error}catch(_:Exception){null}
+                }
+                if(intent.getBooleanExtra("connect",false)){connection(false);return@launch}
+                val entry=connections.current()
+                if(entry!=null){
+                    name.text=entry.name
+                    connections.verifyAndActivate(entry)
+                }else{
+                    val preset=bootstrap
+                    val savedAddress=local.getString("last_address","").orEmpty();val savedUsername=local.getString("last_username","").orEmpty()
+                    val pending=local.getBoolean("bootstrap_retry_pending",false)
+                    val allowed=preset?.mayConnect(repo.connected,savedAddress,savedUsername,local.getBoolean("bootstrap_consumed",false))==true ||
+                        (preset!=null&&pending&&(savedAddress.isBlank()||preset.matchesAddress(savedAddress))&&(savedUsername.isBlank()||savedUsername==preset.username))
+                    if(!repo.connected&&allowed&&preset!=null){
+                        local.edit().putBoolean("bootstrap_consumed",true).putBoolean("bootstrap_retry_pending",true).apply()
+                        repo.login(preset.address,preset.username,preset.password)
+                        local.edit().putString("last_address",preset.address).putString("last_username",preset.username).putBoolean("bootstrap_retry_pending",false).apply()
+                    }else if(!repo.connected){disconnected(false);return@launch}
+                }
+                ensureActive();if(expected==generation)launchDestination()
+            }catch(error:CancellationException){if(error is TimeoutCancellationException&&expected==generation)entryFailure("连接超时，请检查媒体库与网络后重试。")}
+            catch(error:Exception){if(expected==generation){if(LibraryFailure.from(error)==LibraryFailure.SESSION)expiredEntry(connections.current(),false)else entryFailure(connectionFailure(error))}}
+        }
+    }
+    private fun expiredEntry(entry: LibraryConnections.Entry?,fromSwitch: Boolean) {
+        loginEntry=entry;loginFromSwitch=fromSwitch;intent.removeExtra("add_library")
+        fresh("library-expired",false);header("我的媒体库")
+        centerState("登录已过期","请重新登录，继续访问你的媒体库。",listOf("重新登录" to {connection()},"返回看直播" to {finish()}))
+    }
+    private fun connectionFailure(error: Throwable)=when(LibraryFailure.from(error)){
+        LibraryFailure.PERMISSION->"当前账号没有访问权限，请检查授权或切换媒体库。"
+        LibraryFailure.SESSION->"登录已失效，请重新登录，或选择其他媒体库。"
+        LibraryFailure.TIMEOUT->"连接超时，请检查媒体库与网络后重试。"
+        else->"请确认媒体库已开启，或切换到其他媒体库。"
+    }
+    private fun entryFailure(message: String="请确认媒体库已开启，或切换到其他媒体库。",focusKey: String="library-retry") {
+        fresh("offline",false);centerEntryPage();history.clear();header("我的媒体库")
+        connectionIcon(org.jellyfin.androidtv.R.drawable.library_connection_link,171f)
+        centered("${entryName()} · 未连接",215f,28f,15,TvUi.MUTED)
+        centered("暂时无法连接媒体库",247f,34f,23).setTypeface(null,Typeface.BOLD)
+        centered(message,281f,36f,14,TvUi.MUTED)
+        val retry=ui.button(page,"重试连接",313f,325f,160f,44f){restoreInitialConnection(true)}.apply {tag="library-retry"}
+        val change=ui.button(page,"切换媒体库",487f,325f,160f,44f){renderLibrarySwitch()}.apply {tag="library-switch"}
+        listOf(retry,change).forEachIndexed {i,v->v.nextFocusLeftId=if(i==0)v.id else retry.id;v.nextFocusRightId=if(i==1)v.id else change.id;v.nextFocusUpId=v.id;v.nextFocusDownId=v.id}
+        val target=if(focusKey=="library-switch")change else retry;target.isFocusableInTouchMode=true;focus(target)
+    }
+    private fun renderLibrarySwitch(preferred: String="") {
+        fresh("library-switch",false);centerEntryPage();header("切换媒体库");switchBusy=false;switchMessage="";switchValues.clear()
+        centered("当前：${entryName()}",104f,28f,15,TvUi.MUTED)
+        val entries=connections.entries();val current=connections.currentKey()
+        val scroll=ScrollView(this).apply {isFocusable=false};val rows=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL};scroll.addView(rows);ui.at(page,scroll,200f,160f,560f,180f)
+        val actions=entries.map {entry->
+            val row=FrameLayout(this);rows.addView(row,LinearLayout.LayoutParams(-1,ui.px(60f)))
+            val action=ui.button(row,"",0f,0f,560f,50f){startLibrarySwitch(entry)}.apply {tag="entry-${entry.key}";contentDescription="${entry.label}，${entry.address}"+(if(entry.key==current)"，当前媒体库" else "")}
+            val duplicate=entries.count {it.label==entry.label}>1
+            val display=if(duplicate)"${entry.name} · ${entry.address}" else entry.label
+            ui.text(row,display,16,TvUi.INK,16f,0f,408f,50f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
+            switchValues[entry.key]=ui.text(row,if(entry.key==current)"当前 ✓" else "",14,0xffc5b8ff.toInt(),430f,0f,114f,50f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END;maxLines=1}
+            action.setOnFocusChangeListener {v,has->if(has)v.post {v.requestRectangleOnScreen(android.graphics.Rect(0,0,v.width,v.height),false)}}
+            action
+        }.toMutableList()
+        val addRow=FrameLayout(this);rows.addView(addRow,LinearLayout.LayoutParams(-1,ui.px(60f)))
+        actions+=ui.button(addRow,"新增媒体库",0f,0f,560f,50f){
+            if(!switchBusy){intent.putExtra("add_library",true);intent.removeExtra("item_id");intent.removeExtra("search_query");connection()}
+        }.apply {tag="entry-add";gravity=Gravity.CENTER_VERTICAL or Gravity.START;setPadding(ui.px(16f),0,ui.px(16f),0)}
+        if(entries.isEmpty())centered("尚未添加其他媒体库",349f,26f,14,TvUi.MUTED)
+        switchStatus=centered("",360f,60f,14,TvUi.MUTED).apply {ellipsize=android.text.TextUtils.TruncateAt.END}
+        actions.forEachIndexed {i,v->v.nextFocusUpId=actions.getOrNull(i-1)?.id ?: v.id;v.nextFocusDownId=actions.getOrNull(i+1)?.id ?: v.id;v.nextFocusLeftId=v.id;v.nextFocusRightId=v.id}
+        val wanted=preferred.ifEmpty {entries.firstOrNull {it.key!=current}?.key ?: current}
+        switchTarget=wanted
+        val target=actions.firstOrNull {it.tag=="entry-$wanted"} ?: actions.first();target.isFocusableInTouchMode=true;focus(target)
+    }
+    private fun updateSwitchStatus() {
+        val current=connections.currentKey()
+        switchValues.forEach {(key,value)->TvIcons.text(value,when {key==current->"当前 ✓";key==switchTarget&&switchBusy->"连接中…";key==switchTarget&&switchMessage.isNotEmpty()->"未连接";else->""})}
+        switchStatus?.apply {text=switchMessage;setTextColor(if(switchBusy)TvUi.MUTED else 0xfff2b4bb.toInt())}
+    }
+    private fun startLibrarySwitch(entry: LibraryConnections.Entry) {
+        if(switchBusy)return
+        switchBusy=true;switchTarget=entry.key;switchMessage="正在连接${entry.name}…";updateSwitchStatus()
+        val expected=generation
+        task=lifecycleScope.launch {
+            try {connections.verifyAndActivate(entry);ensureActive();if(expected==generation){switchBusy=false;history.clear();intent.removeExtra("item_id");intent.removeExtra("search_query");home(false)}}
+            catch(error:CancellationException){if(error is TimeoutCancellationException&&expected==generation){switchBusy=false;switchMessage="连接超时，请重试或选择其他媒体库。\n当前媒体库仍为${entryName()}";updateSwitchStatus()}}
+            catch(error:Exception){if(expected==generation){switchBusy=false;if(LibraryFailure.from(error)==LibraryFailure.SESSION)expiredEntry(entry,true)else {switchMessage="${entry.name}连接失败，请重试或选择其他媒体库。\n当前媒体库仍为${entryName()}";updateSwitchStatus()}}}
         }
     }
     private fun fresh(name: String, push: Boolean=true): FrameLayout {
@@ -258,10 +331,6 @@ class JellyLibraryActivity : FragmentActivity() {
         fresh("disconnected",push); header("我的媒体库")
         centerState("连接你的 Jellyfin，开启私人影院。","你仍然可以随时返回主页观看直播。",listOf("连接 Jellyfin" to { connection() },"▷ 返回看直播" to { finish() }))
     }
-    private fun offline(push: Boolean=true) {
-        fresh("offline",push); header("我的媒体库")
-        centerState("暂时联系不上你的 Jellyfin。","请检查服务器或网络；独立直播仍可使用。",listOf("重新连接" to { home(false) },"连接设置" to { connection() },"▷ 返回看直播" to { finish() }))
-    }
     private fun empty(title: String="我的媒体库", push: Boolean=false, retry: () -> Unit={home(false)}) {
         fresh("empty",push);header(title)
         centerState("连接成功，还没有媒体内容。","请在 Jellyfin 服务器添加媒体库，再回来刷新。",listOf("刷新媒体库" to retry,"▷ 返回看直播" to { finish() }))
@@ -271,8 +340,8 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.heading(page,if(intent.getBooleanExtra("add_library",false))"新增媒体库" else "连接媒体库",23,50f,46f,700f,42f);ui.text(page,"JellyLive",15,0xffb9b0ef.toInt(),810f,46f,102f,40f)
         val summary=label("Jellyfin 或兼容媒体服务器",50f,86f,840f,34f,15,true)
         val preset=bootstrap
-        val initialAddress=if(intent.getBooleanExtra("add_library",false))"" else repo.address.ifEmpty {local.getString("last_address","").orEmpty()}.ifEmpty {preset?.address.orEmpty()}
-        val initialUsername=if(intent.getBooleanExtra("add_library",false))"" else local.getString("last_username","").orEmpty().ifEmpty {if(preset?.matchesAddress(initialAddress)==true)preset.username else ""}
+        val initialAddress=if(intent.getBooleanExtra("add_library",false))"" else loginEntry?.address ?: repo.address.ifEmpty {local.getString("last_address","").orEmpty()}.ifEmpty {preset?.address.orEmpty()}
+        val initialUsername=if(intent.getBooleanExtra("add_library",false))"" else loginEntry?.username ?: local.getString("last_username","").orEmpty().ifEmpty {if(preset?.matchesAddress(initialAddress)==true)preset.username else ""}
         val addressLabel=label("服务器地址",50f,117f,540f,28f,15)
         val address=TvFormField(this,ui,"http://服务器地址:8096",initialAddress,false);ui.at(page,address,50f,146f,540f,48f)
         val usernameLabel=label("用户名",50f,205f,540f,28f,15)
@@ -288,7 +357,7 @@ class JellyLibraryActivity : FragmentActivity() {
         address.addTextChangedListener(clearForeignPassword);username.addTextChangedListener(clearForeignPassword)
         label("连接提示",640f,234f,260f,35f,17)
         label("使用媒体服务器账号。\n\n更换地址或账号后重新登录。\n\n媒体库与电视直播独立使用。",640f,273f,260f,minOf(225f,maxOf(140f,140f*ui.fontScale)),14,true)
-        val status=label(if(bootstrapFailure)"自动连接未成功，可检查网络后重试" else "",50f,370f,540f,40f,13,true)
+        val status=label("",50f,370f,540f,40f,13,true)
         var connecting=false;var discovering=false;lateinit var submit:Button;lateinit var discover:Button
         fun cancelConnection(){val pending=task;status.text="正在取消…";pending?.cancel();val stamp=generation;pending?.invokeOnCompletion {runOnUiThread {if(stamp==generation){connecting=false;discovering=false;fields.forEach {it.isEnabled=true;it.isFocusable=true};discover.isEnabled=true;discover.isFocusable=true;submit.text="检测并连接";status.text="已取消，原连接未改变。";submit.requestFocus()}}}}
         fun busy(value:Boolean){connecting=value;fields.forEach {it.isEnabled=!value;it.isFocusable=!value};discover.isEnabled=!value;discover.isFocusable=!value;submit.text=if(value)"正在连接…" else "检测并连接";submit.contentDescription=if(value)"正在连接，请稍候" else "检测并连接"}
@@ -309,7 +378,7 @@ class JellyLibraryActivity : FragmentActivity() {
                     repo.login(normalized,u,secret);ensureActive()
                     if(stamp!=generation)throw CancellationException()
                     accepted=true;password.setText("");local.edit().putString("last_address",normalized).putString("last_username",u).putBoolean("bootstrap_consumed",true).apply()
-                    history.clear();if(intent.getBooleanExtra("settings_origin",false)){setResult(RESULT_OK);finish()}else launchDestination()
+                    val switched=loginFromSwitch;loginFromSwitch=false;loginEntry=null;history.clear();if(intent.getBooleanExtra("settings_origin",false)){setResult(RESULT_OK);finish()}else if(switched){intent.removeExtra("item_id");intent.removeExtra("search_query");home(false)}else launchDestination()
                 }catch(e:CancellationException){if(e is TimeoutCancellationException&&stamp==generation)status.text="连接超时，请检查地址与网络。"}
                 catch(_:Exception){if(stamp==generation){status.text="连接未成功，请检查服务器地址、账号和密码。";password.requestFocus()}}
                 finally{
@@ -973,10 +1042,21 @@ class JellyLibraryActivity : FragmentActivity() {
         val saved=history.removeLastOrNull()
         if(saved==null){finish();return}
         if(saved.session!=repo.sessionKey){history.clear();home(false);return}
+        if(saved.name=="library-switch"){intent.removeExtra("add_library");renderLibrarySwitch(switchTarget);return}
         pageSessionKey=saved.session;page=saved.view;pageName=saved.name;setContentView(page);page.findViewById<View>(saved.focus)?.requestFocus();val restored=page;restored.post {if(page===restored)(restored.tag as? Runnable)?.run()}
     }
     private fun back() {
         if(dialog!=null){dialog?.dismiss();return}
+        if(pageName=="loading"){task?.cancel();generation++;finish();return}
+        if(pageName=="library-switch"){
+            if(switchBusy||switchMessage.isNotEmpty())renderLibrarySwitch(switchTarget)else entryFailure(focusKey="library-switch")
+            return
+        }
+        if(pageName=="library-expired"){
+            val target=loginEntry?.key.orEmpty();val fromSwitch=loginFromSwitch;loginEntry=null;loginFromSwitch=false
+            if(fromSwitch)renderLibrarySwitch(target)else entryFailure()
+            return
+        }
         if(pageName=="connection"){val field=currentFocus as? TvFormField;if(field?.isEditing==true){field.finishEditing();return};if(connectionCancel?.invoke()==true)return}
         if(pageName=="player") {if(playbackFailure){stopPlayer();backToSaved();return};if(nextCard!=null){cancelAutoNext();return};if(overlay.seeking){cancelSeek();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
         if(history.isEmpty())finish()else backToSaved()
@@ -1021,7 +1101,7 @@ class JellyLibraryActivity : FragmentActivity() {
         if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(info!=null && reportStarted && playingSessionKey==repo.sessionKey)reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
         super.onStop()
     }
-    override fun onDestroy(){repo.close();stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
+    override fun onDestroy(){connections.close();repo.close();stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
     private fun rememberPosition(item: BaseItemDto,position: Long){if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
     private fun currentPositionPrefix()="pos_${repo.sessions.currentSession.value?.serverId}_${repo.sessions.currentSession.value?.userId}_"
     private fun positionKey(item: BaseItemDto)=(if(playingItem?.id==item.id&&playingPositionPrefix.isNotEmpty())playingPositionPrefix else currentPositionPrefix())+item.id

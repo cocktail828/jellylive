@@ -112,7 +112,7 @@ class LibraryConnections : KoinComponent {
             if(uri.scheme !in listOf("http","https")||uri.host.isNullOrBlank()||username.isBlank())null else LibraryBootstrap(address,username,value.optString("password"))
         }}catch(error:CancellationException){throw error}catch(_:Exception){null}
     }
-    private suspend fun verifyAndActivate(entry:Entry)=withTimeout(20000){
+    suspend fun verifyAndActivate(entry:Entry)=withTimeout(20000){
         val expected=sessions.currentSession.value
         val server=store.getServer(java.util.UUID.fromString(entry.serverId)) ?: error("missing")
         val user=store.getUser(java.util.UUID.fromString(entry.serverId),java.util.UUID.fromString(entry.userId)) ?: error("missing")
