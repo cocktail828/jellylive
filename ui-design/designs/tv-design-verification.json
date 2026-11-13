@@ -1,8 +1,8 @@
 {
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
-  "slots": 100,
-  "active": 94,
-  "textCount": 1486,
+  "slots": 104,
+  "active": 98,
+  "textCount": 1517,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -6260,61 +6260,61 @@
     },
     {
       "figure": 29,
-      "text": "暂时联系不上你的 Jellyfin。",
+      "text": "客厅媒体库 · 未连接",
+      "size": 30.0,
+      "bounds": [
+        819.0,
+        440.0,
+        1101.0,
+        470.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 29,
+      "text": "暂时无法连接媒体库",
       "size": 46.0,
       "bounds": [
-        666.5,
-        502.0,
-        1226.5,
-        553.0
+        755.0,
+        492.0,
+        1166.0,
+        538.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 29,
-      "text": "请检查服务器或网络；独立直播仍可使用。",
+      "text": "请确认媒体库已开启，或切换到其他媒体库。",
       "size": 28.0,
       "bounds": [
-        695.0,
-        575.0,
-        1208.0,
-        605.0
+        681.0,
+        571.0,
+        1222.0,
+        600.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 29,
-      "text": "重新连接",
+      "text": "重试连接",
       "size": 28.0,
       "bounds": [
-        523.0,
-        685.0,
-        634.0,
-        713.0
+        731.0,
+        679.0,
+        842.0,
+        707.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 29,
-      "text": "连接设置",
+      "text": "切换媒体库",
       "size": 28.0,
       "bounds": [
-        870.0,
-        685.0,
-        981.0,
-        713.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 29,
-      "text": "返回看直播",
-      "size": 28.0,
-      "bounds": [
-        1218.0,
-        685.0,
-        1358.0,
-        713.0
+        1064.0,
+        679.0,
+        1203.0,
+        707.0
       ],
       "clippedIntentionally": false
     },
@@ -17835,6 +17835,378 @@
         686.0,
         1074.0,
         734.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 101,
+      "text": "我的媒体库",
+      "size": 42.0,
+      "bounds": [
+        97.0,
+        70.0,
+        305.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 101,
+      "text": "JellyLive",
+      "size": 32.0,
+      "bounds": [
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 101,
+      "text": "客厅媒体库",
+      "size": 30.0,
+      "bounds": [
+        886.0,
+        488.0,
+        1034.0,
+        518.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 101,
+      "text": "正在恢复连接…",
+      "size": 44.0,
+      "bounds": [
+        807.0,
+        541.0,
+        1111.0,
+        585.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 101,
+      "text": "正在连接服务器并验证账号",
+      "size": 28.0,
+      "bounds": [
+        793.0,
+        613.0,
+        1127.0,
+        641.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "切换媒体库",
+      "size": 42.0,
+      "bounds": [
+        96.0,
+        70.0,
+        305.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "JellyLive",
+      "size": 32.0,
+      "bounds": [
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "当前：客厅媒体库",
+      "size": 30.0,
+      "bounds": [
+        843.0,
+        214.0,
+        1079.0,
+        244.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "客厅媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        432.0,
+        355.0,
+        765.0,
+        387.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "当前",
+      "size": 28.0,
+      "bounds": [
+        1383.0,
+        358.0,
+        1435.0,
+        386.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "家庭影音 · 访客账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        475.0,
+        733.0,
+        507.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 102,
+      "text": "书房媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        595.0,
+        765.0,
+        627.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "切换媒体库",
+      "size": 42.0,
+      "bounds": [
+        96.0,
+        70.0,
+        305.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "JellyLive",
+      "size": 32.0,
+      "bounds": [
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "当前：客厅媒体库",
+      "size": 30.0,
+      "bounds": [
+        843.0,
+        214.0,
+        1079.0,
+        244.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "客厅媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        432.0,
+        355.0,
+        765.0,
+        387.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "当前",
+      "size": 28.0,
+      "bounds": [
+        1383.0,
+        358.0,
+        1435.0,
+        386.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "家庭影音 · 访客账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        475.0,
+        733.0,
+        507.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "连接中…",
+      "size": 28.0,
+      "bounds": [
+        1376.0,
+        478.0,
+        1486.0,
+        506.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "书房媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        595.0,
+        765.0,
+        627.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 103,
+      "text": "正在连接家庭影音…",
+      "size": 28.0,
+      "bounds": [
+        835.0,
+        731.0,
+        1084.0,
+        759.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "切换媒体库",
+      "size": 42.0,
+      "bounds": [
+        96.0,
+        70.0,
+        305.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "JellyLive",
+      "size": 32.0,
+      "bounds": [
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "当前：客厅媒体库",
+      "size": 30.0,
+      "bounds": [
+        843.0,
+        214.0,
+        1079.0,
+        244.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "客厅媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        432.0,
+        355.0,
+        765.0,
+        387.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "当前",
+      "size": 28.0,
+      "bounds": [
+        1383.0,
+        358.0,
+        1435.0,
+        386.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "家庭影音 · 访客账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        475.0,
+        733.0,
+        507.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "未连接",
+      "size": 28.0,
+      "bounds": [
+        1404.0,
+        478.0,
+        1487.0,
+        506.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "书房媒体库 · 示例账号",
+      "size": 32.0,
+      "bounds": [
+        433.0,
+        595.0,
+        765.0,
+        627.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "家庭影音连接失败，请重试或选择其他媒体库。",
+      "size": 28.0,
+      "bounds": [
+        667.0,
+        731.0,
+        1236.0,
+        760.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 104,
+      "text": "当前媒体库仍为客厅媒体库",
+      "size": 28.0,
+      "bounds": [
+        795.0,
+        781.0,
+        1127.0,
+        809.0
       ],
       "clippedIntentionally": false
     }

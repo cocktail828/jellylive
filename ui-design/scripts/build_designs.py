@@ -698,6 +698,8 @@ if __name__=='__main__':
     PLAYBACK_BOX_VARIANTS()
     LIVE_QUALITY_VARIANTS()
     SETTINGS_CONNECTION_STATES()
+    from library_connection_designs import additional as library_connection_states
+    library_connection_states(globals())
     favorite_flow()
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
