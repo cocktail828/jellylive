@@ -179,9 +179,12 @@ def install(g):
     def about():
         s=frame(4,nav_focus=True)
         s+='<defs><linearGradient id="about-mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
-        s+=f'<svg x="1110" y="462" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
-        s+=tx(1174,656,'JellyLive',52,weight=650,anchor='middle')+tx(1174,722,'v0.1.3',32,VALUE,anchor='middle')
-        s+=tx(1174,800,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,846,'使用 GPL-2.0 许可证。',30,anchor='middle')
+        brand_x=1174-(128+24+text_width('JellyLive',52))/2
+        s+='<g data-role="about-content" data-center-x="1174" data-center-y="540">'
+        s+=f'<svg x="{brand_x}" y="388" width="128" height="128" viewBox="-16 -16 105 105"><g fill="url(#about-mark)" fill-rule="evenodd"><path d="{g["LOGO_OUTER"]}"/><path d="{g["LOGO_INNER"]}"/></g></svg>'
+        s+=tx(brand_x+152,472,'JellyLive',52,weight=650)+tx(1174,558,'v0.1.3',32,VALUE,anchor='middle')
+        s+=tx(1174,630,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,676,'使用 GPL-2.0 许可证。',30,anchor='middle')
+        s+='</g>'
         return s
     def selector_scene(large=False):
         return choice('字号',['跟随系统','加大字号'],large=large)
