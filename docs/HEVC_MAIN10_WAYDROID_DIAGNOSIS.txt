@@ -34,3 +34,14 @@ FnMediaCompatibility目前没有接入已验证的飞牛重封装/转码协议�
 设置3840×2160仅改变Waydroid显示输出，不能增加其HEVC 10-bit解码能力。
 荣耀智慧屏实际能否直放，要以它自身上报的Main10能力、支持Level和实际播放为准，
 不能把虚拟机拒绝直播放的结果当成电视不支持。此轮未连接智慧屏验证。
+
+2026-11-13当前APK只读复核
+用户再次反馈《猩球崛起：新世界》不能播放，使用当前v0.1.3（含aca0752间距修正）复核。
+apes-current-audit共7项，0失败/error为空；Waydroid仍为3840×2160/density320/font1.0。
+当前原片仍为3840×1606、HEVC Main10、10bit、Level153；协商无播放URL，三种Supports均false。
+真实VideoProfile仅main，系统仍只上报OMX.google.hevc.decoder的profile1/4，没有Main10 profile2。
+诊断内存副本单独允许Main10后匹配变true，真实profile/偏好未改，也没有强行播放影片。
+8-bit对照源生成播放URL且SupportsDirectPlay=true；本次未实际启动两部影片，不据此宣称播放实测。
+因此此前Main10协商阻挡仍存在，当前飞牛兼容路径仍无已验证转码兜底；没有把修改连接页当成新原因。
+此结论仅针对当前Waydroid，不推断荣耀智慧屏实体解码能力或飞牛服务器本身是否支持转码。
+本轮未修改播放器代码/观看进度/服务器配置；临时驱动已卸载。私有原始DTO和报告仅.local-build/apes-current-diagnosis。
