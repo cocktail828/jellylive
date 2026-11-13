@@ -705,18 +705,18 @@ public final class LiveActivity extends Activity {
     private void cancelLibraryRequest(){libraryGeneration++;if(libraryRequest!=null)libraryRequest.cancel();libraryRequest=null;libraryBusy=false;if(libraryRetry!=null)libraryRetry.setBusy(false);}
     private void renderLibrarySummary(LinearLayout rows){
         LibraryConnections.Entry entry=libraryConnections.current();libraryHasStoredEntry=entry!=null;
-        FrameLayout summary=new FrameLayout(this);rows.addView(summary,new LinearLayout.LayoutParams(-1,ui.px(Math.max(119,94*ui.fontScale))));
+        FrameLayout summary=new FrameLayout(this);rows.addView(summary,new LinearLayout.LayoutParams(-1,ui.px(Math.max(75,60*ui.fontScale))));
         LinearLayout line=new LinearLayout(this);line.setOrientation(LinearLayout.HORIZONTAL);line.setGravity(Gravity.CENTER_VERTICAL);ui.at(summary,line,0,10,620,Math.max(48,32*ui.fontScale));
         libraryNameView=ui.text("",18,TvUi.INK);libraryNameView.setTypeface(null,Typeface.BOLD);libraryNameView.setSingleLine();libraryNameView.setEllipsize(TextUtils.TruncateAt.END);line.addView(libraryNameView,new LinearLayout.LayoutParams(-2,-1));
         libraryStatusView=ui.text("",18,TvUi.MUTED);libraryStatusView.setSingleLine();line.addView(libraryStatusView,new LinearLayout.LayoutParams(-2,-1));
         libraryRetry=null;
         if(entry!=null||libraryConnections.getCanRetryDefault()){libraryRetry=new TvRefreshButton(ui,()->connectLibrary(libraryConnections.current(),false));tag(libraryRetry,"media-retry");LinearLayout.LayoutParams retryParams=new LinearLayout.LayoutParams(ui.px(48),ui.px(48));retryParams.leftMargin=ui.px(12);line.addView(libraryRetry,retryParams);settingsActions.add(libraryRetry);}
-        libraryInfoView=ui.text(summary,"",14,TvUi.MUTED,0,Math.max(59,59*ui.fontScale),620,Math.max(36,26*ui.fontScale));
         settingsRow(rows,"media-add","新增媒体库","›","",null,false,()->{libraryConnections.stopStartup();cancelLibraryRequest();openLibrary(true);});
         Button select=settingsRow(rows,"media-switch","切换媒体库","›","",null,false,()->{libraryConnections.stopStartup();cancelLibraryRequest();rememberSettingsFocus();settingsSubmenu="media-switch";librarySwitchFocus="";renderSettingsPanel(true);});
         if(libraryConnections.entries().isEmpty()){select.setEnabled(false);select.setFocusable(false);((View)select.getParent()).setAlpha(.55f);settingsActions.remove(select);}
+        libraryInfoView=ui.text("",14,TvUi.MUTED);libraryInfoView.setPadding(0,ui.px(12),0,0);rows.addView(libraryInfoView,new LinearLayout.LayoutParams(-1,-2));
         updateLibrarySummary();
-        if(entry!=null&&!libraryBusy&&!libraryConnections.getStartupBusy()&&!entry.getKey().equals(libraryCheckedKey))summary.post(()->{if(inLibrarySettings()&&settingsSubmenu.isEmpty()&&libraryInfoView!=null&&libraryInfoView.getParent()==summary&&!libraryBusy)connectLibrary(entry,false);});
+        if(entry!=null&&!libraryBusy&&!libraryConnections.getStartupBusy()&&!entry.getKey().equals(libraryCheckedKey))summary.post(()->{if(inLibrarySettings()&&settingsSubmenu.isEmpty()&&libraryNameView!=null&&libraryNameView.getParent()==line&&!libraryBusy)connectLibrary(entry,false);});
     }
     private void updateLibrarySummary(){
         if(libraryNameView==null||!inLibrarySettings()||!settingsSubmenu.isEmpty())return;
@@ -724,7 +724,8 @@ public final class LiveActivity extends Activity {
         boolean checking=libraryBusy||libraryConnections.getStartupBusy();String status=checking?"检查中…":checked&&libraryOnline&&libraryConnections.isActive(entry)?"已连接":"未连接";
         libraryNameView.setText(entry==null?(checking||libraryConnections.getCanRetryDefault()?"媒体库":"尚未添加媒体库"):entry.getName());libraryStatusView.setText(" · "+status);libraryStatusView.setTextColor(status.equals("已连接")?0xffbfe2d2:checked&&!libraryOnline?0xfff2b4bb:TvUi.MUTED);
         libraryNameView.setMaxWidth(Math.max(ui.px(100),ui.px(620-(entry==null?0:60))-(int)Math.ceil(libraryStatusView.getPaint().measureText(" · "+status))));
-        libraryInfoView.setText(entry==null?(checking?"正在连接已配置的媒体库…":!libraryMessage.isEmpty()?libraryMessage:"添加后即可浏览电影与剧集。"):checking?"正在连接服务器并验证当前账号…":checked&&!libraryOnline?libraryMessage:"当前账号："+entry.getUsername());
+        String info=checking?"":libraryMessage;
+        libraryInfoView.setText(info);libraryInfoView.setVisibility(info.isEmpty()?View.GONE:View.VISIBLE);
         if(libraryRetry!=null){libraryRetry.setContentDescription(checking?"正在重试连接":libraryOnline?"检查连接":"重试连接");libraryRetry.setBusy(checking);}
     }
     private void renderLibrarySwitch(LinearLayout rows){
