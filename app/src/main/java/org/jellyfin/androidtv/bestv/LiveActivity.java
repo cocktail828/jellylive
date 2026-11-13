@@ -711,7 +711,7 @@ public final class LiveActivity extends Activity {
         libraryStatusView=ui.text("",18,TvUi.MUTED);libraryStatusView.setSingleLine();line.addView(libraryStatusView,new LinearLayout.LayoutParams(-2,-1));
         libraryRetry=null;
         if(entry!=null||libraryConnections.getCanRetryDefault()){libraryRetry=new TvRefreshButton(ui,()->connectLibrary(libraryConnections.current(),false));tag(libraryRetry,"media-retry");LinearLayout.LayoutParams retryParams=new LinearLayout.LayoutParams(ui.px(48),ui.px(48));retryParams.leftMargin=ui.px(12);line.addView(libraryRetry,retryParams);settingsActions.add(libraryRetry);}
-        libraryInfoView=ui.text(summary,"",14,TvUi.MUTED,0,Math.max(76,59*ui.fontScale),620,Math.max(36,26*ui.fontScale));
+        libraryInfoView=ui.text(summary,"",14,TvUi.MUTED,0,Math.max(59,59*ui.fontScale),620,Math.max(36,26*ui.fontScale));
         settingsRow(rows,"media-add","新增媒体库","›","",null,false,()->{libraryConnections.stopStartup();cancelLibraryRequest();openLibrary(true);});
         Button select=settingsRow(rows,"media-switch","切换媒体库","›","",null,false,()->{libraryConnections.stopStartup();cancelLibraryRequest();rememberSettingsFocus();settingsSubmenu="media-switch";librarySwitchFocus="";renderSettingsPanel(true);});
         if(libraryConnections.entries().isEmpty()){select.setEnabled(false);select.setFocusable(false);((View)select.getParent()).setAlpha(.55f);settingsActions.remove(select);}
