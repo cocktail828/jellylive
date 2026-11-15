@@ -772,7 +772,7 @@ public final class LiveActivity extends Activity {
         };
         libraryRequest=entry==null?libraryConnections.retryDefault(callback):libraryConnections.connect(entry,callback);
     }
-    private static final String[] SETTINGS_CATEGORIES={"播放设置","显示与操作","媒体库连接","机顶盒配置","关于"};
+    private static final String[] SETTINGS_CATEGORIES={"播放设置","显示与操作","媒体库连接","机顶盒配置","直播源","关于"};
     private String settingsSubmenu="";
     private boolean rebuildingSettingsPanel;
     private final List<View> settingsActions=new ArrayList<>();
@@ -833,6 +833,8 @@ public final class LiveActivity extends Activity {
             DrawerPreview preview=new DrawerPreview(ui,620,Math.max(150,132*ui.fontScale));tag(preview,"display-preview");rows.addView(preview,new LinearLayout.LayoutParams(-1,ui.px(Math.max(150,132*ui.fontScale))));preview.setTransparency(prefs.getInt("drawer_transparency",35));
         }else if(settingsCategory.equals("媒体库连接")){
             renderLibrarySummary(rows);
+        }else if(settingsCategory.equals("直播源")){
+            settingsRow(rows,"live-sources","管理直播源","›","",null,false,()->{rememberSettingsFocus();navigate("sources");});
         }else if(settingsCategory.equals("机顶盒配置")){
             TextView configState=ui.text(config.optString("user_id").isEmpty()?"尚未配置，导入或填写设备资料。":"已保存配置 · 安徽移动百视通",14,TvUi.MUTED);rows.addView(configState,new LinearLayout.LayoutParams(-1,ui.px(27)));
             settingsRow(rows,"box-import","从机顶盒导入","›","读取原机顶盒资料，核对后再保存。",null,false,()->openBoxConfig("import"));
