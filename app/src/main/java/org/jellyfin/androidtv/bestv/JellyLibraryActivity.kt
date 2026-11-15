@@ -612,7 +612,7 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         val original=card.onFocusChangeListener
         card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);if(focused)card.foreground=android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(bounds.height-imageHeight));caption.ellipsize=if(focused&&!ui.reduceMotion())android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused&&!ui.reduceMotion()}
-        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {gravity=Gravity.TOP;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {gravity=Gravity.TOP or Gravity.CENTER_HORIZONTAL;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,13,0xfff7d68d.toInt(),7f,7f,41f,21f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
         if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
         else if(resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(resumeMs(item)*10000.0*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000);ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
