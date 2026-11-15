@@ -119,9 +119,14 @@ def install(g):
             s+=center_button(700,660,520,'清除筛选',True,h=84)
             return s
         cols=5 if large else 6;w=318 if large else 260;step=350 if large else 292;y=286 if large else 270
-        for i,t in enumerate(g['TITLES'][:cols]):s+=portrait(100+i*step,y,t if not large or i else '山河之间：归途与远方','2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],i,i==0 and focused,w,fs)
-        pager_y=900 if large else 848
-        s+=rect(744,pager_y,72,72,'#171c32',14,'#30364e')+icon('back',764,pager_y+20,32,'#596078')+centered(960,pager_y+47,f'1-{cols}',26,MUTED)+rect(1104,pager_y,72,72,'#242a46',14,'#596078')+icon('forward',1124,pager_y+20,32)
+        titles=g['TITLES']
+        s+='<defs><clipPath id="library-scroll-viewport"><rect x="96" y="'+str(y-8)+'" width="1728" height="'+str(1026-y+8)+'"/></clipPath></defs><g data-role="focus-following-grid" clip-path="url(#library-scroll-viewport)">'
+        for row in range(2):
+            for i in range(cols):
+                t=titles[(row*cols+i)%len(titles)]
+                if large and i==0 and row==0:t='山河之间：归途与远方'
+                s+=portrait(100+i*step,y+row*(576 if large else 476),t,'2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],row*cols+i,i==0 and row==0 and focused,w,fs)
+        s+='</g>'
         return s
 
     def movie_details(large=False):

@@ -35,4 +35,4 @@ python3 scripts/verify_tv_designs.py
 
 几何结果写入 `designs/tv-design-verification.json`，不替代 Android TV 的实际遥控测试。素材说明和授权见 [ASSET_NOTICES.txt](designs/ASSET_NOTICES.txt) 与 [LICENSE-JELLYFIN.txt](designs/LICENSE-JELLYFIN.txt)。
 
-当前直播源设计位于设置分区的“直播源：设置内直接管理”：设置右侧直接展示列表与操作，已进入代码实施并完成覆盖安装；本轮原生验证未重跑。影视图稿已按现有实现刷新标题、继续观看、分类卡片、元信息与分页。
+当前直播源设计位于设置分区的“直播源：设置内直接管理”：设置右侧直接展示列表与操作，已进入代码实施并完成覆盖安装；本轮原生验证未重跑。影视图稿已按现有实现刷新标题、继续观看、分类卡片与元信息；电影、剧集、最近添加均去掉分页，使用固定工具栏下的多行海报与焦点滚动追加。

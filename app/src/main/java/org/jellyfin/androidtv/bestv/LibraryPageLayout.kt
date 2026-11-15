@@ -41,14 +41,6 @@ object LibraryPageLayout {
     val GRID_SEARCH = Box(444f, 68f, 148f, 38f)
     val GRID_FILTER = Box(604f, 68f, 148f, 38f)
     val GRID_SORT = Box(764f, 68f, 148f, 38f)
-    val GRID_PREVIOUS = Box(372f, 424f, 36f, 36f)
-    val GRID_RANGE = Box(420f, 424f, 120f, 36f)
-    val GRID_NEXT = Box(552f, 424f, 36f, 36f)
-
-    fun pagerPrevious(large: Boolean=false) = if (large) GRID_PREVIOUS.copy(y=450f) else GRID_PREVIOUS
-    fun pagerRange(large: Boolean=false) = if (large) GRID_RANGE.copy(y=450f) else GRID_RANGE
-    fun pagerNext(large: Boolean=false) = if (large) GRID_NEXT.copy(y=450f) else GRID_NEXT
-
     fun toolbar(box: Box, large: Boolean) = if(large) box.copy(y=75f,height=50f) else box
 
     fun columns(large: Boolean) = if (large) 5 else 6
@@ -58,6 +50,23 @@ object LibraryPageLayout {
         // Five larger posters or six normal posters fit the approved 5% TV safe area.
         return if (large) Box(50f + index * 175f, 143f, 159f, 272f)
             else Box(50f + index * 146f, 135f, 130f, 222f)
+    }
+
+    fun scrollViewport(large: Boolean=false): Box {
+        val top=poster(0,large).y-4f
+        return Box(48f,top,864f,513f-top)
+    }
+    fun scrollPoster(index: Int,large: Boolean=false): Box {
+        val base=poster(index % columns(large),large)
+        return base.copy(x=base.x-48f,y=4f+(index / columns(large))*(base.height+16f))
+    }
+    fun appendLimit(shown: Int,total: Int,focused: Int,large: Boolean=false): Int {
+        val columns=columns(large)
+        return when {
+            shown==0 -> minOf(total,columns*3)
+            focused>=shown-columns*2 -> minOf(total,shown+columns*2)
+            else -> shown
+        }
     }
 
     fun posterImageHeight(large: Boolean=false) = poster(0, large).width * 1.5f

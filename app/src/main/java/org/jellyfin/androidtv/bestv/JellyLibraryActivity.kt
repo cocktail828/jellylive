@@ -548,7 +548,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val anchor=currentFocus;val popup=create();dialog=popup
         popup.setOnDismissListener {if(dialog===popup)dialog=null;anchor?.takeIf {it.isAttachedToWindow&&it.isShown}?.requestFocus()}
     }
-    /** Gallery 16: one category, one toolbar, one row of posters and centered pagination. */
+    /** Gallery 16/63: append poster rows as remote focus descends, preserving the saved view. */
     private fun renderGrid(title: String,parent: UUID?,initialQuery: LibraryBrowse.Query,start: Int=0,push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
         fresh("grid",push);header(title,"正在准备媒体目录…");val session=repo.sessionKey
@@ -562,57 +562,89 @@ class JellyLibraryActivity : FragmentActivity() {
         load({repo.catalog(parent,refresh)}) {catalog->
             if(session!=repo.sessionKey){home(false);return@load}
             fresh("grid",false);val host=page;val large=ui.largeText()
-            ui.header(host,title,"",{back()});ui.footer(host,"方向键浏览 · 确认箭头翻页 · 返回媒体库")
+            ui.header(host,title,"",{back()})
             val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,48f,if(large)78f else 65f,690f,if(large)30f else 23f)
-            var query=initialQuery;var offset=start;val updates=LibraryGridUpdates()
-            val posterHost=FrameLayout(this);ui.at(host,posterHost,0f,0f,960f,489f);posterHost.isFocusable=false
+            var query=initialQuery;val updates=LibraryGridUpdates()
+            val posterHost=FrameLayout(this);posterHost.isFocusable=false
+            val scroller=ScrollView(this).apply {
+                isVerticalScrollBarEnabled=false;isFocusable=false;isSmoothScrollingEnabled=false
+                descendantFocusability=ViewGroup.FOCUS_AFTER_DESCENDANTS
+                addView(posterHost,ViewGroup.LayoutParams(ui.px(864f),ui.px(1f)))
+                place(host,this,LibraryPageLayout.scrollViewport(large))
+            }
             val search=place(host,ui.button("⌕ 搜索媒体"){search(parent=parent,kind=query.kind)},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SEARCH,large)).apply {tag="grid-search"}
-            val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_FILTER,large)).apply {tag="grid-filter"}
-            val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;offset=0;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SORT,large)).apply {tag="grid-sort"}
+            val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_FILTER,large)).apply {tag="grid-filter"}
+            val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SORT,large)).apply {tag="grid-sort"}
             search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=search.id
             listOf(search,filter,sort).forEach {it.setSingleLine();it.ellipsize=android.text.TextUtils.TruncateAt.END}
-            var selectedColumn=0;var preferred: String?=null
             fun update(){
                 if(page!==host||session!=repo.sessionKey)return
-                gridRenderJob?.cancel();val request=updates.begin(query,offset) ?: return
-                val requestedQuery=request.query;val requestedOffset=request.offset
+                gridRenderJob?.cancel();val request=updates.begin(query,0) ?: return
+                val requestedQuery=request.query
                 gridRenderJob=lifecycleScope.launch {
-                    val result=withContext(Dispatchers.Default){LibraryBrowse.page(LibraryBrowse.select(catalog,requestedQuery),requestedOffset,LibraryPageLayout.columns(large))}
+                    val result=withContext(Dispatchers.Default){LibraryBrowse.page(LibraryBrowse.select(catalog,requestedQuery),0,maxOf(1,catalog.size))}
                     if(page!==host||session!=repo.sessionKey)return@launch
                     val firstRender=!updates.hasResult;if(!updates.accept(request,result.start))return@launch
-                    val previousFocus=currentFocus;posterHost.removeAllViews();offset=result.start
+                    val previousFocus=currentFocus;posterHost.removeAllViews();scroller.scrollTo(0,0)
                     val count=filterCount(requestedQuery)
                     subtitle.text="${if(requestedQuery.kind==BaseItemKind.MOVIE)"全部电影" else if(requestedQuery.kind==BaseItemKind.SERIES)"全部剧集" else "全部媒体"} · ${result.total} ${if(requestedQuery.kind==BaseItemKind.MOVIE)"部" else "项"}${if(count>0)" · 已筛选" else ""}"
                     TvIcons.text(filter,if(count==0)"类型：全部" else if(count==1&&requestedQuery.genre!=null)"类型：${requestedQuery.genre}" else "筛选：${count}项")
                     val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"发布时间升序" else "发布时间降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序";LibraryBrowse.Sort.DURATION->if(requestedQuery.ascending)"时长升序" else "时长降序"}
                     TvIcons.text(sort,"排序：$order")
-                    val cards=result.items.mapIndexed {index,item->
-                        val card=posterCard(item,large){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
-                        card.setOnFocusChangeListener {view,focused->existing?.onFocusChange(view,focused);if(focused)selectedColumn=index}
-                        place(posterHost,card,LibraryPageLayout.poster(index,large))
+                    val cards=mutableListOf<FrameLayout>()
+                    var onCardFocus: (Int)->Unit={}
+                    fun wireCards(){
+                        val cols=LibraryPageLayout.columns(large)
+                        cards.forEachIndexed {i,card->
+                            card.nextFocusLeftId=if(i%cols>0)cards[i-1].id else card.id
+                            card.nextFocusRightId=if(i%cols<cols-1)cards.getOrNull(i+1)?.id ?: card.id else card.id
+                            card.nextFocusUpId=if(i>=cols)cards[i-cols].id else listOf(search,filter,sort)[(i%cols*3/cols).coerceAtMost(2)].id
+                            card.nextFocusDownId=if(i/cols<(cards.size-1)/cols)cards[minOf(i+cols,cards.lastIndex)].id else card.id
+                        }
                     }
+                    fun append(focused: Int){
+                        if(page!==host||session!=repo.sessionKey)return
+                        val limit=LibraryPageLayout.appendLimit(cards.size,result.items.size,focused,large)
+                        if(limit==cards.size)return
+                        for(index in cards.size until limit){
+                            val item=result.items[index]
+                            val card=posterCard(item,large){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
+                            card.setOnFocusChangeListener {view,hasFocus->
+                                existing?.onFocusChange(view,hasFocus)
+                                if(hasFocus){
+                                    host.post {
+                                        if(page===host&&view.isAttachedToWindow&&view.hasFocus())onCardFocus(index)
+                                    }
+                                }
+                            }
+                            cards+=card
+                            place(posterHost,card,LibraryPageLayout.scrollPoster(index,large))
+                        }
+                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(cards.lastOrNull()?.let {LibraryPageLayout.scrollPoster(cards.lastIndex,large).bottom+4f} ?: 1f)}
+                        wireCards()
+                    }
+                    onCardFocus={index: Int->
+                        append(index)
+                        scroller.smoothScrollTo(0,ui.px(LibraryPageLayout.scrollPoster(index,large).y-4f))
+                    }
+                    append(0)
                     var recovery: Button?=null
                     if(cards.isEmpty()){
-                        ui.text(posterHost,"⌕",48,0xffb7a2ff.toInt(),456f,175f,48f,48f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",22,TvUi.INK,48f,245f,864f,36f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",14,TvUi.MUTED,48f,282f,864f,28f).gravity=Gravity.CENTER
-                        recovery=ui.button(posterHost,if(count>0)"清除筛选" else "刷新分类",350f,330f,260f,42f){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);offset=0;update()}else renderGrid(title,parent,query,0,false,true)}
+                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(380f)}
+                        ui.text(posterHost,"⌕",48,0xffb7a2ff.toInt(),408f,40f,48f,48f).gravity=Gravity.CENTER
+                        ui.text(posterHost,if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",22,TvUi.INK,0f,110f,864f,36f).gravity=Gravity.CENTER
+                        ui.text(posterHost,if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",14,TvUi.MUTED,0f,147f,864f,28f).gravity=Gravity.CENTER
+                        recovery=ui.button(posterHost,if(count>0)"清除筛选" else "刷新分类",302f,195f,260f,42f){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);update()}else renderGrid(title,parent,query,0,false,true)}
                     }
-                    val previous=place(posterHost,ui.button("‹"){offset=result.start-result.size;preferred="grid-previous";update()},LibraryPageLayout.pagerPrevious(large)).apply {tag="grid-previous";contentDescription="上一页";isEnabled=result.previous;isFocusable=result.previous;alpha=if(result.previous)1f else .35f}
-                    pageText(posterHost,result.range,13,TvUi.MUTED,LibraryPageLayout.pagerRange(large)).gravity=Gravity.CENTER
-                    val next=place(posterHost,ui.button("›"){offset=result.start+result.size;preferred="grid-next";update()},LibraryPageLayout.pagerNext(large)).apply {tag="grid-next";contentDescription="下一页";isEnabled=result.next;isFocusable=result.next;alpha=if(result.next)1f else .35f}
-                    cards.forEachIndexed {i,card->card.nextFocusLeftId=cards.getOrNull(i-1)?.id ?: card.id;card.nextFocusRightId=cards.getOrNull(i+1)?.id ?: card.id;card.nextFocusUpId=listOf(search,filter,sort)[(i*3/LibraryPageLayout.columns(large)).coerceAtMost(2)].id;card.nextFocusDownId=if(next.isEnabled)next.id else if(previous.isEnabled)previous.id else card.id}
-                    val target=cards.getOrNull(selectedColumn.coerceAtMost(cards.lastIndex)) ?: recovery ?: filter
+                    val target=cards.firstOrNull() ?: recovery ?: filter
                     recovery?.apply {nextFocusUpId=filter.id;nextFocusLeftId=id;nextFocusRightId=id;nextFocusDownId=id}
-                    previous.nextFocusUpId=target.id;next.nextFocusUpId=target.id;previous.nextFocusRightId=if(next.isEnabled)next.id else previous.id;next.nextFocusLeftId=if(previous.isEnabled)previous.id else next.id
                     listOf(search,filter,sort).forEach {it.nextFocusDownId=target.id}
                     if(dialog?.isShowing!=true){
-                        val wanted=preferred?.let {host.findViewWithTag<View>(it)}?.takeIf {it.isEnabled&&it.isFocusable};preferred=null
-                        when {firstRender->focus(target);wanted!=null->focus(wanted);previousFocus?.isAttachedToWindow==true->Unit;else->focus(target)}
+                        when {firstRender->focus(target);previousFocus?.isAttachedToWindow==true->Unit;else->focus(target)}
                     }
                 }
             }
-            gridReloads[host]={renderGrid(title,parent,query,offset,false,true)}
+            gridReloads[host]={renderGrid(title,parent,query,0,false,true)}
             host.tag=Runnable {update()};update()
         }
     }

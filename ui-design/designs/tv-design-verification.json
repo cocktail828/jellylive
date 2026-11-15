@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 105,
   "active": 97,
-  "textCount": 1542,
+  "textCount": 1624,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -3424,7 +3424,7 @@
         166.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3436,7 +3436,7 @@
         285.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3448,7 +3448,7 @@
         296.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3460,7 +3460,7 @@
         457.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3472,7 +3472,7 @@
         577.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3484,7 +3484,7 @@
         588.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3496,7 +3496,7 @@
         749.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3508,7 +3508,7 @@
         870.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3520,7 +3520,7 @@
         880.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3532,7 +3532,7 @@
         1041.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3544,7 +3544,7 @@
         1162.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3556,7 +3556,7 @@
         1172.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3568,7 +3568,7 @@
         1334.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3580,7 +3580,7 @@
         1426.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3592,7 +3592,7 @@
         1464.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3604,7 +3604,7 @@
         1625.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3616,7 +3616,7 @@
         1745.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
@@ -3628,19 +3628,223 @@
         1756.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 16,
-      "text": "1-6",
+      "text": "8.6",
       "size": 26.0,
       "bounds": [
-        943.5,
-        876.0,
-        978.5,
-        895.0
+        129.0,
+        771.0,
+        166.0,
+        790.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "山河之间",
+      "size": 28.0,
+      "bounds": [
+        176.0,
+        1089.0,
+        285.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        163.0,
+        1149.0,
+        296.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "8.1",
+      "size": 26.0,
+      "bounds": [
+        421.0,
+        771.0,
+        457.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "远方来信",
+      "size": 28.0,
+      "bounds": [
+        466.0,
+        1089.0,
+        577.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        455.0,
+        1149.0,
+        588.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "7.9",
+      "size": 26.0,
+      "bounds": [
+        713.0,
+        771.0,
+        749.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "海岸日记",
+      "size": 28.0,
+      "bounds": [
+        758.0,
+        1089.0,
+        870.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        747.0,
+        1149.0,
+        880.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "8.3",
+      "size": 26.0,
+      "bounds": [
+        1005.0,
+        771.0,
+        1041.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "星夜漫游",
+      "size": 28.0,
+      "bounds": [
+        1051.0,
+        1089.0,
+        1162.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1039.0,
+        1149.0,
+        1172.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "7.8",
+      "size": 26.0,
+      "bounds": [
+        1297.0,
+        771.0,
+        1334.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "归途",
+      "size": 28.0,
+      "bounds": [
+        1371.0,
+        1089.0,
+        1426.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1331.0,
+        1149.0,
+        1464.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "8.5",
+      "size": 26.0,
+      "bounds": [
+        1589.0,
+        771.0,
+        1625.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "森林之声",
+      "size": 28.0,
+      "bounds": [
+        1634.0,
+        1089.0,
+        1745.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 16,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1623.0,
+        1149.0,
+        1756.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
     },
     {
       "figure": 17,
@@ -8044,7 +8248,7 @@
         166.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8056,7 +8260,7 @@
         285.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8068,7 +8272,7 @@
         296.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8080,7 +8284,7 @@
         457.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8092,7 +8296,7 @@
         577.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8104,7 +8308,7 @@
         588.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8116,7 +8320,7 @@
         749.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8128,7 +8332,7 @@
         870.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8140,7 +8344,7 @@
         880.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8152,7 +8356,7 @@
         1041.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8164,7 +8368,7 @@
         1162.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8176,7 +8380,7 @@
         1172.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8188,7 +8392,7 @@
         1334.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8200,7 +8404,7 @@
         1426.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8212,7 +8416,7 @@
         1464.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8224,7 +8428,7 @@
         1625.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8236,7 +8440,7 @@
         1745.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8248,19 +8452,223 @@
         1756.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
-      "text": "1-6",
+      "text": "8.6",
       "size": 26.0,
       "bounds": [
-        943.5,
-        876.0,
-        978.5,
-        895.0
+        129.0,
+        771.0,
+        166.0,
+        790.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "山河之间",
+      "size": 28.0,
+      "bounds": [
+        176.0,
+        1089.0,
+        285.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        163.0,
+        1149.0,
+        296.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "8.1",
+      "size": 26.0,
+      "bounds": [
+        421.0,
+        771.0,
+        457.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "远方来信",
+      "size": 28.0,
+      "bounds": [
+        466.0,
+        1089.0,
+        577.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        455.0,
+        1149.0,
+        588.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "7.9",
+      "size": 26.0,
+      "bounds": [
+        713.0,
+        771.0,
+        749.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "海岸日记",
+      "size": 28.0,
+      "bounds": [
+        758.0,
+        1089.0,
+        870.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        747.0,
+        1149.0,
+        880.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "8.3",
+      "size": 26.0,
+      "bounds": [
+        1005.0,
+        771.0,
+        1041.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "星夜漫游",
+      "size": 28.0,
+      "bounds": [
+        1051.0,
+        1089.0,
+        1162.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1039.0,
+        1149.0,
+        1172.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "7.8",
+      "size": 26.0,
+      "bounds": [
+        1297.0,
+        771.0,
+        1334.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "归途",
+      "size": 28.0,
+      "bounds": [
+        1371.0,
+        1089.0,
+        1426.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1331.0,
+        1149.0,
+        1464.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "8.5",
+      "size": 26.0,
+      "bounds": [
+        1589.0,
+        771.0,
+        1625.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "森林之声",
+      "size": 28.0,
+      "bounds": [
+        1634.0,
+        1089.0,
+        1745.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 39,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1623.0,
+        1149.0,
+        1756.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
     },
     {
       "figure": 39,
@@ -8620,7 +9028,7 @@
         166.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8632,7 +9040,7 @@
         285.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8644,7 +9052,7 @@
         296.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8656,7 +9064,7 @@
         457.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8668,7 +9076,7 @@
         577.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8680,7 +9088,7 @@
         588.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8692,7 +9100,7 @@
         749.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8704,7 +9112,7 @@
         870.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8716,7 +9124,7 @@
         880.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8728,7 +9136,7 @@
         1041.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8740,7 +9148,7 @@
         1162.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8752,7 +9160,7 @@
         1172.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8764,7 +9172,7 @@
         1334.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8776,7 +9184,7 @@
         1426.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8788,7 +9196,7 @@
         1464.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8800,7 +9208,7 @@
         1625.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8812,7 +9220,7 @@
         1745.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -8824,19 +9232,223 @@
         1756.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
-      "text": "1-6",
+      "text": "8.6",
       "size": 26.0,
       "bounds": [
-        943.5,
-        876.0,
-        978.5,
-        895.0
+        129.0,
+        771.0,
+        166.0,
+        790.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "山河之间",
+      "size": 28.0,
+      "bounds": [
+        176.0,
+        1089.0,
+        285.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        163.0,
+        1149.0,
+        296.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "8.1",
+      "size": 26.0,
+      "bounds": [
+        421.0,
+        771.0,
+        457.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "远方来信",
+      "size": 28.0,
+      "bounds": [
+        466.0,
+        1089.0,
+        577.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        455.0,
+        1149.0,
+        588.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "7.9",
+      "size": 26.0,
+      "bounds": [
+        713.0,
+        771.0,
+        749.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "海岸日记",
+      "size": 28.0,
+      "bounds": [
+        758.0,
+        1089.0,
+        870.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        747.0,
+        1149.0,
+        880.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "8.3",
+      "size": 26.0,
+      "bounds": [
+        1005.0,
+        771.0,
+        1041.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "星夜漫游",
+      "size": 28.0,
+      "bounds": [
+        1051.0,
+        1089.0,
+        1162.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1039.0,
+        1149.0,
+        1172.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "7.8",
+      "size": 26.0,
+      "bounds": [
+        1297.0,
+        771.0,
+        1334.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "归途",
+      "size": 28.0,
+      "bounds": [
+        1371.0,
+        1089.0,
+        1426.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1331.0,
+        1149.0,
+        1464.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "8.5",
+      "size": 26.0,
+      "bounds": [
+        1589.0,
+        771.0,
+        1625.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "森林之声",
+      "size": 28.0,
+      "bounds": [
+        1634.0,
+        1089.0,
+        1745.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 40,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1623.0,
+        1149.0,
+        1756.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
     },
     {
       "figure": 40,
@@ -10816,7 +11428,7 @@
         186.0,
         352.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10852,7 +11464,7 @@
         360.0,
         818.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10864,7 +11476,7 @@
         535.0,
         352.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10876,7 +11488,7 @@
         692.0,
         735.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10888,7 +11500,7 @@
         710.0,
         818.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10900,7 +11512,7 @@
         886.0,
         352.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10912,7 +11524,7 @@
         1042.0,
         735.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10924,7 +11536,7 @@
         1060.0,
         818.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10936,7 +11548,7 @@
         1235.0,
         352.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10948,7 +11560,7 @@
         1392.0,
         735.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10960,7 +11572,7 @@
         1410.0,
         818.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10972,7 +11584,7 @@
         1586.0,
         352.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10984,7 +11596,7 @@
         1701.0,
         735.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
@@ -10996,19 +11608,187 @@
         1760.0,
         818.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 58,
-      "text": "1-5",
-      "size": 26.0,
+      "text": "8.6",
+      "size": 39.0,
       "bounds": [
-        943.5,
-        928.0,
-        978.5,
-        947.0
+        129.0,
+        899.0,
+        186.0,
+        928.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "森林之声",
+      "size": 42.0,
+      "bounds": [
+        175.0,
+        1269.0,
+        341.0,
+        1311.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "2025 · 剧情",
+      "size": 36.0,
+      "bounds": [
+        158.0,
+        1359.0,
+        360.0,
+        1394.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "8.1",
+      "size": 39.0,
+      "bounds": [
+        479.0,
+        899.0,
+        535.0,
+        928.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "山河之间",
+      "size": 42.0,
+      "bounds": [
+        528.0,
+        1269.0,
+        691.0,
+        1311.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "2025 · 剧情",
+      "size": 36.0,
+      "bounds": [
+        508.0,
+        1359.0,
+        710.0,
+        1394.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "7.9",
+      "size": 39.0,
+      "bounds": [
+        829.0,
+        899.0,
+        886.0,
+        928.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "远方来信",
+      "size": 42.0,
+      "bounds": [
+        876.0,
+        1269.0,
+        1042.0,
+        1311.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "2025 · 剧情",
+      "size": 36.0,
+      "bounds": [
+        858.0,
+        1359.0,
+        1060.0,
+        1394.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "8.3",
+      "size": 39.0,
+      "bounds": [
+        1179.0,
+        899.0,
+        1235.0,
+        928.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "海岸日记",
+      "size": 42.0,
+      "bounds": [
+        1226.0,
+        1269.0,
+        1392.0,
+        1311.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "2025 · 剧情",
+      "size": 36.0,
+      "bounds": [
+        1208.0,
+        1359.0,
+        1410.0,
+        1394.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "7.8",
+      "size": 39.0,
+      "bounds": [
+        1529.0,
+        899.0,
+        1586.0,
+        928.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "星夜漫游",
+      "size": 42.0,
+      "bounds": [
+        1576.0,
+        1269.0,
+        1742.0,
+        1311.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 58,
+      "text": "2025 · 剧情",
+      "size": 36.0,
+      "bounds": [
+        1558.0,
+        1359.0,
+        1760.0,
+        1394.0
+      ],
+      "clippedIntentionally": true
     },
     {
       "figure": 59,
@@ -11824,7 +12604,7 @@
         166.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11836,7 +12616,7 @@
         285.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11848,7 +12628,7 @@
         296.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11860,7 +12640,7 @@
         457.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11872,7 +12652,7 @@
         577.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11884,7 +12664,7 @@
         588.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11896,7 +12676,7 @@
         749.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11908,7 +12688,7 @@
         870.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11920,7 +12700,7 @@
         880.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11932,7 +12712,7 @@
         1041.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11944,7 +12724,7 @@
         1162.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11956,7 +12736,7 @@
         1172.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11968,7 +12748,7 @@
         1334.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11980,7 +12760,7 @@
         1426.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -11992,7 +12772,7 @@
         1464.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -12004,7 +12784,7 @@
         1625.0,
         314.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -12016,7 +12796,7 @@
         1745.0,
         641.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
@@ -12028,19 +12808,223 @@
         1756.0,
         697.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
     },
     {
       "figure": 63,
-      "text": "1-6",
+      "text": "8.6",
       "size": 26.0,
       "bounds": [
-        943.5,
-        876.0,
-        978.5,
-        895.0
+        129.0,
+        771.0,
+        166.0,
+        790.0
       ],
-      "clippedIntentionally": false
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "山河之间",
+      "size": 28.0,
+      "bounds": [
+        176.0,
+        1089.0,
+        285.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        163.0,
+        1149.0,
+        296.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "8.1",
+      "size": 26.0,
+      "bounds": [
+        421.0,
+        771.0,
+        457.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "远方来信",
+      "size": 28.0,
+      "bounds": [
+        466.0,
+        1089.0,
+        577.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        455.0,
+        1149.0,
+        588.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "7.9",
+      "size": 26.0,
+      "bounds": [
+        713.0,
+        771.0,
+        749.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "海岸日记",
+      "size": 28.0,
+      "bounds": [
+        758.0,
+        1089.0,
+        870.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        747.0,
+        1149.0,
+        880.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "8.3",
+      "size": 26.0,
+      "bounds": [
+        1005.0,
+        771.0,
+        1041.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "星夜漫游",
+      "size": 28.0,
+      "bounds": [
+        1051.0,
+        1089.0,
+        1162.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1039.0,
+        1149.0,
+        1172.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "7.8",
+      "size": 26.0,
+      "bounds": [
+        1297.0,
+        771.0,
+        1334.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "归途",
+      "size": 28.0,
+      "bounds": [
+        1371.0,
+        1089.0,
+        1426.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1331.0,
+        1149.0,
+        1464.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "8.5",
+      "size": 26.0,
+      "bounds": [
+        1589.0,
+        771.0,
+        1625.0,
+        790.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "森林之声",
+      "size": 28.0,
+      "bounds": [
+        1634.0,
+        1089.0,
+        1745.0,
+        1117.0
+      ],
+      "clippedIntentionally": true
+    },
+    {
+      "figure": 63,
+      "text": "2025 · 剧情",
+      "size": 24.0,
+      "bounds": [
+        1623.0,
+        1149.0,
+        1756.0,
+        1173.0
+      ],
+      "clippedIntentionally": true
     },
     {
       "figure": 64,

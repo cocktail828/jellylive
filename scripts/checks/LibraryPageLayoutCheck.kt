@@ -32,7 +32,7 @@ fun main(args: Array<String>) {
     }
     val homeCard=LibraryPageLayout.Box(0f,0f,276f,130f)
     verify("home captions and progress stay inside card",listOf(LibraryPageLayout.HOME_CARD_TITLE,LibraryPageLayout.HOME_CARD_SUBTITLE,LibraryPageLayout.HOME_CARD_PROGRESS).all {inside(it,homeCard)})
-    verify("home progress does not cover subtitle",!overlaps(LibraryPageLayout.HOME_CARD_SUBTITLE,LibraryPageLayout.HOME_CARD_PROGRESS))
+    verify("home progress stays inset within artwork",LibraryPageLayout.HOME_CARD_PROGRESS.let {it.x>0f&&it.right<276f&&it.bottom<LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT})
     verify("home captions are separated",!overlaps(LibraryPageLayout.HOME_CARD_TITLE,LibraryPageLayout.HOME_CARD_SUBTITLE))
     val tools=listOf(LibraryPageLayout.GRID_SEARCH,LibraryPageLayout.GRID_FILTER,LibraryPageLayout.GRID_SORT)
     verify("category tools stay in original one toolbar row",tools.map {it.y}.distinct().size==1&&tools.all {near(it.y,68f)&&near(it.height,38f)})
@@ -41,7 +41,6 @@ fun main(args: Array<String>) {
     for(large in listOf(false,true)){
         val columns=LibraryPageLayout.columns(large)
         val cards=(0 until columns).map {LibraryPageLayout.poster(it,large)}
-        val pager=listOf(LibraryPageLayout.pagerPrevious(large),LibraryPageLayout.pagerRange(large),LibraryPageLayout.pagerNext(large))
         val imageHeight=LibraryPageLayout.posterImageHeight(large)
         val localCard=LibraryPageLayout.Box(0f,0f,cards[0].width,cards[0].height)
         val title=LibraryPageLayout.posterTitle(large)
@@ -50,14 +49,9 @@ fun main(args: Array<String>) {
         verify("posters fit safe content ($large)",cards.all {inside(it,safe)})
         verify("posters retain one row and separate columns ($large)",cards.map {it.y}.distinct().size==1&&cards.zipWithNext().all {(a,b)->!overlaps(a,b)&&b.x>a.x})
         verify("toolbar does not cover posters ($large)",cards.all {c->tools.map {LibraryPageLayout.toolbar(it,large)}.none {overlaps(it,c)}})
-        verify("posters do not cover pagination ($large)",cards.all {c->pager.none {overlaps(it,c)}})
         verify("poster artwork keeps 2-to-3 ratio ($large)",near(imageHeight/cards[0].width,1.5f))
         verify("title and metadata fit poster ($large)",inside(title,localCard)&&inside(metadata,localCard))
         verify("caption overlays artwork while metadata stays below ($large)",title.y<imageHeight&&title.bottom<=imageHeight&&!overlaps(title,metadata))
-        verify("pager stays above footer ($large)",pager.all {inside(it,safe)})
-        verify("pager controls are separate ($large)",pager.zipWithNext().all {(a,b)->!overlaps(a,b)})
-        verify("page range remains screen centered ($large)",near(pager[1].x+pager[1].width/2,480f))
-        verify("previous and next are symmetric ($large)",near(pager[0].x+pager[0].width/2+pager[2].x+pager[2].width/2,960f))
     }
     verify("normal grid retains supplied image width and compact caption area",LibraryPageLayout.poster(0)==LibraryPageLayout.Box(50f,135f,130f,222f))
     for(large in listOf(false,true)){
@@ -69,6 +63,21 @@ fun main(args: Array<String>) {
             val cards=(0 until LibraryPageLayout.columns(large)).map {LibraryPageLayout.poster(it,large)}
             verify("full poster focus border fits 5 percent overscan at $screenHeight ($large)",cards.all {it.x*scale>=screenHeight*16/9*.05f&&it.right*scale<=screenHeight*16/9*.95f&&it.y*scale>=screenHeight*.05f&&it.bottom*scale<=screenHeight*.95f})
         }
+    }
+    for(large in listOf(false,true)){
+        val cols=LibraryPageLayout.columns(large)
+        val viewport=LibraryPageLayout.scrollViewport(large)
+        val first=LibraryPageLayout.scrollPoster(0,large)
+        val second=LibraryPageLayout.scrollPoster(cols,large)
+        verify("scroll viewport fits safe area ($large)",inside(viewport,safe))
+        verify("scroll grid keeps original card size ($large)",first.width==LibraryPageLayout.poster(0,large).width&&first.height==LibraryPageLayout.poster(0,large).height)
+        verify("next row appends below complete cards ($large)",second.y==first.bottom+16f)
+        verify("initial batch is three rows ($large)",LibraryPageLayout.appendLimit(0,100,0,large)==cols*3)
+        verify("focus near bottom appends two rows ($large)",LibraryPageLayout.appendLimit(cols*3,100,cols,large)==cols*5)
+        verify("focus away from bottom retains loaded batch ($large)",LibraryPageLayout.appendLimit(cols*5,100,0,large)==cols*5)
+        verify("last partial row clamps to real total ($large)",LibraryPageLayout.appendLimit(cols*3,cols*3+1,cols*2,large)==cols*3+1)
+        verify("end does not add phantom items ($large)",LibraryPageLayout.appendLimit(2,2,1,large)==2)
+        verify("empty catalog has no appended cards ($large)",LibraryPageLayout.appendLimit(0,0,0,large)==0)
     }
     println("$count library page layout checks passed")
     if(args.isNotEmpty()){
@@ -92,7 +101,6 @@ fun main(args: Array<String>) {
                 for(large in listOf(false,true))put(if(large)"large" else "normal",buildJsonObject {
                     put("posters",rects((0 until LibraryPageLayout.columns(large)).map {LibraryPageLayout.poster(it,large)}))
                     put("imageHeight",LibraryPageLayout.posterImageHeight(large));put("title",box(LibraryPageLayout.posterTitle(large)));put("metadata",box(LibraryPageLayout.posterMetadata(large)))
-                    put("pager",rects(listOf(LibraryPageLayout.pagerPrevious(large),LibraryPageLayout.pagerRange(large),LibraryPageLayout.pagerNext(large))))
                 })
             })
         }
