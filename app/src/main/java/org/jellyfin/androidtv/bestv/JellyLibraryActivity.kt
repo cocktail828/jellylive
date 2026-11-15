@@ -448,7 +448,7 @@ class JellyLibraryActivity : FragmentActivity() {
         pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
         val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
         val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
-            val card=homeCard(entry.title,"浏览全部内容",illustrations[index]){renderGrid(entry.title,null,entry.query())}
+            val card=homeCard(entry.title,"",illustrations[index]){renderGrid(entry.title,null,entry.query())}
             card.tag="library-entry-${entry.name.lowercase()}";place(host,card,LibraryPageLayout.homeEntry(index))
         }
         entries.forEachIndexed {index,card->card.nextFocusLeftId=entries.getOrNull(index-1)?.id ?: card.id;card.nextFocusRightId=entries.getOrNull(index+1)?.id ?: card.id;card.nextFocusUpId=search.id;card.nextFocusDownId=card.id}
@@ -459,9 +459,9 @@ class JellyLibraryActivity : FragmentActivity() {
             val counts=withContext(Dispatchers.Default){LibraryPageLayout.Entry.entries.map {LibraryBrowse.select(catalog,it.query()).size}}
             if(page!==host||session!=repo.sessionKey)return@launch
             if(counts.sum()==0){if(page===host)empty(retry={home(false,true)});return@launch}
-            LibraryPageLayout.Entry.entries.forEachIndexed {index,entry->
+            LibraryPageLayout.Entry.entries.forEachIndexed {index,_->
                 val count=counts[index]
-                entries[index].findViewWithTag<TextView>("entry-subtitle")?.text="${count} ${if(entry==LibraryPageLayout.Entry.MOVIES)"部电影" else if(entry==LibraryPageLayout.Entry.SERIES)"部剧集" else "项内容"}"
+                entries[index].findViewWithTag<TextView>("entry-subtitle")?.text=count.toString()
             }
         }
         host.tag=Runnable {refreshHomeResume(host,resumeArea,search,entries,null)}
@@ -502,7 +502,7 @@ class JellyLibraryActivity : FragmentActivity() {
                 if(previous!=null)entries.first().requestFocus()
             }else{
                 val scroller=HorizontalScrollView(this@JellyLibraryActivity);scroller.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this@JellyLibraryActivity);scroller.addView(row)
-                val cards=resumes.map {item->homeCard(cardTitle(item),if(item.type==BaseItemKind.EPISODE)"第 ${item.indexNumber ?: "?"} 集 · ${time(resumeMs(item))}" else "继续播放 · ${time(resumeMs(item))}",item=item){play(item,resumeMs(item))}.also {it.tag="resume-item-${item.id}";row.addView(it,LinearLayout.LayoutParams(ui.px(276f),ui.px(130f)).apply {marginEnd=ui.px(16f)})}}
+                val cards=resumes.map {item->homeCard(cardTitle(item),"",item=item){play(item,resumeMs(item))}.also {it.tag="resume-item-${item.id}";row.addView(it,LinearLayout.LayoutParams(ui.px(276f),ui.px(130f)).apply {marginEnd=ui.px(16f)})}}
                 ui.at(area,scroller,0f,0f,LibraryPageLayout.HOME_RESUME_ROW.width,LibraryPageLayout.HOME_RESUME_ROW.height)
                 cards.forEachIndexed {i,card->card.nextFocusUpId=search.id;card.nextFocusDownId=entries[i.coerceAtMost(entries.lastIndex)].id}
                 entries.forEachIndexed {i,card->card.nextFocusUpId=cards[i.coerceAtMost(cards.lastIndex)].id}
@@ -519,13 +519,17 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun homeCard(name: String,subtitle: String,illustration: Int?=null,item: BaseItemDto?=null,click: ()->Unit): FrameLayout {
         val card=focusCard(FrameLayout(this),click)
-        if(item!=null)art(card,item,0f,0f,276f,LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT,true)
-        else ui.at(card,ImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP;setImageResource(requireNotNull(illustration))},0f,0f,276f,LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT)
-        ui.at(card,View(this).apply {setBackgroundColor(0xff10182a.toInt())},0f,if(ui.largeText())62f else LibraryPageLayout.HOME_CARD_INFO_TOP,276f,if(ui.largeText())68f else 50f)
-        pageText(card,name,16,TvUi.INK,LibraryPageLayout.HOME_CARD_TITLE.let {if(ui.largeText())it.copy(y=65f,height=31f)else it}).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE.let {if(ui.largeText())it.copy(y=99f,height=28f)else it}).apply {tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(card,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(card,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
-        card.contentDescription="$name，$subtitle";return card
+        card.background=ColorDrawable(Color.TRANSPARENT);card.clipToOutline=false
+        val artworkHeight=if(ui.largeText())62f else LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT
+        val imageHost=FrameLayout(this).apply {background=ui.surface(TvUi.PANEL,false);clipToOutline=true};ui.at(card,imageHost,0f,0f,276f,artworkHeight)
+        if(item!=null)art(imageHost,item,0f,0f,276f,artworkHeight,true)
+        else ui.at(imageHost,ImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP;setImageResource(requireNotNull(illustration))},0f,0f,276f,artworkHeight)
+        val title=LibraryPageLayout.HOME_CARD_TITLE.let {if(ui.largeText())it.copy(y=65f,height=31f)else it}
+        pageText(card,name,16,TvUi.INK,if(item!=null)title.copy(height=130f-title.y)else title).apply {gravity=Gravity.CENTER;setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(item==null)pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE.let {if(ui.largeText())it.copy(y=99f,height=28f)else it}).apply {gravity=Gravity.CENTER;tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS.copy(y=artworkHeight-2f);ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
+        card.setOnFocusChangeListener {_,focused->card.foreground=if(focused)android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(130f-artworkHeight))else null}
+        card.contentDescription=if(item!=null)"$name，${time(resumeMs(item))}" else name;return card
     }
     private fun filterCount(query: LibraryBrowse.Query)=listOf(query.state!=LibraryBrowse.State.ALL,query.genre!=null,query.year!=null,query.resolution!=null,query.region!=null).count {it}
     private fun browseDialog(create: ()->AlertDialog){
