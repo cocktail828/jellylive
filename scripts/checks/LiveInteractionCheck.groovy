@@ -79,7 +79,7 @@ class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 class FakeConfig { Map values=[:]; String optString(String key){values[key] ?: ""} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible','canRefreshBuiltin'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible','canRefreshBuiltin','retryLive','showVideoEmpty','restoreLastChannel'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false,playerReleasedForLibrary=false
@@ -118,6 +118,10 @@ class InteractionHost {
     void rememberFocus(){events.add('remember-focus')}
     void exitDialog(){events.add('exit-confirm')}
     void toast(String value){events.add('toast')}
+    void openBoxConfig(){events.add('box-config')}
+    void refreshSource(String id,boolean explicit){events.add('refresh:'+id)}
+    void showVideoError(String title,String detail){liveErrorTitle=title;events.add('video-error')}
+    Channel requestedChannel(){new Channel(code:requestedCode)}
     def owner(Channel channel){source}
     String channelKey(Channel channel){LiveFilter.key(source.id,channel.code)}
     String filterKey(){"home/all/false"}
@@ -224,6 +228,25 @@ check('tv_source_refresh_requires_each_login_field_and_valid_mac') {
     for(key in valid.keySet()) {h.config.values=valid.clone();h.config.values[key]=' ';assert !h.canRefreshBuiltin()}
     h.config.values=valid.clone();h.config.values.mac='invalid';assert !h.canRefreshBuiltin()
     h.config.values.mac='02-00-00-00-00-01';assert h.canRefreshBuiltin()
+}
+check('retired_startup_and_source_error_routes_restore_home') {
+    def h=fresh();for(route in ['onboarding','source-error']){assert h.restoreRoute(route)=='home';h.route='full';h.returnFromFull=route;h.back();assert h.route=='home'}
+}
+check('missing_config_reports_error_in_home_without_navigation') {
+    def h=fresh();h.showVideoEmpty();assert h.route=='home' && h.liveErrorTitle=='未配置直播源'
+    h.events.clear();h.retryLive();assert h.events==['box-config'] && h.route=='home'
+}
+check('unconfigured_cached_tv_channels_never_autoplay') {
+    def h=fresh();h.source.channels=[channel('a')];h.restoreLastChannel()
+    assert h.events==['video-error'] && h.liveErrorTitle=='未配置直播源'
+}
+check('empty_configured_source_retries_fetch_without_loading_page') {
+    def h=fresh();h.config.values=[user_id:'user',tvid:'tv',stb_id:'box',tv_profile:'profile',mac:'02:00:00:00:00:01']
+    h.retryLive();assert h.events==['refresh:builtin'] && h.route=='home'
+}
+check('other_sources_do_not_require_tv_credentials') {
+    def h=fresh();h.source.id='m3u';h.retryLive();assert h.events==['refresh:m3u']
+    h.events.clear();h.source.channels=[channel('a')];h.retryLive();assert h.events==['play:a']
 }
 check('background_cancels_idle_overlay_actions') {
     def h=fresh();h.route='full';h.drawerVisible=true;h.controlsVisible=true;h.resetIdleTimers()

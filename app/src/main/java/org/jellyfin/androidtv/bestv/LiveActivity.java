@@ -97,7 +97,6 @@ public final class LiveActivity extends Activity {
     private TextView editorStatus;
     private Button detectButton,saveButton;
     private String liveErrorTitle="",liveErrorDetail="";
-    private String sourceErrorReason="";
     private String searchQuery="";
     private long searchGeneration,lastInputAt;
     private final Runnable hideControls=()->hideControls();
@@ -151,7 +150,6 @@ public final class LiveActivity extends Activity {
         root.removeAllViews();stage=ui.canvas();FrameLayout.LayoutParams stageParams=new FrameLayout.LayoutParams(ui.px(960),ui.px(540),Gravity.CENTER);root.addView(stage,stageParams);
         videoShell=new FrameLayout(this);videoShell.setBackgroundColor(Color.BLACK);videoShell.setClipToOutline(true);videoShell.addView(video,new FrameLayout.LayoutParams(-1,-1));stage.addView(videoShell);videoShell.setVisibility(View.GONE);
         render(false);
-        if(source.channels.isEmpty()&&source.builtin()&&!config.optString("user_id").isEmpty()&&state==null)showOnboarding();
         if(!cacheProblem.isEmpty())toast(cacheProblem);
         worker.scheduleWithFixedDelay(()->onUi(()->{if(resumed)refreshSource(source.id,false);}),6,6,TimeUnit.HOURS);
         if(resumed)resumeReady();
@@ -214,7 +212,7 @@ public final class LiveActivity extends Activity {
         if(route.equals("home")&&f!=null&&f.getTag() instanceof String){String t=(String)f.getTag();if(t.equals("preview")||t.equals("channel-list")||t.equals("group"))lastHomeFocus=t;}
         captureEditor();
     }
-    private static String restoreRoute(String saved){return "channels".equals(saved)?"home":saved;}
+    private static String restoreRoute(String saved){return "channels".equals(saved)||"onboarding".equals(saved)||"source-error".equals(saved)?"home":saved;}
     private void navigate(String target){rememberFocus();backStack.push(route);route=restoreRoute(target);render(true);}
     private void home(){rememberFocus();backStack.clear();route="home";render(true);}
     private void back(){
@@ -236,10 +234,10 @@ public final class LiveActivity extends Activity {
         videoFrame=null;list=null;favoriteGrid=null;settingsPanel=null;settingsTabs.clear();groupButton=null;previewButton=null;tiles=null;sourceStatus=null;sourceRowsHost=null;sourceName=null;sourceUrl=null;sourceEpg=null;editorStatus=null;searchInput=null;controls=null;drawer=null;
         if(!isLiveRoute())suspendPlayback();else if(resumed&&player.getMediaItemCount()>0)player.play();
         videoShell.setVisibility(isLiveRoute()?View.VISIBLE:View.GONE);
-        switch(route){case "full":renderFull();break;case "sources":renderSources();break;case "editor":renderEditor();break;case "favorites":renderFavorites();break;case "guide":renderGuide();break;case "search":renderSearch();break;case "settings":renderSettings();break;case "onboarding":renderOnboarding();break;case "source-error":renderSourceError();break;default:route="home";renderHome();}
+        switch(route){case "full":renderFull();break;case "sources":renderSources();break;case "editor":renderEditor();break;case "favorites":renderFavorites();break;case "guide":renderGuide();break;case "search":renderSearch();break;case "settings":renderSettings();break;default:route="home";renderHome();}
         if(isLiveRoute()&&!liveErrorTitle.isEmpty())showVideoError(liveErrorTitle,liveErrorDetail);
         immersive();final int gen=screenGeneration;
-        page.post(()->{if(gen!=screenGeneration||dead||drawerVisible)return;if(route.equals("favorites")){restoreFavoritePosition();return;}String desired=restore?focusMemory.get(route):null;if(desired==null){if(route.equals("sources"))desired=canRefreshBuiltin()?"source-refresh":"source-box-config";else if(route.equals("editor"))desired="editor-name";else if(route.equals("settings"))desired="settings-"+settingsCategoryIndex();else if(route.equals("source-error"))desired="source-retry";}View f=desired==null?null:page.findViewWithTag(desired);if(f!=null&&f.isFocusable()&&f.isShown())f.requestFocus();else if(route.equals("home"))focusHomeDefault();else if(route.equals("full")){if(errorPanel!=null){View q=firstFocusable(errorPanel);if(q!=null)q.requestFocus();}else videoFrame.requestFocus();}else{View first=firstFocusable(page);if(first!=null)first.requestFocus();}if(list!=null&&restore){int[] a=listMemory.get(route);if(a!=null&&list.hasFocus())list.setSelectionFromTop(Math.min(a[0],shown.size()-1),a[1]);}});
+        page.post(()->{if(gen!=screenGeneration||dead||drawerVisible)return;if(route.equals("favorites")){restoreFavoritePosition();return;}String desired=restore?focusMemory.get(route):null;if(desired==null){if(route.equals("sources"))desired=canRefreshBuiltin()?"source-refresh":"source-box-config";else if(route.equals("editor"))desired="editor-name";else if(route.equals("settings"))desired="settings-"+settingsCategoryIndex();}View f=desired==null?null:page.findViewWithTag(desired);if(f!=null&&f.isFocusable()&&f.isShown())f.requestFocus();else if(route.equals("home"))focusHomeDefault();else if(route.equals("full")){if(errorPanel!=null){View q=firstFocusable(errorPanel);if(q!=null)q.requestFocus();}else videoFrame.requestFocus();}else{View first=firstFocusable(page);if(first!=null)first.requestFocus();}if(list!=null&&restore){int[] a=listMemory.get(route);if(a!=null&&list.hasFocus())list.setSelectionFromTop(Math.min(a[0],shown.size()-1),a[1]);}});
         if(resumed&&started&&isLiveRoute()&&player.getMediaItemCount()==0&&!openingChannel&&!source.channels.isEmpty()&&(prefs.getBoolean("auto_play",true)||resumePlayback&&resumeSource.equals(source.id)))restoreLastChannel();
         if(enteringHome)lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();
     }
@@ -267,7 +265,10 @@ public final class LiveActivity extends Activity {
         for(int i=0;i<4;i++){final int index=i;tiles[i]=ui.button(page,names[i],50+i*219,413,203,88,clicks[i]);tiles[i].setTextSize(TypedValue.COMPLEX_UNIT_PX,18*ui.scale*ui.fontScale);tag(tiles[i],"tile-"+i);tiles[i].setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_UP){if("channel-list".equals(lastHomeFocus))focusList(false);else if("group".equals(lastHomeFocus))groupButton.requestFocus();else focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT&&index==0||key==KeyEvent.KEYCODE_DPAD_RIGHT&&index==3||key==KeyEvent.KEYCODE_DPAD_DOWN)return true;return false;});}
         previewButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_RIGHT){lastHomeFocus="channel-list";focusList(true);return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN){lastHomeFocus="preview";tiles[0].requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_LEFT)return true;return false;});
         groupButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_DOWN){focusList(false);return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT){focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT)return true;if(key==KeyEvent.KEYCODE_DPAD_UP)return true;return false;});
-        if(shown.isEmpty()){ui.text(page,source.channels.isEmpty()?"暂无频道\n请在直播源中获取或添加来源":"本分组暂无频道",14,TvUi.MUTED,622,150,280,110);if(source.channels.isEmpty())showVideoEmpty();}
+        String emptyDetail=source.builtin()&&!canRefreshBuiltin()?"配置直播源后显示频道":"请在直播源中获取或添加来源";
+        TextView empty=ui.text(page,source.channels.isEmpty()?"暂无频道\n"+emptyDetail:"本分组暂无频道",14,TvUi.MUTED,612,165,280,130);empty.setGravity(Gravity.CENTER);tag(empty,"channel-empty");empty.setVisibility(shown.isEmpty()?View.VISIBLE:View.GONE);
+        if(source.channels.isEmpty()){android.text.SpannableString content=new android.text.SpannableString(empty.getText());content.setSpan(new android.text.style.RelativeSizeSpan(16f/14f),0,4,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);content.setSpan(new android.text.style.StyleSpan(Typeface.BOLD),0,4,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);content.setSpan(new android.text.style.ForegroundColorSpan(TvUi.INK),0,4,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);empty.setText(content);}
+        if(source.channels.isEmpty()||source.builtin()&&!canRefreshBuiltin())showVideoEmpty();
     }
     private void focusHomeDefault(){
         homeFocusFromInput=false;cancelPreviewSwitch();
@@ -338,7 +339,7 @@ public final class LiveActivity extends Activity {
     private JSONObject findChannel(String code){for(JSONObject c:source.channels)if(code.equals(c.optString("ChannelCode")))return c;return null;}
     private JSONObject requestedChannel(){JSONObject c=findChannel(requestedCode);return c==null?currentChannel():c;}
     private JSONObject currentChannel(){JSONObject c=playingSource.equals(source.id)?findChannel(playingCode):null;if(c==null)c=findChannel(requestedCode);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);return c;}
-    private void restoreLastChannel(){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");JSONObject c=findChannel(code);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);if(c!=null)play(c,true);}
+    private void restoreLastChannel(){if(source.builtin()&&!canRefreshBuiltin()){showVideoEmpty();return;}String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");JSONObject c=findChannel(code);if(c==null&&!source.channels.isEmpty())c=source.channels.get(0);if(c!=null)play(c,true);}
     private List<JSONObject> qualityVariants(JSONObject channel){
         if(channel==null)return Collections.emptyList();LiveSourceStore.Source owner=owner(channel);List<JSONObject> result=new ArrayList<>();Set<String> codes=new HashSet<>();
         for(JSONObject candidate:owner.channels)if(LiveQuality.sameStation(channel.optString("ChannelName"),candidate.optString("ChannelName"))&&codes.add(candidate.optString("ChannelCode")))result.add(candidate);
@@ -425,7 +426,14 @@ public final class LiveActivity extends Activity {
         player.setMediaSource(new DefaultMediaSourceFactory(data).createMediaSource(item));bindPlaybackListener(generation,id,code);player.prepare();player.play();
     }
     private void message(String text){if(videoMessage==null)return;videoMessage.setText(text);videoMessage.setVisibility(View.VISIBLE);}
-    private void showVideoEmpty(){showVideoError("还没有可用频道", "添加第三方直播源，或配置内置机顶盒来源。");}
+    private void showVideoEmpty(){
+        if(source.builtin()&&!canRefreshBuiltin())showVideoError("未配置直播源","完成机顶盒配置，或添加其他直播源。");
+        else showVideoError("还没有可用频道","可刷新频道，或检查直播源。");
+    }
+    private void retryLive(){
+        if(source.builtin()&&!canRefreshBuiltin()){openBoxConfig();return;}
+        if(source.channels.isEmpty())refreshSource(source.id,true);else play(requestedChannel(),true);
+    }
     private void removeVideoError(){liveErrorTitle="";liveErrorDetail="";if(videoFrame!=null)videoFrame.setVisibility(View.VISIBLE);if(errorPanel!=null){boolean focused=errorPanel.hasFocus();TvUi.detach(errorPanel);errorPanel=null;recoveryRetry=null;recoverySources=null;lastRecoveryAction=null;if(previewButton!=null){previewButton.setVisibility(View.VISIBLE);if(focused)focusPreview();}else if(focused&&route.equals("full")&&videoFrame!=null&&!drawerVisible)videoFrame.requestFocus();}}
     private void showVideoError(String title,String detail){
         qualityPendingKey="";qualityPendingCode="";qualityRollback=null;
@@ -436,7 +444,8 @@ public final class LiveActivity extends Activity {
         float mid=h/2;TextView warning=ui.text("△",40,0xffbba8ff);warning.setGravity(Gravity.CENTER);ui.at(errorPanel,warning,w/2-20,mid-83,40,40);
         TextView heading=ui.text(title,23,TvUi.INK);heading.setGravity(Gravity.CENTER);heading.setMaxLines(2);ui.at(errorPanel,heading,20,mid-40,w-40,45);
         TextView description=ui.text(detail,13,TvUi.MUTED);description.setGravity(Gravity.CENTER);description.setMaxLines(2);ui.at(errorPanel,description,22,mid-4,w-44,38);
-        recoveryRetry=ui.button(errorPanel,"重试",w/2-150,mid+44,130,42,()->play(requestedChannel(),true));recoverySources=ui.button(errorPanel,"检查直播源",w/2-5,mid+44,155,42,()->navigate("sources"));
+        boolean unconfigured=source.builtin()&&!canRefreshBuiltin();float retryWidth=unconfigured?160:130;float actionsLeft=(w-retryWidth-170)/2;
+        recoveryRetry=ui.button(errorPanel,unconfigured?"机顶盒配置":"重试",actionsLeft,mid+44,retryWidth,42,()->retryLive());recoverySources=ui.button(errorPanel,"检查直播源",actionsLeft+retryWidth+15,mid+44,155,42,()->navigate("sources"));
         recoveryRetry.setNextFocusLeftId(recoveryRetry.getId());recoveryRetry.setNextFocusRightId(recoverySources.getId());recoverySources.setNextFocusLeftId(recoveryRetry.getId());recoverySources.setNextFocusRightId(recoverySources.getId());
         for(Button action:new Button[]{recoveryRetry,recoverySources}){action.setOnFocusChangeListener((v,f)->{if(f)lastRecoveryAction=v;});action.setOnKeyListener((v,key,event)->{if(event.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_DOWN&&tiles!=null){tiles[1].requestFocus();return true;}return key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_DOWN;});}
         if(!drawerVisible)recoveryRetry.requestFocus();
@@ -542,29 +551,24 @@ public final class LiveActivity extends Activity {
         if(menu.getWindow()!=null){menu.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));menu.getWindow().setLayout(ui.px(260),ui.px(176));}
         playButton.requestFocus();
     }
-    private void showOnboarding(){route="onboarding";render(false);}
-    private void renderOnboarding(){
-        ui.title(page,"JellyLive",64,64,400,52);ui.text(page,"电视，由你掌控",14,0xffb6a8ff,64,110,400,32);ui.title(page,"打开，就是好节目。",64,162,600,60);ui.text(page,"正在获取内置直播源，无需先连接媒体库。",16,TvUi.MUTED,64,224,740,44);
-        ProgressBar progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setIndeterminate(true);ui.at(page,progress,64,294,700,12);sourceStatus=ui.text(page,"正在连接并同步频道…",14,TvUi.INK,64,320,720,58);
-        ui.button(page,"＋ 手动添加直播源",64,405,190,40,()->editSource(null));ui.button(page,"先进入主页",270,405,160,40,()->home());ui.footer(page,"获取中可以先浏览应用，也可以手动添加直播源。");
-    }
     private void refreshSource(String id,boolean explicit){
         if(refreshing.contains(id)||dead)return;final LiveSourceStore.Source snapshot=store.metadata(id);if(snapshot==null)return;
         if(snapshot.builtin()&&!canRefreshBuiltin()){if(explicit)showActions("电视直播源需要自己的机顶盒资料",new String[]{"导入或填写机顶盒配置","添加直播源"},n->{if(n==0)openBoxConfig();else editSource(null);});return;}
         if(snapshot.jellyfin()){refreshJellyfinSource(snapshot,explicit);return;}
+        if(id.equals(source.id)&&isLiveRoute()&&(source.channels.isEmpty()||liveErrorTitle.equals("未配置直播源"))){removeVideoError();if(source.channels.isEmpty())message("正在获取频道…");}
         refreshing.add(id);if(sourceStatus!=null&&snapshot.builtin())sourceStatus.setText("正在后台获取频道… 当前播放继续。");final BestvApi activeApi=backgroundApi;
         worker.execute(()->{try{
             List<JSONObject> loaded=snapshot.builtin()?activeApi.channels():loadM3u(snapshot);
             LiveSourceStore.Source latest=store.metadata(id);if(latest==null||!latest.url.equals(snapshot.url)||!latest.enabled||(snapshot.builtin()&&activeApi!=backgroundApi))throw new IOException("来源已更改");
             store.update(id,loaded);final LiveSourceStore.Source ready=store.get(id);
             onUi(()->{
-                refreshing.remove(id);boolean current=id.equals(source.id);if(current){source=ready;if(isLiveRoute()){boolean wasEmpty=player.getMediaItemCount()==0&&!openingChannel;updateChannelCacheOnScreen();if(wasEmpty&&prefs.getBoolean("auto_play",true))restoreLastChannel();}}
-                if(!current&&isLiveRoute())updateChannelCacheOnScreen();if(route.equals("onboarding")&&current)home();if(sourceStatus!=null&&snapshot.builtin())sourceStatus.setText(sourceSummary(LiveSourceStore.BUILTIN));updateSourceRows();if(explicit)toast("频道已更新，当前播放未中断。");
+                refreshing.remove(id);boolean current=id.equals(source.id);if(current){source=ready;if(isLiveRoute()){boolean wasEmpty=player.getMediaItemCount()==0&&!openingChannel;updateChannelCacheOnScreen();if(source.channels.isEmpty())showVideoEmpty();else{if(wasEmpty&&videoMessage!=null)videoMessage.setVisibility(View.GONE);if(wasEmpty&&prefs.getBoolean("auto_play",true))restoreLastChannel();}}}
+                if(!current&&isLiveRoute())updateChannelCacheOnScreen();if(sourceStatus!=null&&snapshot.builtin())sourceStatus.setText(sourceSummary(LiveSourceStore.BUILTIN));updateSourceRows();if(explicit)toast("频道已更新，当前播放未中断。");
             });
         }catch(Exception e){onUi(()->{
             refreshing.remove(id);String reason=networkReason(e);if(sourceStatus!=null&&snapshot.builtin())sourceStatus.setText("更新失败："+reason+"；保留原频道。");
             android.util.Log.w("JellyLive","Source refresh failed: "+e.getClass().getSimpleName());
-            if(route.equals("onboarding")&&id.equals(source.id))showSourceError(reason,source);else toast(snapshot.name+"更新失败："+reason+"；已保留缓存和当前播放。");
+            if(id.equals(source.id)&&isLiveRoute()&&source.channels.isEmpty())showVideoError("频道获取失败",reason);else toast(snapshot.name+"更新失败："+reason+"；已保留缓存和当前播放。");
         });}});
     }
     private void refreshJellyfinSource(LiveSourceStore.Source snapshot,boolean explicit){
@@ -613,17 +617,14 @@ public final class LiveActivity extends Activity {
         Runnable apply=new Runnable(){public void run(){
             if(dead||target!=list||generation!=screenGeneration)return;
             if(android.os.SystemClock.uptimeMillis()-lastInputAt<200){handler.postDelayed(this,200);return;}
-            rememberChannelFilter();homeFocusFromInput=false;suppressPreviewSelection=true;filteredChannels(false);((BaseAdapter)target.getAdapter()).notifyDataSetChanged();
+            boolean focusLoaded=route.equals("home")&&shown.isEmpty()&&!homeFocusFromInput&&getCurrentFocus()==previewButton;
+            rememberChannelFilter();homeFocusFromInput=false;suppressPreviewSelection=true;filteredChannels(false);((BaseAdapter)target.getAdapter()).notifyDataSetChanged();TextView empty=page.findViewWithTag("channel-empty");if(empty!=null)empty.setVisibility(shown.isEmpty()?View.VISIBLE:View.GONE);
             if(!shown.isEmpty()){List<String> keys=new ArrayList<>();for(JSONObject channel:shown)keys.add(channelKey(channel));int at=LiveFilter.focus(keys,channelFocus.get(filterKey()),LiveFilter.key(playingSource,playingCode));int[] position=channelScroll.get(filterKey());target.setSelectionFromTop(at,position==null?0:position[1]);}
+            if(focusLoaded&&!shown.isEmpty())focusList(true);
             target.post(()->suppressPreviewSelection=false);
         }};handler.post(apply);
     }
     private String sourceSummary(String id){try{LiveSourceStore.Source s=store.metadata(id);return store.channelCount(id)+" 个频道 · "+(s.updated==0?"尚未成功更新":new SimpleDateFormat("MM-dd HH:mm",Locale.ROOT).format(new Date(s.updated))+" 更新")+(id.equals(source.id)?" · 正在使用":"");}catch(Exception e){return "来源不可用";}}
-    private void showSourceError(String reason,LiveSourceStore.Source s){sourceErrorReason=reason;route="source-error";render(false);}
-    private void renderSourceError(){
-        LiveSourceStore.Source s=source;String reason=sourceErrorReason;ui.header(page,"直播源暂时无法更新","",()->home());ui.text(page,"△",40,0xffc5b3ff,64,124,80,60);ui.title(page,s.channels.isEmpty()?"连接没有成功，可以添加自己的来源。":"连接没有成功，先用上次的频道。",64,202,830,60);ui.text(page,reason+"\n"+(s.channels.isEmpty()?"当前没有成功缓存。":sourceSummary(s.id)),15,TvUi.MUTED,64,269,810,62);
-        Button retry=ui.button(page,"重新获取",64,365,140,40,()->{showOnboarding();refreshSource(s.id,true);});tag(retry,"source-retry");if(!s.channels.isEmpty())ui.button(page,"使用缓存频道",222,365,160,40,()->home());ui.button(page,"手动添加来源",s.channels.isEmpty()?222:400,365,165,40,()->editSource(null));ui.footer(page,"直播与媒体库相互独立；返回可先进入主页。");retry.requestFocus();
-    }
     private boolean canRefreshBuiltin(){
         for(String name:new String[]{"user_id","tvid","stb_id","tv_profile"})if(config.optString(name).trim().isEmpty())return false;
         return config.optString("mac").replace(":","").replace("-","").matches("(?i)[0-9a-f]{12}");
