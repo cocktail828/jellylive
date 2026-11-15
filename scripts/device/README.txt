@@ -71,3 +71,12 @@ phase 只接受字母、数字、下划线与连字符。字体/显示设置由�
 媒体库入口增量（保持4K/当前字号）：
   -e entryRecoveryReview true：居中/默认焦点、真实loopback503/401、当前库重试、切换失败/取消/成功与目标重新登录。finally恢复原选择、清理合成记录。
   -e aboutReview true：关于两张实屏截图，以及通过正式入口打开真实媒体库、注入失败展示后重试当前库。
+
+优化交付包验收：
+  adb -s SERIAL shell am instrument -w -r \
+    org.jellyfin.androidtv.bestvlive.probe/.DeliverySmokeProbe
+该入口不依赖产品私有成员名，不为测试额外保留产品代码。通过真实控件、按键、
+画面帧变化验证直播与媒体，并在当前账号与本地测试配置匹配时重新登录同一账号。
+支持 -e mediaOnly true 独立验证媒体路径；所有报告与截图仅在设备私有测试目录保存。
+固定使用4K/当前字号。仅时间前进不视为视频解码证据，需同时检查视频区域帧变化。
+旧 TvRegressionProbe 的私有反射入口仅用于未混淆的开发包。

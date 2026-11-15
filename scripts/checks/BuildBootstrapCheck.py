@@ -28,7 +28,7 @@ pathlib.Path(os.environ['BUILD_CHECK_LOG']).write_text(json.dumps(args))
 if os.environ.get('BUILD_CHECK_FAIL')=='1':sys.exit(7)
 mounts=[args[i+1] for i,x in enumerate(args) if x=='--mount']
 source=next(x for x in mounts if ',dst=/src' in x).split(',src=',1)[1].split(',dst=',1)[0]
-apk=pathlib.Path(source)/'app/build/outputs/apk/debug/jellyfin-androidtv-v0.1.1-debug.apk'
+apk=pathlib.Path(source)/'app/build/outputs/apk/delivery/jellyfin-androidtv-v0.1.1-delivery.apk'
 apk.parent.mkdir(parents=True,exist_ok=True);apk.write_bytes(b'fixture APK, not installable')
 """)
     docker.chmod(0o700)

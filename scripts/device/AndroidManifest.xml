@@ -2,4 +2,5 @@
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="33"/>
     <application android:label="JellyLive TV regression probe" android:debuggable="true"/>
     <instrumentation android:name=".TvRegressionProbe" android:targetPackage="org.jellyfin.androidtv.bestvlive" android:label="Native TV rendering and D-pad regression"/>
+    <instrumentation android:name=".DeliverySmokeProbe" android:targetPackage="org.jellyfin.androidtv.bestvlive" android:label="Optimized APK smoke check without private reflection"/>
 </manifest>

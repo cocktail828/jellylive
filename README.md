@@ -49,7 +49,9 @@
 sh scripts/build-container.sh
 ```
 
-默认缓存目录为 `.local-build/cache/`，可通过 `JELLYLIVE_GRADLE_CACHE` 指定其他位置。无内置连接配置的调试 APK 输出到 `dist/`。
+脚本默认执行干净的 `delivery` 构建，开启 R8 代码优化与资源裁剪，保留四种 CPU 架构；Compose 预览工具仅用于 Debug 构建。开发用 Debug 构建仍保留。
+
+默认缓存目录为 `.local-build/cache/`，可通过 `JELLYLIVE_GRADLE_CACHE` 指定其他位置。无内置连接配置的交付 APK 输出到 `dist/`。
 
 应用默认在界面中配置连接。需要定制初始连接参数时，可参阅 [构建时配置](config/README.md)；已有会话及用户选择的服务器优先。
 

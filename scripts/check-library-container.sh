@@ -9,7 +9,7 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
  "${JELLYLIVE_BUILD_IMAGE:-swr.cn-north-4.myhuaweicloud.com/ddn-k8s/ghcr.io/cirruslabs/flutter:3.38.6}" -c '
  set -eu
  check_lib=$(find /cache/wrapper/dists -type d -path "*/gradle-9.1.0/lib" -print -quit)
- check_cp=/src/app/build/tmp/kotlin-classes/debug:/src/app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes
+ check_cp=/src/app/build/tmp/kotlin-classes/delivery:/src/app/build/intermediates/javac/delivery/compileDeliveryJavaWithJavac/classes
  for check_jar in $(find /cache/caches/modules-2/files-2.1 -name "*.jar"); do check_cp=$check_cp:$check_jar; done
  javac -proc:none -cp "$check_cp" -d /tmp /src/scripts/checks/LibraryImageCheck.java
  java -cp "/tmp:$check_cp" LibraryImageCheck

@@ -13,7 +13,7 @@ docker --config /tmp run --pull=never --rm --user "$(id -u):$(id -g)" \
  build=$sdk/build-tools/36.0.0
  android=$sdk/platforms/android-36/android.jar
  mkdir -p /tmp/probe/classes /tmp/probe/dex
- javac -source 8 -target 8 -cp "$android" -d /tmp/probe/classes /source/TvRegressionProbe.java
+ javac -source 8 -target 8 -cp "$android" -d /tmp/probe/classes /source/*.java
  jar cf /tmp/probe/classes.jar -C /tmp/probe/classes .
  "$build/d8" --lib "$android" --min-api 26 --output /tmp/probe/dex /tmp/probe/classes.jar
  "$build/aapt" package -f -M /source/AndroidManifest.xml -I "$android" -F /tmp/probe/base.apk

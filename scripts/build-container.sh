@@ -56,20 +56,21 @@ docker run --pull=never --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -e GRADLE_U
   "$@" --workdir /src --entrypoint /bin/sh \
   "${JELLYLIVE_BUILD_IMAGE:-swr.cn-north-4.myhuaweicloud.com/ddn-k8s/ghcr.io/cirruslabs/flutter:3.38.6}" -c '
     set -eu
+    umask 077
     if ! test -f /cache/signing/debug.keystore; then
       keytool -genkeypair -keystore /cache/signing/debug.keystore -storepass android \
         -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
         -dname "CN=Bestv Live Debug,O=Local,C=CN"
       chmod 600 /cache/signing/debug.keystore
     fi
-    set -- :app:assembleDebug -Pjellylive.debugKeystore=/cache/signing/debug.keystore --no-daemon --console plain
+    set -- clean :app:assembleDelivery -Pjellylive.debugKeystore=/cache/signing/debug.keystore --no-build-cache --no-daemon --console plain
     if test -n "$JELLYLIVE_CONFIGURED"; then set -- "$@" -Pjellylive.bootstrapDir=/bootstrap; fi
     ./gradlew "$@"
     /opt/android-sdk-linux/build-tools/36.0.0/apksigner verify \
-      "app/build/outputs/apk/debug/jellyfin-androidtv-v$BESTV_BUILD_VERSION-debug.apk"
+      "app/build/outputs/apk/delivery/jellyfin-androidtv-v$BESTV_BUILD_VERSION-delivery.apk"
   '
 output_path="$output_dir/jellylive+v$version.apk"
-cp "$client_dir/app/build/outputs/apk/debug/jellyfin-androidtv-v$version-debug.apk" "$output_path.tmp"
+cp "$client_dir/app/build/outputs/apk/delivery/jellyfin-androidtv-v$version-delivery.apk" "$output_path.tmp"
 if test -n "$output_suffix"; then chmod 600 "$output_path.tmp"; else chmod 644 "$output_path.tmp"; fi
 mv -f "$output_path.tmp" "$output_path"
 printf 'APK: %s\n' "$output_path"

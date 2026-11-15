@@ -115,6 +115,16 @@ android {
 
 			buildConfigField("boolean", "DEVELOPMENT", (defaultConfig.versionCode!! < 100).toString())
 		}
+
+		create("delivery") {
+			// Keep the installed app identity and signing key while optimizing delivery.
+			initWith(getByName("debug"))
+			isDebuggable = false
+			isMinifyEnabled = true
+			isShrinkResources = true
+			proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+			matchingFallbacks += listOf("debug")
+		}
 	}
 
 	lint {
@@ -130,6 +140,15 @@ android {
 }
 
 base.archivesName.set("jellyfin-androidtv-v${project.getVersionName()}")
+
+aboutLibraries {
+	offlineMode.set(true)
+	collect {
+		configPath.set(rootProject.layout.projectDirectory.dir("config/aboutlibraries"))
+		fetchRemoteLicense.set(false)
+		fetchRemoteFunding.set(false)
+	}
+}
 
 tasks.register("versionTxt") {
 	val path = layout.buildDirectory.asFile.get().resolve("version.txt")
@@ -181,6 +200,7 @@ dependencies {
 	implementation(libs.androidx.cardview)
 	implementation(libs.androidx.startup)
 	implementation(libs.bundles.androidx.compose)
+	debugImplementation(libs.androidx.compose.ui.tooling)
 	implementation(libs.accompanist.permissions)
 
 	// Dependency Injection
