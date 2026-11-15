@@ -440,10 +440,17 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun home(push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
         fresh("home",push)
-        val headingPrefix="我的媒体库 · "
-        ui.header(page,headingPrefix+repo.serverName,""){back()}.apply {
-            text=android.text.SpannableString(text).apply {setSpan(android.text.style.RelativeSizeSpan(14f/21f),headingPrefix.length,length,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)}
-            setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END
+        val heading=ui.header(page,"我的媒体库 · ",""){back()}.apply {setSingleLine()}
+        val headingIndex=page.indexOfChild(heading);val headingBounds=heading.layoutParams;page.removeView(heading)
+        val titleRow=LinearLayout(this).apply {orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;isBaselineAligned=false;tag="library-heading"}
+        titleRow.addView(heading,LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.MATCH_PARENT))
+        val libraryName=ui.text(repo.serverName,14,0xffb9b0cf.toInt()).apply {tag="library-name";setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
+        titleRow.addView(libraryName,LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.MATCH_PARENT,1f));page.addView(titleRow,headingIndex,headingBounds)
+        titleRow.post {
+            val mainInk=android.graphics.Rect();val nameInk=android.graphics.Rect()
+            heading.paint.getTextBounds(heading.text.toString(),0,heading.length(),mainInk)
+            libraryName.paint.getTextBounds(libraryName.text.toString(),0,libraryName.length(),nameInk)
+            libraryName.translationY=heading.baseline+mainInk.exactCenterY()-libraryName.baseline-nameInk.exactCenterY()
         }
         val host=page;val session=repo.sessionKey;val initialInteraction=interaction
         val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)

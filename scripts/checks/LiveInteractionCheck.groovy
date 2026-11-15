@@ -54,6 +54,13 @@ class View {
     boolean isAttachedToWindow(){attached}
     void requestFocus(){focused=true}
 }
+class FrameLayout { static class LayoutParams { int leftMargin,width } }
+class Button extends View {
+    boolean enabled=true,focusable=true
+    FrameLayout.LayoutParams layoutParams
+    boolean isEnabled(){enabled}
+    boolean isFocusable(){focusable}
+}
 class FakeList extends View {
     int selected=-1,top=0
     int getSelectedItemPosition(){selected}
@@ -79,7 +86,7 @@ class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 class FakeConfig { Map values=[:]; String optString(String key){values[key] ?: ""} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible','canRefreshBuiltin','retryLive','showVideoEmpty','restoreLastChannel'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible','canRefreshBuiltin','retryLive','showVideoEmpty','restoreLastChannel','restoreSourceRoute','inSourceSettings','closestSourceButton'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false,playerReleasedForLibrary=false
@@ -90,6 +97,8 @@ class InteractionHost {
     boolean homeFocusFromInput=true,suppressPreviewSelection=false
     boolean renderRestore=false,favoritesOnly=false
     String sourceScope=''
+    String settingsCategory="播放设置",settingsSubmenu=""
+    Map focusMemory=[:],settingsFocus=[:]
     Map channelFocus=[:],channelScroll=[:]
     def source=new FakeSource()
     def store=new FakeStore()
@@ -247,6 +256,23 @@ check('empty_configured_source_retries_fetch_without_loading_page') {
 check('other_sources_do_not_require_tv_credentials') {
     def h=fresh();h.source.id='m3u';h.retryLive();assert h.events==['refresh:m3u']
     h.events.clear();h.source.channels=[channel('a')];h.retryLive();assert h.events==['play:a']
+}
+check('source_entry_opens_settings_without_management_page') {
+    def h=fresh();h.route='sources';h.settingsSubmenu='old';h.restoreSourceRoute()
+    assert h.route=='settings' && h.settingsCategory=='直播源' && h.settingsSubmenu=='' && h.inSourceSettings()
+    assert h.focusMemory.settings=='source-box-config'
+}
+check('source_entry_restores_existing_action_and_leaves_other_routes_alone') {
+    def h=fresh();h.route='sources';h.settingsFocus['直播源']='source-test-edit';h.restoreSourceRoute();assert h.focusMemory.settings=='source-test-edit'
+    h.route='home';h.restoreSourceRoute();assert h.route=='home' && !h.inSourceSettings()
+}
+check('source_vertical_focus_selects_nearest_enabled_control') {
+    def h=fresh();def b=loader.loadClass('Button');def lp=loader.loadClass('FrameLayout$LayoutParams')
+    def button={int x,int width->b.newInstance(layoutParams:lp.newInstance(leftMargin:x,width:width))}
+    def from=button(462,150);def refresh=button(328,122);def config=button(462,150)
+    assert h.closestSourceButton([refresh,config],from).is(config)
+    refresh.enabled=false;assert h.closestSourceButton([refresh,config],button(306,70)).is(config)
+    config.focusable=false;assert h.closestSourceButton([refresh,config],from)==null
 }
 check('background_cancels_idle_overlay_actions') {
     def h=fresh();h.route='full';h.drawerVisible=true;h.controlsVisible=true;h.resetIdleTimers()
