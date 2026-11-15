@@ -21,21 +21,21 @@ object LibraryPageLayout {
 
     val HOME_SEARCH = Box(754f, 69f, 158f, 38f)
     val HOME_RESUME_LABEL = Box(48f, 101f, 864f, 22f)
-    val HOME_RESUME_ROW = Box(50f, 132f, 862f, 130f)
-    val HOME_EXPLORE_LABEL = Box(48f, 289f, 864f, 22f)
-    const val HOME_CARD_ARTWORK_HEIGHT = 80f
+    val HOME_RESUME_ROW = Box(50f, 132f, 862f, 170f)
+    val HOME_EXPLORE_LABEL = Box(48f, 329f, 864f, 22f)
+    const val HOME_CARD_ARTWORK_HEIGHT = 130f
     const val HOME_CARD_INFO_TOP = 80f
     const val HOME_CARD_IMAGE_HEIGHT = 80f
     val HOME_CARD_TITLE = Box(10f, 87f, 256f, 22f)
     val HOME_CARD_SUBTITLE = Box(10f, 110f, 256f, 16f)
-    val HOME_CARD_PROGRESS = Box(0f, 78f, 276f, 2f)
+    val HOME_CARD_PROGRESS = Box(0f, 128f, 276f, 2f)
 
     fun homeExploreLabel(hasResume: Boolean) =
         HOME_EXPLORE_LABEL
 
     fun homeEntry(index: Int, hasResume: Boolean=true): Box {
         require(index in Entry.entries.indices)
-        return Box(50f + index * 292f, 321f, 276f, 130f)
+        return Box(50f + index * 292f, 361f, 276f, 130f)
     }
 
     val GRID_SEARCH = Box(444f, 68f, 148f, 38f)
