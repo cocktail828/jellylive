@@ -28,7 +28,7 @@ object LibraryPageLayout {
     const val HOME_CARD_IMAGE_HEIGHT = 80f
     val HOME_CARD_TITLE = Box(10f, 87f, 256f, 22f)
     val HOME_CARD_SUBTITLE = Box(10f, 110f, 256f, 16f)
-    val HOME_CARD_PROGRESS = Box(0f, 128f, 276f, 2f)
+    val HOME_CARD_PROGRESS = Box(8f, 124f, 260f, 3f)
 
     fun homeExploreLabel(hasResume: Boolean) =
         HOME_EXPLORE_LABEL

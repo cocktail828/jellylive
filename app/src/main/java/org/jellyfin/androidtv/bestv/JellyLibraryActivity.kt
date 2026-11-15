@@ -439,7 +439,12 @@ class JellyLibraryActivity : FragmentActivity() {
     /** Gallery 15: navigation cards and resume playback, with no category poster grid. */
     private fun home(push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
-        fresh("home",push);header("我的媒体库","${repo.serverName} · 已连接")
+        fresh("home",push)
+        val headingPrefix="我的媒体库 · "
+        ui.header(page,headingPrefix+repo.serverName,""){back()}.apply {
+            text=android.text.SpannableString(text).apply {setSpan(android.text.style.RelativeSizeSpan(14f/21f),headingPrefix.length,length,android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)}
+            setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END
+        }
         val host=page;val session=repo.sessionKey;val initialInteraction=interaction
         val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
         pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
@@ -527,7 +532,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val title=LibraryPageLayout.HOME_CARD_TITLE.let {if(item!=null)it.copy(y=artworkHeight+6f,height=32f)else if(ui.largeText())it.copy(y=29f,height=38f)else it.copy(y=38f,height=28f)}
         pageText(card,name,16,TvUi.INK,title).apply {gravity=Gravity.CENTER;setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         if(item==null)pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE.let {if(ui.largeText())it.copy(y=71f,height=30f)else it.copy(y=70f,height=22f)}).apply {gravity=Gravity.CENTER;tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS.copy(y=artworkHeight-2f);ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
+        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
         card.setOnFocusChangeListener {_,focused->card.foreground=if(focused)android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(if(item!=null)LibraryPageLayout.HOME_RESUME_ROW.height-artworkHeight else 0f))else null}
         card.contentDescription=if(item!=null)"$name，${time(resumeMs(item))}" else name;return card
     }

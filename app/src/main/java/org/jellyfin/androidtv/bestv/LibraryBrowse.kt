@@ -13,7 +13,7 @@ object LibraryBrowse {
     data class Page(val items: List<BaseItemDto>,val start: Int,val total: Int,val size: Int){
         val previous get()=start>0
         val next get()=start+items.size<total
-        val range get()="${if(total==0)0 else start+1}–${start+items.size} / $total"
+        val range get()="${if(total==0)0 else start+1}-${start+items.size}"
     }
     fun page(items: List<BaseItemDto>,start: Int,size: Int): Page {
         require(size>0)
