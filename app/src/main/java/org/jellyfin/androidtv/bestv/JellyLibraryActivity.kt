@@ -532,7 +532,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val title=LibraryPageLayout.HOME_CARD_TITLE.let {if(item!=null)it.copy(y=artworkHeight+6f,height=32f)else if(ui.largeText())it.copy(y=29f,height=38f)else it.copy(y=38f,height=28f)}
         pageText(card,name,16,TvUi.INK,title).apply {gravity=Gravity.CENTER;setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         if(item==null)pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE.let {if(ui.largeText())it.copy(y=71f,height=30f)else it.copy(y=70f,height=22f)}).apply {gravity=Gravity.CENTER;tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item!=null&&(item.runTimeTicks ?: 0)>0){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*(resumeMs(item)*10000.0/item.runTimeTicks!!).coerceIn(0.0,1.0).toFloat(),b.height)}
+        if(item!=null&&LibraryMetadata.durationTicks(item)!=null){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*LibraryMetadata.progress(item,resumeMs(item)).toFloat(),b.height)}
         card.setOnFocusChangeListener {_,focused->card.foreground=if(focused)android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(if(item!=null)LibraryPageLayout.HOME_RESUME_ROW.height-artworkHeight else 0f))else null}
         card.contentDescription=if(item!=null)"$name，${time(resumeMs(item))}" else name;return card
     }
@@ -624,7 +624,7 @@ class JellyLibraryActivity : FragmentActivity() {
         pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {gravity=Gravity.TOP or Gravity.CENTER_HORIZONTAL;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,13,0xfff7d68d.toInt(),7f,7f,41f,21f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
         if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
-        else if(resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(resumeMs(item)*10000.0*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000);ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
+        else if(resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(LibraryMetadata.progress(item,resumeMs(item))*1000).toInt();ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
         card.contentDescription=listOfNotNull(cardTitle(item),LibraryMetadata.rating(item)?.let {"评分 $it"},cardMeta(item).takeIf {it.isNotBlank()},if(item.userData?.played==true)"已看" else null).joinToString("，")
         return card
     }
@@ -650,8 +650,8 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.text(box,name,14,TvUi.INK,textX,if(compact)12f else artH+4f,textWidth,if(landscape&&!compact)22f else 34f).apply {maxLines=if(landscape&&!compact)1 else 2;ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
         ui.text(box,sub,11,TvUi.MUTED,textX,if(compact)h-32f else artH+if(landscape)27f else 40f,textWidth,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         if(item?.userData?.played==true)ui.text(box,"已看",10,TvUi.INK,w-43f,7f,36f,18f).apply{gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
-        else if(item!=null&&resumeMs(item)>0&&(item.runTimeTicks ?: 0)>0){
-            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=(resumeMs(item)*10000*1000/item.runTimeTicks!!).toInt().coerceIn(0,1000)
+        else if(item!=null&&resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null){
+            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=(LibraryMetadata.progress(item,resumeMs(item))*1000).toInt()
             ui.at(box,p,4f,artH-4f,artW-8f,3f)
         }
         box.setOnFocusChangeListener { _, focused ->

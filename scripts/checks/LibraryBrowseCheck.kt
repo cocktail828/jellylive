@@ -8,6 +8,10 @@ private fun item(id: Int, extra: String="", type: String="Movie"): BaseItemDto {
  val normal=buildJsonObject {obj.forEach { (k,v)->put(k,v) };obj["UserData"]?.jsonObject?.let {user->put("UserData",buildJsonObject {put("PlayCount",0);put("IsFavorite",false);put("Key",id.toString());put("ItemId",obj.getValue("Id"));put("Played",false);put("PlaybackPositionTicks",0);user.forEach { (k,v)->put(k,v) }})}}
  return ApiSerializer.json.decodeFromJsonElement<BaseItemDto>(normal)
 }
+private fun durationSource(ticks: Long): MediaSourceInfo {
+ val fields=ApiSerializer.json.parseToJsonElement("""{"Protocol":"File","Type":"Default","IsRemote":false,"ReadAtNativeFramerate":false,"IgnoreDts":false,"IgnoreIndex":false,"GenPtsInput":false,"SupportsTranscoding":false,"SupportsDirectStream":false,"SupportsDirectPlay":true,"IsInfiniteStream":false,"RequiresOpening":false,"RequiresClosing":false,"RequiresLooping":false,"SupportsProbing":true,"TranscodingSubProtocol":"http","HasSegments":false}""").jsonObject
+ return ApiSerializer.json.decodeFromJsonElement(buildJsonObject {fields.forEach {(key,value)->put(key,value)};put("RunTimeTicks",ticks)})
+}
 fun main(){
  var checks=0
  fun verify(name: String,ok: Boolean){check(ok){name};checks++;println("PASS $name")}
@@ -58,5 +62,12 @@ fun main(){
  verify("release sorting distinguishes dates within a year",LibraryBrowse.select(listOf(late,early),q.copy(sort=LibraryBrowse.Sort.YEAR,ascending=true))==listOf(early,late))
  verify("recent entry uses actual added date across full scope",LibraryBrowse.select(listOf(early,unseen,late),LibraryPageLayout.Entry.RECENT.query())==listOf(late,early,unseen))
  for(asc in listOf(false,true))verify("unknown release date trails known ($asc)",LibraryBrowse.select(listOf(early,unseen,late),q.copy(sort=LibraryBrowse.Sort.YEAR,ascending=asc)).last()==unseen)
+ val badDuration=item(601,",\"RunTimeTicks\":1080000000").copy(mediaSources=listOf(durationSource(64_500_000_000L)))
+ verify("source duration overrides incorrect 108-second item duration",LibraryMetadata.durationTicks(badDuration)==64_500_000_000L)
+ verify("forty minutes into 107m30s is 37.2 percent, not complete",kotlin.math.abs(LibraryMetadata.progress(badDuration,2_400_000L)-0.37209302325581395)<0.000001)
+ verify("progress uses milliseconds against ticks",LibraryMetadata.progress(item(602,",\"RunTimeTicks\":72000000000"),1_800_000L)==0.25)
+ verify("progress is bounded at both ends",LibraryMetadata.progress(badDuration,-100L)==0.0&&LibraryMetadata.progress(badDuration,9_000_000L)==1.0)
+ verify("unknown duration does not invent progress",LibraryMetadata.durationTicks(unseen)==null&&LibraryMetadata.progress(unseen,2_400_000L)==0.0)
+ verify("invalid source duration falls back to valid item duration",LibraryMetadata.durationTicks(item(603,",\"RunTimeTicks\":72000000000").copy(mediaSources=listOf(durationSource(0L))))==72_000_000_000L)
  println("$checks library browse checks passed")
 }
