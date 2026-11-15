@@ -1,8 +1,8 @@
 {
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
-  "slots": 104,
-  "active": 98,
-  "textCount": 1510,
+  "slots": 105,
+  "active": 97,
+  "textCount": 1506,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -15,90 +15,6 @@
         509.0,
         1190.0,
         592.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "JellyLive",
-      "size": 64.0,
-      "bounds": [
-        129.0,
-        110.0,
-        405.0,
-        177.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "电视，由你掌控",
-      "size": 24.0,
-      "bounds": [
-        149.0,
-        203.0,
-        314.0,
-        228.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "打开，就是好节目。",
-      "size": 58.0,
-      "bounds": [
-        129.0,
-        290.0,
-        613.0,
-        349.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "正在获取内置直播源，无需先连接媒体库。",
-      "size": 28.0,
-      "bounds": [
-        129.0,
-        380.0,
-        642.0,
-        409.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "正在同步频道…  68%",
-      "size": 28.0,
-      "bounds": [
-        129.0,
-        515.0,
-        393.0,
-        543.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "手动添加直播源",
-      "size": 28.0,
-      "bounds": [
-        199.0,
-        678.0,
-        394.0,
-        706.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 2,
-      "text": "先进入主页",
-      "size": 28.0,
-      "bounds": [
-        473.0,
-        678.0,
-        611.0,
-        706.0
       ],
       "clippedIntentionally": false
     },
@@ -5343,102 +5259,6 @@
         721.0,
         1626.0,
         749.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "直播源暂时无法更新",
-      "size": 42.0,
-      "bounds": [
-        97.0,
-        70.0,
-        473.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "JellyLive",
-      "size": 32.0,
-      "bounds": [
-        1628.0,
-        79.0,
-        1767.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "连接没有成功，先用上次的频道。",
-      "size": 48.0,
-      "bounds": [
-        128.0,
-        378.0,
-        818.0,
-        428.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "上次成功更新：今天 18:00 · 128 个缓存频道可用",
-      "size": 28.0,
-      "bounds": [
-        129.0,
-        466.0,
-        745.0,
-        494.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "也可以手动添加其他直播源，继续观看。",
-      "size": 28.0,
-      "bounds": [
-        128.0,
-        517.0,
-        614.0,
-        546.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "重新获取",
-      "size": 28.0,
-      "bounds": [
-        199.0,
-        685.0,
-        310.0,
-        713.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "使用缓存频道",
-      "size": 28.0,
-      "bounds": [
-        442.0,
-        685.0,
-        610.0,
-        714.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 24,
-      "text": "手动添加来源",
-      "size": 28.0,
-      "bounds": [
-        771.0,
-        685.0,
-        938.0,
-        713.0
       ],
       "clippedIntentionally": false
     },
@@ -18123,6 +17943,138 @@
         781.0,
         1127.0,
         809.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "全部频道",
+      "size": 28.0,
+      "bounds": [
+        1260.0,
+        97.0,
+        1372.0,
+        125.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "暂无频道",
+      "size": 32.0,
+      "bounds": [
+        1441.0,
+        424.0,
+        1568.0,
+        456.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "配置直播源后显示频道",
+      "size": 26.0,
+      "bounds": [
+        1375.0,
+        473.0,
+        1633.0,
+        499.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "未配置直播源",
+      "size": 42.0,
+      "bounds": [
+        500.0,
+        371.0,
+        752.0,
+        413.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "完成机顶盒配置，或添加其他直播源。",
+      "size": 26.0,
+      "bounds": [
+        406.0,
+        439.0,
+        831.0,
+        466.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "机顶盒配置",
+      "size": 28.0,
+      "bounds": [
+        386.0,
+        537.0,
+        525.0,
+        565.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "检查直播源",
+      "size": 28.0,
+      "bounds": [
+        731.0,
+        537.0,
+        871.0,
+        565.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "收藏",
+      "size": 36.0,
+      "bounds": [
+        300.0,
+        896.0,
+        371.0,
+        932.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "纪录片",
+      "size": 36.0,
+      "bounds": [
+        719.0,
+        896.0,
+        824.0,
+        932.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "媒体库",
+      "size": 36.0,
+      "bounds": [
+        1157.0,
+        896.0,
+        1264.0,
+        932.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 105,
+      "text": "设置",
+      "size": 36.0,
+      "bounds": [
+        1614.0,
+        897.0,
+        1684.0,
+        932.0
       ],
       "clippedIntentionally": false
     }

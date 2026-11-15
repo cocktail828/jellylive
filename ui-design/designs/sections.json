@@ -4,9 +4,7 @@
     "title": "启动",
     "file": "startup.html",
     "figures": [
-      1,
-      2,
-      24
+      1
     ]
   },
   {
@@ -14,6 +12,7 @@
     "title": "直播",
     "file": "live.html",
     "figures": [
+      105,
       3,
       4,
       30,

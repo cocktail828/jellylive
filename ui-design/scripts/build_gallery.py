@@ -9,7 +9,7 @@ from build_designs import header, footer, rect, text, line
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'designs'
 screens=[dict(item,number=i+1) for i,item in enumerate(json.loads((OUT/'manifest.json').read_text())) if not item.get('retired',False)]
-PARTS=[('startup','启动','启动动画、初始化与获取失败'),('live','直播','主页、全屏、频道、收藏、节目单与直播源'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、选择子菜单、媒体库连接与机顶盒配置')]
+PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏、节目单与直播源'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、选择子菜单、媒体库连接与机顶盒配置')]
 def part_for(screen):
     if screen['id'].startswith('17-settings'): return 'settings'
     number=screen['number']

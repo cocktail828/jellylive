@@ -459,6 +459,21 @@ def splash_body(animated=False):
     s+=text(844,574,'JellyLive',80,INK,650)
     return s
 
+def home_unconfigured():
+    # A complete empty homepage, without hidden channel rows underneath.
+    s=rect(100,64,1052,716,'#101629',20,'#414866')
+    s+=rect(1184,64,640,716,'#14192e',16,'#363e5d')+source_tabs(1192,80,616)
+    s+=centered_text(1504,452,'暂无频道',32,INK,600)+centered_text(1504,496,'配置直播源后显示频道',26,MUTED)
+    s+='<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,256,80,'#bba8ff')
+    s+=centered_text(626,408,'未配置直播源',42,weight=650)+centered_text(626,462,'完成机顶盒配置，或添加其他直播源。',26,MUTED)
+    s+=centered_button(296,510,320,'机顶盒配置',True,h=84)+centered_button(646,510,310,'检查直播源',h=84)+'</g>'
+    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+        x=100+i*438
+        s+=rect(x,826,406,176,'#242a46',18,'#363e5d')
+        start=x+(406-(44+20+len(name)*36))/2
+        s+=icon(ico,start,892,44)+text(start+64,928,name,36,weight=600)
+    return s
+
 FAVORITES=['山野纪实','城市新闻','体育现场','光影剧场','旅行生活','音乐现场','少儿天地','人文历史','科学探索','都市生活','自然世界','经典影视','地方新闻','生活服务','戏曲欣赏','文化视界']
 
 def favorites_grid(focus=0):
@@ -530,12 +545,7 @@ def favorite_flow():
 
 def make():
     emit('00-splash','启动动画',splash_body())
-    s=text(128,162,'JellyLive',64,weight=700)+pill(128,196,'电视，由你掌控',w=240)
-    s+=text(128,340,'打开，就是好节目。',58,weight=650)+text(128,405,'正在获取内置直播源，无需先连接媒体库。',28,MUTED)
-    s+=rect(128,480,740,12,'#272c44',6)+rect(128,480,510,12,ACCENT,6)+text(128,540,'正在同步频道…  68%',28)
-    s+=button(128,655,290,'手动添加直播源',True,'plus')+button(446,655,270,'先进入主页')
-    s+=scene(1010,160,780,650)+footer('获取中可先浏览应用，也可手动添加直播源。')
-    emit('01-onboarding','首次启动与初始化',s)
+    SCREENS.append(dict(id='01-onboarding',title='首次频道同步引导（已取消）',note='启动就绪直接进入主页，频道在后台获取，不再单独展示初始化页面。',flow='图01 → 主页图03或图25',kind='state',retired=True))
     emit('02-home','主页',homepage())
     emit('02-home-switch','主页：随焦点切台',homepage('list',selected=2))
     s=header('频道浏览','内置直播源 · 128 个频道')+button(1174,140,324,'频道操作')+button(1530,140,326,'搜索频道',False,'search')
@@ -608,11 +618,7 @@ def make():
     s+=footer()
     emit('18-jellyfin','Jellyfin 服务器连接',s)
 
-    # Six independent state designs, each with an actionable recovery route.
-    s=header('直播源暂时无法更新')+icon('alert',128,258,72,'#c5b3ff')+text(128,420,'连接没有成功，先用上次的频道。',48,weight=650)
-    s+=text(128,491,'上次成功更新：今天 18:00 · 128 个缓存频道可用',28,MUTED)+text(128,542,'也可以手动添加其他直播源，继续观看。',28,MUTED)
-    s+=button(128,662,260,'重新获取',True,'refresh')+button(416,662,300,'使用缓存频道')+button(744,662,300,'手动添加来源')+footer()
-    emit('19-source-error','状态：内置源获取失败',s)
+    SCREENS.append(dict(id='19-source-error',title='独立来源获取失败页（已取消）',note='来源未配置或获取失败均在主页预览区域提示，不再离开主页。',flow='图01 → 主页图25',kind='state',retired=True))
     s=homepage('none')
     for _,program in CHANNELS:s=s.replace(program,'暂时无法播放')
     s+=rect(104,126,1044,588,'#101629',0)+'<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,256,80,'#bba8ff')
@@ -693,6 +699,7 @@ if __name__=='__main__':
     SETTINGS_CONNECTION_STATES()
     from library_connection_designs import additional as library_connection_states
     library_connection_states(globals())
+    emit('25-home-unconfigured','主页：未配置直播源',home_unconfigured())
     favorite_flow()
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
