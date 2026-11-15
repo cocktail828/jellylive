@@ -221,7 +221,7 @@ public final class LiveActivity extends Activity {
         if(dialog!=null&&dialog.isShowing()){dialog.dismiss();return;}
         if(drawerVisible){hideDrawer();return;}
         if(controlsVisible){hideControls();return;}
-        if(route.equals("full")){route=restoreRoute(returnFromFull);render(true);return;}
+        if(route.equals("full")){route=restoreRoute(returnFromFull);boolean home=route.equals("home");if(home){homeFocusFromInput=false;ensureCurrentChannelVisible();}render(!home);return;}
         if(route.equals("guide")){route=restoreRoute(guideReturn);if(route.equals("full"))returnFromFull=guideFullReturn;render(true);return;}
         if(settingsBack())return;
         if(route.equals("home")){exitDialog();return;}
@@ -312,15 +312,28 @@ public final class LiveActivity extends Activity {
         l.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=l.getSelectedItemPosition();if(key==KeyEvent.KEYCODE_DPAD_LEFT){if(full){hideDrawer();return true;}if(previewButton!=null){if(errorPanel!=null){focusRecovery();}else focusPreview();}else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP&&n<=0){rememberChannelFilter();if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n>=shown.size()-1){if(tiles!=null)tiles[1].requestFocus();else if(groupButton!=null)groupButton.requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT){rememberChannelFilter();if(groupButton!=null)groupButton.requestFocus();return true;}return false;});
         return l;
     }
+    private String currentChannelKey(){
+        if(!playingCode.isEmpty())return LiveFilter.key(playingSource.isEmpty()?source.id:playingSource,playingCode);
+        String code=requestedCode;
+        if(code.isEmpty()){code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");}
+        return LiveFilter.key(source.id,code);
+    }
+    private void ensureCurrentChannelVisible(){
+        if(sourceScope.isEmpty()&&!favoritesOnly)return;
+        String current=currentChannelKey();
+        for(LiveSourceStore.Source s:store.channelSnapshots())if(s.enabled)for(JSONObject channel:s.channels){
+            String code=channel.optString("ChannelCode");
+            if(current.equals(LiveFilter.key(s.id,code))){if(!LiveFilter.includes(sourceScope,favoritesOnly,s.id,s.enabled,store.favorite(s.id,code))){sourceScope="";favoritesOnly=false;}return;}
+        }
+    }
     private void focusList(boolean current){
         if(list==null)return;if(shown.isEmpty()){if(groupButton!=null)groupButton.requestFocus();return;}
         int target=list.getSelectedItemPosition();if(current||target<0){
             List<String> keys=new ArrayList<>();for(JSONObject ch:shown)keys.add(channelKey(ch));
-            String fallback=LiveFilter.key(playingSource.isEmpty()?source.id:playingSource,playingCode.isEmpty()?requestedCode:playingCode);
-            if(playingCode.isEmpty()&&requestedCode.isEmpty()){String code=source.id.equals(resumeSource)?resumeCode:store.last(source.id);if(code.isEmpty()&&source.builtin())code=prefs.getString("last_channel","");fallback=LiveFilter.key(source.id,code);}
-            target=LiveFilter.focus(keys,channelFocus.get(filterKey()),fallback);
+            String playing=currentChannelKey(),remembered=channelFocus.get(filterKey());
+            target=current?LiveFilter.focus(keys,playing,remembered):LiveFilter.focus(keys,remembered,playing);
         }
-        list.requestFocus();int[] scroll=channelScroll.get(filterKey());if(scroll!=null&&(current||scroll[0]==target))list.setSelectionFromTop(target,scroll[1]);else list.setSelection(target);
+        list.requestFocus();int[] scroll=channelScroll.get(filterKey());if(current)list.setSelectionFromTop(target,0);else if(scroll!=null&&scroll[0]==target)list.setSelectionFromTop(target,scroll[1]);else list.setSelection(target);
     }
     private JSONObject findChannel(String code){for(JSONObject c:source.channels)if(code.equals(c.optString("ChannelCode")))return c;return null;}
     private JSONObject requestedChannel(){JSONObject c=findChannel(requestedCode);return c==null?currentChannel():c;}
@@ -477,7 +490,7 @@ public final class LiveActivity extends Activity {
     private void hideControls(){cancelFavoriteGesture();controlsVisible=false;handler.removeCallbacks(hideControls);if(controls!=null){TvUi.detach(controls);controls=null;}if(route.equals("full")&&videoFrame!=null&&!drawerVisible)videoFrame.requestFocus();}
     private void showDrawer(){
         if(!route.equals("full")||drawerVisible)return;
-        cancelFavoriteGesture();hideControls();drawerVisible=true;
+        cancelFavoriteGesture();hideControls();ensureCurrentChannelVisible();drawerVisible=true;
         int tint=OverlayContrast.drawerColor(prefs.getInt("drawer_transparency",35));
         drawerShade=new View(this);drawerShade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,new int[]{0x00111629,tint}));ui.at(page,drawerShade,632,0,48,540);
         drawer=new FrameLayout(this);drawer.setBackgroundColor(tint);ui.at(page,drawer,PlaybackLayout.DRAWER_X,0,PlaybackLayout.DRAWER_WIDTH,540);

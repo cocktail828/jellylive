@@ -12,7 +12,7 @@ def type = parsed.result.get().getClassByName('LiveActivity').get()
 def method = { String name ->
     def node = type.getMethodsByName(name)[0].clone()
     node.setPrivate(false).setPublic(true)
-    node.toString().replace('JSONObject', 'Channel')
+    node.toString().replace('JSONObject', 'Channel').replace('LiveSourceStore.Source', 'FakeSource')
 }
 def initializer = { String name -> type.getFieldByName(name).get().variables[0].initializer.get().toString() }
 def loader = new GroovyClassLoader(getClass().classLoader)
@@ -62,14 +62,23 @@ class FakeList extends View {
 }
 class FakeSource {
     String id='builtin'
+    boolean enabled=true
+    List channels=[]
     boolean builtin(){id=='builtin'}
 }
-class FakeStore { String saved=''; String last(String id){saved} }
+class FakeStore {
+    String saved=''
+    List sources=[]
+    Set favorites=[] as Set
+    String last(String id){saved}
+    List channelSnapshots(){sources}
+    boolean favorite(String id,String code){favorites.contains(id+'/'+code)}
+}
 class FakePrefs { String legacy=''; String getString(String key,String fallback){legacy ?: fallback} }
 class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute'].collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false,playerReleasedForLibrary=false
@@ -78,6 +87,8 @@ class InteractionHost {
     long lastInputAt=0
     static final long HOME_IDLE_MS=30000,DRAWER_IDLE_MS=10000
     boolean homeFocusFromInput=true,suppressPreviewSelection=false
+    boolean renderRestore=false,favoritesOnly=false
+    String sourceScope=''
     Map channelFocus=[:],channelScroll=[:]
     def source=new FakeSource()
     def store=new FakeStore()
@@ -100,7 +111,7 @@ class InteractionHost {
     void resetControlsTimer(){handler.removeCallbacks(hideControls);if(resumed&&controlsVisible&&(dialog==null||!dialog.isShowing()))handler.postDelayed(hideControls,5000)}
     void hideControls(){controlsVisible=false;events.add('hide-controls')}
     void hideDrawer(){drawerVisible=false;events.add('hide-drawer')}
-    void render(boolean restore){events.add('render:'+route)}
+    void render(boolean restore){renderRestore=restore;events.add('render:'+route)}
     boolean settingsBack(){false} // Android settings focus itself is covered by the native driver.
     void rememberFocus(){events.add('remember-focus')}
     void exitDialog(){events.add('exit-confirm')}
@@ -207,7 +218,43 @@ check('background_cancels_idle_overlay_actions') {
 }
 // Use the production focus methods to verify startup without Android rendering.
 def focusHost={
-    def h=fresh();h.requestedCode='';h.shown=['a','b','c'].collect{channel(it)};h
+    def h=fresh();h.requestedCode='';h.shown=['a','b','c'].collect{channel(it)};h.source.channels=h.shown;h.store.sources=[h.source];h
+}
+check('drawer_open_focuses_current_channel_over_old_focus_and_scroll') {
+    def h=focusHost();h.route='full';h.drawerVisible=true;h.playingSource='builtin';h.playingCode='b'
+    h.channelFocus['home/all/false']='builtin/a';h.channelScroll['home/all/false']=[0,-15] as int[]
+    h.focusList(true);assert h.list.selected==1 && h.list.top==0
+}
+check('home_default_focuses_current_channel_over_saved_focus') {
+    def h=focusHost();h.playingSource='builtin';h.playingCode='b';h.channelFocus['home/all/false']='builtin/a'
+    h.focusHomeDefault();assert h.list.focused && h.list.selected==1 && !h.homeFocusFromInput
+}
+check('fullscreen_return_to_home_skips_old_widget_and_list_restore') {
+    def h=focusHost();h.route='full';h.returnFromFull='home';h.homeFocusFromInput=true
+    h.back();assert h.route=='home' && !h.renderRestore && !h.homeFocusFromInput
+}
+check('fullscreen_return_to_other_page_keeps_normal_restore') {
+    def h=focusHost();h.route='full';h.returnFromFull='favorites'
+    h.back();assert h.route=='favorites' && h.renderRestore
+}
+check('fullscreen_home_return_reveals_current_channel_outside_filter') {
+    for(scope in ['', '@other']){
+        def h=focusHost();h.route='full';h.playingSource='builtin';h.playingCode='b';h.sourceScope=scope;h.favoritesOnly=scope==''
+        h.back();assert h.sourceScope=='' && !h.favoritesOnly
+    }
+}
+check('fullscreen_home_return_preserves_filter_containing_current_channel') {
+    def h=focusHost();h.route='full';h.playingSource='builtin';h.playingCode='b';h.favoritesOnly=true;h.store.favorites.add('builtin/b')
+    h.back();assert h.favoritesOnly
+}
+check('fullscreen_return_does_not_invent_missing_channel') {
+    def h=focusHost();h.route='full';h.playingSource='builtin';h.playingCode='missing';h.favoritesOnly=true
+    h.back();assert h.favoritesOnly
+}
+check('current_focus_uses_actual_playing_source_during_pending_source_switch') {
+    def h=focusHost();h.source.id='other';h.playingSource='builtin';h.playingCode='b';h.requestedCode='a'
+    assert h.currentChannelKey()=='builtin/b'
+    h.playingCode='';assert h.currentChannelKey()=='other/a'
 }
 check('home_default_focuses_playing_channel_before_requested_or_history') {
     def h=focusHost();h.playingSource='builtin';h.playingCode='b';h.requestedCode='c';h.store.saved='a'
@@ -262,7 +309,7 @@ check('retired_channel_route_migrates_to_home') {
     h.route='settings';h.backStack.push('channels');h.back();assert h.route=='home'
 }
 check('saved_filter_focus_is_source_scoped') {
-    def h=focusHost();h.channelFocus['home/all/false']='builtin/c';h.playingSource='builtin';h.playingCode='a';h.focusList(true);assert h.list.selected==2
+    def h=focusHost();h.channelFocus['home/all/false']='builtin/c';h.playingSource='builtin';h.playingCode='a';h.focusList(false);assert h.list.selected==2
 }
 check('filter_rebuild_never_tunes_programmatic_first_row') {
     def h=fresh();h.suppressPreviewSelection=true;h.schedulePreview(channel('a'));h.handler.advance(200);assert h.events.empty
