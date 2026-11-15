@@ -60,7 +60,7 @@ def install(g):
 
     def library_home(empty=False):
         prefix='我的媒体库 · '
-        s=header(prefix)+text(96+text_width(prefix,42),107,'客厅媒体库',28,INK)
+        s=header(prefix)+text(96+text_width(prefix,42),102,'客厅媒体库',28,'#b9b0cf')
         s+=button(1508,138,316,'搜索媒体',False,'search')+text(96,231,'继续观看',34,weight=600)
         if empty:s+=centered(960,462,'暂无观看历史',32,MUTED)
         else:
