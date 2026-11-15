@@ -77,8 +77,9 @@ class FakeStore {
 class FakePrefs { String legacy=''; String getString(String key,String fallback){legacy ?: fallback} }
 class Player { static final int STATE_READY=3 }
 class Channel { String code; String optString(String key){code} }
+class FakeConfig { Map values=[:]; String optString(String key){values[key] ?: ""} }
 ''')
-def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
+def methods = ['isLiveRoute','validPlayback','resetIdleTimers','cancelPreviewSwitch','schedulePreview','back','focusHomeDefault','focusList','focusPreview','focusRecovery','restoreRoute','currentChannelKey','ensureCurrentChannelVisible','canRefreshBuiltin'].findAll{!type.getMethodsByName(it).empty}.collect{method(it)}.join('\n')
 def hostClass = loader.parseClass('''
 class InteractionHost {
     boolean dead=false,resumed=true,openingChannel=false,drawerVisible=false,controlsVisible=false,playerReleasedForLibrary=false
@@ -93,6 +94,7 @@ class InteractionHost {
     def source=new FakeSource()
     def store=new FakeStore()
     def prefs=new FakePrefs()
+    def config=new FakeConfig()
     def list=new FakeList()
     def previewButton=new View()
     def errorPanel=null,groupButton=null,lastRecoveryAction=null,recoveryRetry=new View()
@@ -211,6 +213,17 @@ check('dialog_pauses_overlay_idle_and_close_restarts_timer') {
     h.dialog=fakeDialog();h.resetIdleTimers();h.handler.advance(20000);assert h.drawerVisible && h.controlsVisible
     h.dialog.dismiss();h.lastInputAt=clock.now;h.resetIdleTimers();h.handler.advance(5000);assert !h.controlsVisible && h.drawerVisible
     h.handler.advance(5000);assert !h.drawerVisible
+}
+check('unconfigured_tv_source_cannot_refresh') {
+    def h=fresh();assert !h.canRefreshBuiltin()
+    h.config.values=[user_id:'user'];assert !h.canRefreshBuiltin()
+}
+check('tv_source_refresh_requires_each_login_field_and_valid_mac') {
+    def h=fresh();def valid=[user_id:'user',tvid:'tv',stb_id:'box',tv_profile:'profile',mac:'02:00:00:00:00:01']
+    h.config.values=valid.clone();assert h.canRefreshBuiltin()
+    for(key in valid.keySet()) {h.config.values=valid.clone();h.config.values[key]=' ';assert !h.canRefreshBuiltin()}
+    h.config.values=valid.clone();h.config.values.mac='invalid';assert !h.canRefreshBuiltin()
+    h.config.values.mac='02-00-00-00-00-01';assert h.canRefreshBuiltin()
 }
 check('background_cancels_idle_overlay_actions') {
     def h=fresh();h.route='full';h.drawerVisible=true;h.controlsVisible=true;h.resetIdleTimers()
