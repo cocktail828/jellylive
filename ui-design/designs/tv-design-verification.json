@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 104,
   "active": 98,
-  "textCount": 1511,
+  "textCount": 1510,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -12,21 +12,9 @@
       "size": 80.0,
       "bounds": [
         845.0,
-        457.0,
+        509.0,
         1190.0,
-        540.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 1,
-      "text": "正在准备直播…",
-      "size": 28.0,
-      "bounds": [
-        863.0,
-        637.0,
-        1056.0,
-        665.0
+        592.0
       ],
       "clippedIntentionally": false
     },

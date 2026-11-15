@@ -455,9 +455,8 @@ LOGO_OUTER='M0.98,65C-3.69,55.61 26.98,0 36.5,0c9.53,0 40.15,55.71 35.53,65s-66.
 def splash_body(animated=False):
     motion='<animateTransform attributeName="transform" type="rotate" from="0 36.5 36.5" to="360 36.5 36.5" dur="2s" repeatCount="indefinite"/>' if animated else ''
     s=rect(0,0,1920,1080,'#101326',0)+'<defs><linearGradient id="jellyfin-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
-    s+=f'<svg x="620" y="398" width="180" height="180" viewBox="-16 -16 105 105"><g fill="url(#jellyfin-gradient)" fill-rule="evenodd">{motion}<path d="{LOGO_OUTER}"/><path d="{LOGO_INNER}"/></g></svg>'
-    s+=text(844,522,'JellyLive',80,INK,650)
-    s+='<text x="960" y="662" text-anchor="middle" fill="#a9adc6" font-size="28">正在准备直播…</text>'
+    s+=f'<svg x="620" y="450" width="180" height="180" viewBox="-16 -16 105 105"><g fill="url(#jellyfin-gradient)" fill-rule="evenodd">{motion}<path d="{LOGO_OUTER}"/><path d="{LOGO_INNER}"/></g></svg>'
+    s+=text(844,574,'JellyLive',80,INK,650)
     return s
 
 FAVORITES=['山野纪实','城市新闻','体育现场','光影剧场','旅行生活','音乐现场','少儿天地','人文历史','科学探索','都市生活','自然世界','经典影视','地方新闻','生活服务','戏曲欣赏','文化视界']

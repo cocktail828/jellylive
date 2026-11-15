@@ -168,8 +168,8 @@ public final class LiveActivity extends Activity {
     private void restoreStringMap(Bundle state,String key,Map<String,String> target){try{JSONObject values=new JSONObject(state.getString(key,"{}"));Iterator<String> names=values.keys();while(names.hasNext()){String name=names.next();target.put(name,values.optString(name));}}catch(Exception ignored){}}
     private void showStartup(){
         FrameLayout loading=ui.canvas();loading.setBackgroundColor(0xff101326);root.addView(loading,new FrameLayout.LayoutParams(ui.px(960),ui.px(540),Gravity.CENTER));
-        ImageView logo=new ImageView(this);logo.setImageResource(org.jellyfin.androidtv.R.drawable.jellylive_mark);ui.at(loading,logo,310,199,90,90);
-        ui.text(loading,"JellyLive",40,TvUi.INK,422,214,270,54);ui.text(loading,"正在准备直播…",14,TvUi.MUTED,360,316,260,32);
+        ImageView logo=new ImageView(this);logo.setImageResource(org.jellyfin.androidtv.R.drawable.jellylive_mark);ui.at(loading,logo,310,225,90,90);
+        ui.text(loading,"JellyLive",40,TvUi.INK,422,243,270,54);
         if(Build.VERSION.SDK_INT<26||android.animation.ValueAnimator.areAnimatorsEnabled()){startupRotation=ObjectAnimator.ofFloat(logo,View.ROTATION,0f,360f);startupRotation.setDuration(2000);startupRotation.setRepeatCount(android.animation.ValueAnimator.INFINITE);startupRotation.setInterpolator(new LinearInterpolator());startupRotation.start();}
     }
     private void showFatal(){if(startupRotation!=null){startupRotation.cancel();startupRotation=null;}TextView t=new TextView(this);t.setText("直播配置存储不可用，请检查电视存储空间后重试。");t.setTextColor(Color.WHITE);t.setBackgroundColor(0xff101326);setContentView(t);}
