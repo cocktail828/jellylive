@@ -2,7 +2,7 @@
 from html import escape
 from design_text import text_width
 
-CATEGORIES=['播放设置','显示与操作','媒体库连接','机顶盒配置','关于']
+CATEGORIES=['播放设置','显示与操作','媒体库连接','机顶盒配置','直播源','关于']
 INK='#f6f5ff';MUTED='#b9bfd0';VALUE='#c5b8ff';SURFACE='#1b2038';FOCUS='url(#purple)'
 
 def install(g):
@@ -176,7 +176,7 @@ def install(g):
             s+=tx(132,y+65,name,34,weight=600)+tx(1728,y+65,address,28,INK if i==0 else VALUE,anchor='end')
         return s
     def about():
-        s=frame(4,nav_focus=True)
+        s=frame(5,nav_focus=True)
         s+='<defs><linearGradient id="about-mark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#AA5CC3"/><stop offset="1" stop-color="#00A4DC"/></linearGradient></defs>'
         brand_x=1174-(128+24+text_width('JellyLive',52))/2
         s+='<g data-role="about-content" data-center-x="1174" data-center-y="540">'

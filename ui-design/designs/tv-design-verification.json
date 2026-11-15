@@ -2,7 +2,7 @@
   "scope": "SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution",
   "slots": 104,
   "active": 98,
-  "textCount": 1514,
+  "textCount": 1511,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
@@ -356,12 +356,12 @@
     },
     {
       "figure": 3,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -632,12 +632,12 @@
     },
     {
       "figure": 4,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -2900,49 +2900,37 @@
     },
     {
       "figure": 13,
-      "text": "电视直播源",
-      "size": 30.0,
-      "bounds": [
-        99.0,
-        216.0,
-        246.0,
-        246.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "内置直播源",
-      "size": 34.0,
-      "bounds": [
-        199.0,
-        304.0,
-        366.0,
-        338.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "145 个频道 · 今天 20:50 更新",
+      "text": "1 个直播源",
       "size": 26.0,
       "bounds": [
-        198.0,
-        367.0,
-        538.0,
-        393.0
+        98.0,
+        193.0,
+        220.0,
+        219.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 13,
-      "text": "已就绪",
-      "size": 24.0,
+      "text": "电视直播源",
+      "size": 32.0,
       "bounds": [
-        1056.0,
-        341.0,
-        1126.0,
-        365.0
+        231.0,
+        278.0,
+        388.0,
+        310.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 13,
+      "text": "尚未配置",
+      "size": 25.0,
+      "bounds": [
+        231.0,
+        338.0,
+        327.0,
+        363.0
       ],
       "clippedIntentionally": false
     },
@@ -2951,10 +2939,10 @@
       "text": "刷新频道",
       "size": 28.0,
       "bounds": [
-        1300.0,
-        343.0,
-        1412.0,
-        371.0
+        1260.0,
+        317.0,
+        1372.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -2963,69 +2951,21 @@
       "text": "机顶盒配置",
       "size": 28.0,
       "bounds": [
-        1570.0,
-        343.0,
-        1709.0,
-        371.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "第三方直播源",
-      "size": 30.0,
-      "bounds": [
-        97.0,
-        488.0,
-        276.0,
-        518.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "0 个来源",
-      "size": 24.0,
-      "bounds": [
-        319.0,
-        493.0,
-        408.0,
-        517.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "暂无第三方直播源",
-      "size": 32.0,
-      "bounds": [
-        833.0,
-        676.0,
-        1088.0,
-        708.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 13,
-      "text": "支持 M3U，以及提供直播频道的 Jellyfin 服务器",
-      "size": 26.0,
-      "bounds": [
-        685.0,
-        735.0,
-        1235.0,
-        764.0
+        1530.0,
+        317.0,
+        1669.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 14,
-      "text": "添加第三方直播源",
+      "text": "添加直播源",
       "size": 42.0,
       "bounds": [
         97.0,
         70.0,
-        432.0,
+        306.0,
         112.0
       ],
       "clippedIntentionally": false
@@ -4928,13 +4868,25 @@
     },
     {
       "figure": 21,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 21,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -5072,13 +5024,25 @@
     },
     {
       "figure": 22,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 22,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -5732,12 +5696,12 @@
     },
     {
       "figure": 25,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -6056,12 +6020,12 @@
     },
     {
       "figure": 26,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -6560,12 +6524,12 @@
     },
     {
       "figure": 30,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -6884,12 +6848,12 @@
     },
     {
       "figure": 31,
-      "text": "直播源",
+      "text": "纪录片",
       "size": 36.0,
       "bounds": [
-        720.0,
+        719.0,
         896.0,
-        827.0,
+        824.0,
         932.0
       ],
       "clippedIntentionally": false
@@ -7604,49 +7568,37 @@
     },
     {
       "figure": 37,
-      "text": "电视直播源",
-      "size": 30.0,
+      "text": "3 个直播源",
+      "size": 26.0,
       "bounds": [
-        99.0,
-        216.0,
-        246.0,
-        246.0
+        96.0,
+        193.0,
+        220.0,
+        219.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 37,
-      "text": "内置直播源",
-      "size": 34.0,
+      "text": "电视直播源",
+      "size": 32.0,
       "bounds": [
-        199.0,
-        304.0,
-        366.0,
-        338.0
+        231.0,
+        278.0,
+        388.0,
+        310.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 37,
       "text": "145 个频道 · 今天 20:50 更新",
-      "size": 26.0,
+      "size": 25.0,
       "bounds": [
-        198.0,
-        367.0,
-        538.0,
-        393.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 37,
-      "text": "已就绪",
-      "size": 24.0,
-      "bounds": [
-        1056.0,
-        341.0,
-        1126.0,
-        365.0
+        230.0,
+        338.0,
+        562.0,
+        363.0
       ],
       "clippedIntentionally": false
     },
@@ -7655,10 +7607,10 @@
       "text": "刷新频道",
       "size": 28.0,
       "bounds": [
-        1300.0,
-        343.0,
-        1412.0,
-        371.0
+        1260.0,
+        317.0,
+        1372.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -7667,34 +7619,10 @@
       "text": "机顶盒配置",
       "size": 28.0,
       "bounds": [
-        1570.0,
-        343.0,
-        1709.0,
-        371.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 37,
-      "text": "第三方直播源",
-      "size": 30.0,
-      "bounds": [
-        97.0,
-        488.0,
-        276.0,
-        518.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 37,
-      "text": "2 个来源",
-      "size": 24.0,
-      "bounds": [
-        318.0,
-        493.0,
-        408.0,
-        517.0
+        1530.0,
+        317.0,
+        1669.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -7703,10 +7631,10 @@
       "text": "家庭 IPTV",
       "size": 32.0,
       "bounds": [
-        197.0,
-        572.0,
-        339.0,
-        604.0
+        229.0,
+        458.0,
+        371.0,
+        490.0
       ],
       "clippedIntentionally": false
     },
@@ -7715,10 +7643,10 @@
       "text": "32 个频道 · 今天 20:40 更新",
       "size": 25.0,
       "bounds": [
-        196.0,
-        624.0,
-        516.0,
-        649.0
+        228.0,
+        518.0,
+        548.0,
+        543.0
       ],
       "clippedIntentionally": false
     },
@@ -7727,10 +7655,10 @@
       "text": "M3U",
       "size": 24.0,
       "bounds": [
-        1150.0,
-        603.0,
-        1195.0,
-        621.0
+        1118.0,
+        504.0,
+        1163.0,
+        522.0
       ],
       "clippedIntentionally": false
     },
@@ -7739,10 +7667,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        600.0,
-        1408.0,
-        624.0
+        1308.0,
+        501.0,
+        1376.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -7751,10 +7679,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        599.0,
-        1710.0,
-        627.0
+        1622.0,
+        497.0,
+        1678.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -7763,22 +7691,22 @@
       "text": "客厅 Jellyfin",
       "size": 32.0,
       "bounds": [
-        196.0,
-        724.0,
-        383.0,
-        759.0
+        228.0,
+        638.0,
+        415.0,
+        673.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 37,
-      "text": "18 个频道 · 已连接服务器",
+      "text": "18 个频道 · 今天 20:35 更新",
       "size": 25.0,
       "bounds": [
-        198.0,
-        776.0,
-        492.0,
-        801.0
+        230.0,
+        698.0,
+        548.0,
+        723.0
       ],
       "clippedIntentionally": false
     },
@@ -7787,10 +7715,10 @@
       "text": "Jellyfin",
       "size": 24.0,
       "bounds": [
-        1148.0,
-        753.0,
-        1228.0,
-        779.0
+        1116.0,
+        682.0,
+        1196.0,
+        708.0
       ],
       "clippedIntentionally": false
     },
@@ -7799,10 +7727,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        752.0,
-        1408.0,
-        776.0
+        1308.0,
+        681.0,
+        1376.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -7811,10 +7739,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        751.0,
-        1710.0,
-        779.0
+        1622.0,
+        677.0,
+        1678.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -7880,49 +7808,37 @@
     },
     {
       "figure": 38,
-      "text": "电视直播源",
-      "size": 30.0,
+      "text": "1 个直播源",
+      "size": 26.0,
       "bounds": [
-        99.0,
-        216.0,
-        246.0,
-        246.0
+        98.0,
+        193.0,
+        220.0,
+        219.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 38,
-      "text": "内置直播源",
-      "size": 34.0,
+      "text": "电视直播源",
+      "size": 32.0,
       "bounds": [
-        199.0,
-        304.0,
-        366.0,
-        338.0
+        231.0,
+        278.0,
+        388.0,
+        310.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 38,
       "text": "145 个频道 · 今天 20:50 更新",
-      "size": 26.0,
+      "size": 25.0,
       "bounds": [
-        198.0,
-        367.0,
-        538.0,
-        393.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 38,
-      "text": "已就绪",
-      "size": 24.0,
-      "bounds": [
-        1056.0,
-        341.0,
-        1126.0,
-        365.0
+        230.0,
+        338.0,
+        562.0,
+        363.0
       ],
       "clippedIntentionally": false
     },
@@ -7931,10 +7847,10 @@
       "text": "刷新频道",
       "size": 28.0,
       "bounds": [
-        1300.0,
-        343.0,
-        1412.0,
-        371.0
+        1260.0,
+        317.0,
+        1372.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -7943,58 +7859,10 @@
       "text": "机顶盒配置",
       "size": 28.0,
       "bounds": [
-        1570.0,
-        343.0,
-        1709.0,
-        371.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 38,
-      "text": "第三方直播源",
-      "size": 30.0,
-      "bounds": [
-        97.0,
-        488.0,
-        276.0,
-        518.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 38,
-      "text": "0 个来源",
-      "size": 24.0,
-      "bounds": [
-        319.0,
-        493.0,
-        408.0,
-        517.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 38,
-      "text": "暂无第三方直播源",
-      "size": 32.0,
-      "bounds": [
-        833.0,
-        676.0,
-        1088.0,
-        708.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 38,
-      "text": "支持 M3U，以及提供直播频道的 Jellyfin 服务器",
-      "size": 26.0,
-      "bounds": [
-        685.0,
-        735.0,
-        1235.0,
-        764.0
+        1530.0,
+        317.0,
+        1669.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -12368,13 +12236,25 @@
     },
     {
       "figure": 68,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 68,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -12488,13 +12368,25 @@
     },
     {
       "figure": 69,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 69,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -12692,13 +12584,25 @@
     },
     {
       "figure": 70,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 70,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -12860,13 +12764,25 @@
     },
     {
       "figure": 71,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 71,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -14504,13 +14420,25 @@
     },
     {
       "figure": 79,
+      "text": "直播源",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        702.0,
+        213.0,
+        732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 79,
       "text": "关于",
       "size": 30.0,
       "bounds": [
         124.0,
-        702.0,
+        814.0,
         183.0,
-        732.0
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -14648,13 +14576,25 @@
     },
     {
       "figure": 80,
-      "text": "关于",
+      "text": "直播源",
       "size": 45.0,
       "bounds": [
         126.0,
         689.0,
+        258.0,
+        733.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 80,
+      "text": "关于",
+      "size": 45.0,
+      "bounds": [
+        126.0,
+        801.0,
         212.0,
-        732.0
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -14792,13 +14732,25 @@
     },
     {
       "figure": 81,
-      "text": "关于",
+      "text": "直播源",
       "size": 45.0,
       "bounds": [
         126.0,
         689.0,
+        258.0,
+        733.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 81,
+      "text": "关于",
+      "size": 45.0,
+      "bounds": [
+        126.0,
+        801.0,
         212.0,
-        732.0
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -15512,49 +15464,37 @@
     },
     {
       "figure": 87,
-      "text": "电视直播源",
-      "size": 30.0,
+      "text": "3 个直播源",
+      "size": 26.0,
       "bounds": [
-        99.0,
-        216.0,
-        246.0,
-        246.0
+        96.0,
+        193.0,
+        220.0,
+        219.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 87,
-      "text": "内置直播源",
-      "size": 34.0,
+      "text": "电视直播源",
+      "size": 32.0,
       "bounds": [
-        199.0,
-        304.0,
-        366.0,
-        338.0
+        231.0,
+        278.0,
+        388.0,
+        310.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 87,
       "text": "145 个频道 · 今天 20:50 更新",
-      "size": 26.0,
+      "size": 25.0,
       "bounds": [
-        198.0,
-        367.0,
-        538.0,
-        393.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "已就绪",
-      "size": 24.0,
-      "bounds": [
-        1056.0,
-        341.0,
-        1126.0,
-        365.0
+        230.0,
+        338.0,
+        562.0,
+        363.0
       ],
       "clippedIntentionally": false
     },
@@ -15563,10 +15503,10 @@
       "text": "刷新频道",
       "size": 28.0,
       "bounds": [
-        1300.0,
-        343.0,
-        1412.0,
-        371.0
+        1260.0,
+        317.0,
+        1372.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -15575,34 +15515,10 @@
       "text": "机顶盒配置",
       "size": 28.0,
       "bounds": [
-        1570.0,
-        343.0,
-        1709.0,
-        371.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "第三方直播源",
-      "size": 30.0,
-      "bounds": [
-        97.0,
-        488.0,
-        276.0,
-        518.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "2 个来源",
-      "size": 24.0,
-      "bounds": [
-        318.0,
-        493.0,
-        408.0,
-        517.0
+        1530.0,
+        317.0,
+        1669.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -15611,10 +15527,10 @@
       "text": "家庭 IPTV",
       "size": 32.0,
       "bounds": [
-        197.0,
-        572.0,
-        339.0,
-        604.0
+        229.0,
+        458.0,
+        371.0,
+        490.0
       ],
       "clippedIntentionally": false
     },
@@ -15623,10 +15539,10 @@
       "text": "32 个频道 · 今天 20:40 更新",
       "size": 25.0,
       "bounds": [
-        196.0,
-        624.0,
-        516.0,
-        649.0
+        228.0,
+        518.0,
+        548.0,
+        543.0
       ],
       "clippedIntentionally": false
     },
@@ -15635,10 +15551,10 @@
       "text": "M3U",
       "size": 24.0,
       "bounds": [
-        1150.0,
-        603.0,
-        1195.0,
-        621.0
+        1118.0,
+        504.0,
+        1163.0,
+        522.0
       ],
       "clippedIntentionally": false
     },
@@ -15647,10 +15563,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        600.0,
-        1408.0,
-        624.0
+        1308.0,
+        501.0,
+        1376.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -15659,10 +15575,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        599.0,
-        1710.0,
-        627.0
+        1622.0,
+        497.0,
+        1678.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -15671,22 +15587,22 @@
       "text": "客厅 Jellyfin",
       "size": 32.0,
       "bounds": [
-        196.0,
-        724.0,
-        383.0,
-        759.0
+        228.0,
+        638.0,
+        415.0,
+        673.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 87,
-      "text": "18 个频道 · 已连接服务器",
+      "text": "18 个频道 · 今天 20:35 更新",
       "size": 25.0,
       "bounds": [
-        198.0,
-        776.0,
-        492.0,
-        801.0
+        230.0,
+        698.0,
+        548.0,
+        723.0
       ],
       "clippedIntentionally": false
     },
@@ -15695,10 +15611,10 @@
       "text": "Jellyfin",
       "size": 24.0,
       "bounds": [
-        1148.0,
-        753.0,
-        1228.0,
-        779.0
+        1116.0,
+        682.0,
+        1196.0,
+        708.0
       ],
       "clippedIntentionally": false
     },
@@ -15707,10 +15623,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        752.0,
-        1408.0,
-        776.0
+        1308.0,
+        681.0,
+        1376.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -15719,10 +15635,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        751.0,
-        1710.0,
-        779.0
+        1622.0,
+        677.0,
+        1678.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -15860,49 +15776,37 @@
     },
     {
       "figure": 88,
-      "text": "电视直播源",
-      "size": 30.0,
+      "text": "3 个直播源",
+      "size": 26.0,
       "bounds": [
-        99.0,
-        216.0,
-        246.0,
-        246.0
+        96.0,
+        193.0,
+        220.0,
+        219.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 88,
-      "text": "内置直播源",
-      "size": 34.0,
+      "text": "电视直播源",
+      "size": 32.0,
       "bounds": [
-        199.0,
-        304.0,
-        366.0,
-        338.0
+        231.0,
+        278.0,
+        388.0,
+        310.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 88,
       "text": "145 个频道 · 今天 20:50 更新",
-      "size": 26.0,
+      "size": 25.0,
       "bounds": [
-        198.0,
-        367.0,
-        538.0,
-        393.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 88,
-      "text": "已就绪",
-      "size": 24.0,
-      "bounds": [
-        1056.0,
-        341.0,
-        1126.0,
-        365.0
+        230.0,
+        338.0,
+        562.0,
+        363.0
       ],
       "clippedIntentionally": false
     },
@@ -15911,10 +15815,10 @@
       "text": "刷新频道",
       "size": 28.0,
       "bounds": [
-        1300.0,
-        343.0,
-        1412.0,
-        371.0
+        1260.0,
+        317.0,
+        1372.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -15923,34 +15827,10 @@
       "text": "机顶盒配置",
       "size": 28.0,
       "bounds": [
-        1570.0,
-        343.0,
-        1709.0,
-        371.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 88,
-      "text": "第三方直播源",
-      "size": 30.0,
-      "bounds": [
-        97.0,
-        488.0,
-        276.0,
-        518.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 88,
-      "text": "2 个来源",
-      "size": 24.0,
-      "bounds": [
-        318.0,
-        493.0,
-        408.0,
-        517.0
+        1530.0,
+        317.0,
+        1669.0,
+        345.0
       ],
       "clippedIntentionally": false
     },
@@ -15959,10 +15839,10 @@
       "text": "家庭 IPTV",
       "size": 32.0,
       "bounds": [
-        197.0,
-        572.0,
-        339.0,
-        604.0
+        229.0,
+        458.0,
+        371.0,
+        490.0
       ],
       "clippedIntentionally": false
     },
@@ -15971,10 +15851,10 @@
       "text": "32 个频道 · 今天 20:40 更新",
       "size": 25.0,
       "bounds": [
-        196.0,
-        624.0,
-        516.0,
-        649.0
+        228.0,
+        518.0,
+        548.0,
+        543.0
       ],
       "clippedIntentionally": false
     },
@@ -15983,10 +15863,10 @@
       "text": "M3U",
       "size": 24.0,
       "bounds": [
-        1150.0,
-        603.0,
-        1195.0,
-        621.0
+        1118.0,
+        504.0,
+        1163.0,
+        522.0
       ],
       "clippedIntentionally": false
     },
@@ -15995,10 +15875,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        600.0,
-        1408.0,
-        624.0
+        1308.0,
+        501.0,
+        1376.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -16007,10 +15887,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        599.0,
-        1710.0,
-        627.0
+        1622.0,
+        497.0,
+        1678.0,
+        525.0
       ],
       "clippedIntentionally": false
     },
@@ -16019,22 +15899,22 @@
       "text": "客厅 Jellyfin",
       "size": 32.0,
       "bounds": [
-        196.0,
-        724.0,
-        383.0,
-        759.0
+        228.0,
+        638.0,
+        415.0,
+        673.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 88,
-      "text": "18 个频道 · 已连接服务器",
+      "text": "18 个频道 · 今天 20:35 更新",
       "size": 25.0,
       "bounds": [
-        198.0,
-        776.0,
-        492.0,
-        801.0
+        230.0,
+        698.0,
+        548.0,
+        723.0
       ],
       "clippedIntentionally": false
     },
@@ -16043,10 +15923,10 @@
       "text": "Jellyfin",
       "size": 24.0,
       "bounds": [
-        1148.0,
-        753.0,
-        1228.0,
-        779.0
+        1116.0,
+        682.0,
+        1196.0,
+        708.0
       ],
       "clippedIntentionally": false
     },
@@ -16055,10 +15935,10 @@
       "text": "已启用",
       "size": 24.0,
       "bounds": [
-        1340.0,
-        752.0,
-        1408.0,
-        776.0
+        1308.0,
+        681.0,
+        1376.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -16067,10 +15947,10 @@
       "text": "管理",
       "size": 28.0,
       "bounds": [
-        1654.0,
-        751.0,
-        1710.0,
-        779.0
+        1622.0,
+        677.0,
+        1678.0,
+        705.0
       ],
       "clippedIntentionally": false
     },
@@ -16796,13 +16676,25 @@
     },
     {
       "figure": 94,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 94,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -16964,13 +16856,25 @@
     },
     {
       "figure": 95,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 95,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -17144,13 +17048,25 @@
     },
     {
       "figure": 96,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 96,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -17312,13 +17228,25 @@
     },
     {
       "figure": 97,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 97,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -17444,13 +17372,25 @@
     },
     {
       "figure": 98,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 98,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -17588,13 +17528,25 @@
     },
     {
       "figure": 99,
-      "text": "关于",
+      "text": "直播源",
       "size": 30.0,
       "bounds": [
         125.0,
         702.0,
-        183.0,
+        213.0,
         732.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 99,
+      "text": "关于",
+      "size": 30.0,
+      "bounds": [
+        125.0,
+        814.0,
+        183.0,
+        844.0
       ],
       "clippedIntentionally": false
     },
@@ -17744,13 +17696,25 @@
     },
     {
       "figure": 100,
-      "text": "关于",
+      "text": "直播源",
       "size": 45.0,
       "bounds": [
         126.0,
         689.0,
+        258.0,
+        733.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 100,
+      "text": "关于",
+      "size": 45.0,
+      "bounds": [
+        126.0,
+        801.0,
         212.0,
-        732.0
+        844.0
       ],
       "clippedIntentionally": false
     },

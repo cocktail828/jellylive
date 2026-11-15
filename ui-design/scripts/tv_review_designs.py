@@ -183,9 +183,9 @@ def install(g):
             s+=f'<text x="{x+width-28}" y="{ry+35*fs}" text-anchor="end" fill="{INK}" font-size="{24*fs}">{escape(detail)}</text>'
         return s
 
-    def sources_page(populated=False,add_menu=False):
+    def sources_page(populated=False,add_menu=False,configured=True):
         # Reuse the established page; only move unsafe content and its matching backgrounds.
-        s=g['_original_sources'](populated,add_menu)
+        s=g['_original_sources'](populated,add_menu,configured)
         s=s.replace('x="64"','x="96"').replace('width="1792"','width="1728"').replace('x="1856"','x="1824"')
         s=s.replace('x="1500" y="130"','x="1464" y="130"').replace('translate(1524 146)','translate(1492 146)').replace('x="1570" y="172"','x="1538" y="172"')
         s=s.replace('x="1256"','x="1224"').replace('x="1262"','x="1230"')

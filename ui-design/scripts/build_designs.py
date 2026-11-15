@@ -320,33 +320,27 @@ def live_option_popover(kind,ratio='原始',audio='普通话',subtitles='关闭'
 def playback_popover():
     return live_option_popover('画面比例')
 
-def sources_page(populated=False,add_menu=False):
+def sources_page(populated=False,add_menu=False,configured=True):
     s=header('直播源','管理频道来源，已启用的频道会显示在分组列表中')
     s+=button(1500,130,356,'添加直播源',False,'plus',h=64)
     if add_menu:
         s+=rect(1500,130,356,64,'#39315e',14,'#a996e5')+icon('plus',1524,146,32)+text(1570,172,'添加直播源',28,weight=600)
-    s+=text(64,242,'电视直播源',30,weight=600)
-    s+=rect(64,268,1792,180,'#171d32',18,'#343d56')
-    s+=rect(96,316,72,72,'#2b2848',16)+icon('tv',114,332,36,'#c7b8ff')
-    s+=text(196,334,'内置直播源',34,weight=600)+text(196,390,'145 个频道 · 今天 20:50 更新',26,MUTED)
-    s+=pill(1036,334,'已就绪',color='#a5dbbf',w=134)
-    s+=button(1230,320,244,'刷新频道',not populated and not add_menu,'refresh')+button(1500,320,320,'机顶盒配置',False,'gear')
-    s+=text(64,514,'第三方直播源',30,weight=600)
+    s+=text(96,216,'3 个直播源' if populated else '1 个直播源',26,MUTED)
+    entries=[('电视直播源','145 个频道 · 今天 20:50 更新' if configured else '尚未配置','tv','')]
     if populated:
-        s+=text(318,514,'2 个来源',24,MUTED)
-        for i,(name,kind,info,ico) in enumerate([('家庭 IPTV','M3U','32 个频道 · 今天 20:40 更新','source'),('客厅 Jellyfin','Jellyfin','18 个频道 · 已连接服务器','tv')]):
-            y=548+i*152
-            s+=rect(64,y,1792,132,'#171d32',18,'#343d56')
-            s+=rect(96,y+30,72,72,'#242d46',16)+icon(ico,114,y+48,36,'#bdafd9')
-            s+=text(196,y+52,name,32,weight=600)+text(196,y+98,info,25,MUTED)
-            s+=pill(1130,y+45,kind,w=156)+pill(1320,y+45,'已启用',color='#a5dbbf',w=156)
-            s+=button(1628,y+28,192,'管理',i==0,h=76)
-    else:
-        s+=text(318,514,'0 个来源',24,MUTED)
-        s+=rect(64,548,1792,286,'#141a2d',18,'#303950')
-        s+=icon('source',929,585,62,'#82779c')
-        s+='<text x="960" y="704" text-anchor="middle" fill="#f6f5ff" font-size="32" font-weight="600">暂无第三方直播源</text>'
-        s+='<text x="960" y="758" text-anchor="middle" fill="#a9adc6" font-size="26">支持 M3U，以及提供直播频道的 Jellyfin 服务器</text>'
+        entries += [('家庭 IPTV','32 个频道 · 今天 20:40 更新','source','M3U'),('客厅 Jellyfin','18 个频道 · 今天 20:35 更新','tv','Jellyfin')]
+    for i,(name,info,ico,kind) in enumerate(entries):
+        y=252+i*180
+        s+=rect(96,y,1728,160,'#171d32',18,'#343d56')
+        s+=icon(ico,128,y+48,60,'#c7b8ff')
+        s+=text(228,y+54,name,32,weight=600)+text(228,y+108,info,25,MUTED)
+        if i==0:
+            refresh=button(1190,y+42,244,'刷新频道',configured and not populated and not add_menu,'refresh',h=76)
+            s+=refresh if configured else '<g opacity=".4" data-disabled="true">'+refresh+'</g>'
+            s+=button(1460,y+42,320,'机顶盒配置',not configured and not add_menu,'gear',h=76)
+        else:
+            s+=pill(1098,y+62,kind,w=156)+pill(1288,y+62,'已启用',color='#a5dbbf',w=156)
+            s+=button(1596,y+42,192,'管理',i==1,h=76)
     if add_menu:
         # The entry is shared; Jellyfin is an input type rather than a permanent
         # standalone source button. Connection alone never invents channels.
@@ -365,7 +359,7 @@ def homepage(focus='list',no_epg=False,selected=0):
     s+=rect(1192,64,664,716,'#14192e')
     s+=source_tabs(1208,80,632)
     s+=line(1216,145,1832,145)+channel_list(1208,163,632,selected if focus=='list' else -1,no_epg=no_epg,playing=selected)
-    for i,(name,ico) in enumerate([('收藏','star'),('直播源','source'),('媒体库','media'),('设置','gear')]):
+    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
         x=64+i*456
         active=focus==name
         s+=rect(x,826,424,176,'url(#purple)' if active else '#242a46',18,'#fff' if active else '#363e5d',4 if active else 1)
@@ -576,13 +570,13 @@ def make():
     for y,t in [(524,'穿越群山与河谷，探访高原深处的自然风貌。'),(566,'跟随镜头，感受山河之间缓慢而坚定的生命。')]:s+=text(632,y,t,28,MUTED)
     s+=button(632,622,300,'观看该频道',True,'play')+button(956,622,180,'关闭')+'</g>'
     emit('08-program-detail','节目详情弹层',s)
-    emit('09-sources','直播源管理',sources_page())
-    s=header('添加第三方直播源','输入来源信息，检测成功后保存到频道列表')
+    emit('09-sources','直播源管理',sources_page(configured=False))
+    s=header('添加直播源','输入来源信息，检测成功后保存到频道列表')
     for y,label,value,focus in [(226,'来源名称','家庭 IPTV',False),(390,'M3U 播放列表地址','https://example.com/live/channels.m3u',True),(554,'XMLTV 节目单地址（可选）','https://example.com/live/guide.xml',False)]:
         s+=text(128,y,label,28,MUTED)+rect(128,y+24,1376,80,'#1c223c',14,'#fff' if focus else '#3a425f',4 if focus else 1)+text(158,y+76,value,30)
     s+=text(128,737,'检测状态：待检测。未填写节目单也可正常观看。',26,MUTED)
     s+=button(128,800,250,'检测来源')+button(408,800,250,'保存来源')+button(688,800,180,'取消')+footer('OK  编辑字段并打开电视键盘    返回  取消编辑')
-    emit('10-source-editor','添加或编辑第三方源',s)
+    emit('10-source-editor','添加或编辑直播源',s)
     emit('11-library','媒体库首页',library_home())
     emit('12-library-grid','媒体分类与海报列表',library_grid())
     emit('13-movie','电影详情',movie_details())
@@ -673,7 +667,7 @@ if __name__=='__main__':
     make()
     emit('05-live-playback-settings','直播：画面比例局部浮层',playback_popover())
     emit('06-channel-drawer-groups','全屏：展开频道分组',drawer_scene(menu=True))
-    emit('09-sources-populated','直播源：统一管理第三方来源',sources_page(populated=True))
+    emit('09-sources-populated','直播源：统一列表',sources_page(populated=True))
     emit('09-sources-add','直播源：统一添加入口',sources_page(add_menu=True))
     emit('12-library-filter','媒体库：右侧筛选',library_browse_panel())
     emit('12-library-sort','媒体库：右侧排序',library_browse_panel(sort=True))
