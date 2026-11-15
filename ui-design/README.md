@@ -14,7 +14,7 @@
 - `designs/INTERACTION_RULES.txt`：统一交互规则；各专项规范见同目录的 `*_REVIEW.txt`。
 - `scripts/`：生成当前图稿、画册、适配预览和几何检查的源文件。
 
-本次设置修订已实施：菜单默认单行、播放设置精简、媒体库新增/切换、带背景预览与真实透明度。原生验证范围另见仓库增量验收文档。
+既有设置已实施：菜单默认单行、播放设置精简、媒体库新增/切换、带背景预览与真实透明度。原生验证范围另见仓库增量验收文档。
 
 媒体库入口的图29与图101–104已实施：居中恢复连接、失败重试当前库和影视内切换媒体库。
 
@@ -34,3 +34,5 @@ python3 scripts/verify_tv_designs.py
 ```
 
 几何结果写入 `designs/tv-design-verification.json`，不替代 Android TV 的实际遥控测试。素材说明和授权见 [ASSET_NOTICES.txt](designs/ASSET_NOTICES.txt) 与 [LICENSE-JELLYFIN.txt](designs/LICENSE-JELLYFIN.txt)。
+
+当前直播源设计位于设置分区的“直播源：设置内直接管理”：设置右侧直接展示列表与操作，未进入代码实施。影视图稿已按现有实现刷新标题、继续观看、分类卡片、元信息与分页。

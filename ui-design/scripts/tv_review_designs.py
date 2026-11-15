@@ -59,14 +59,22 @@ def install(g):
         return s.replace('<text ','<text stroke="#080c18" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke" ')
 
     def library_home(empty=False):
-        s=header('我的媒体库','客厅 Jellyfin · 已连接')+button(1508,138,316,'搜索媒体',False,'search')+text(96,231,'继续观看',34,weight=600)
-        if empty:s+=centered(960,406,'暂无观看历史',32,MUTED)
+        prefix='我的媒体库 · '
+        s=header(prefix)+text(96+text_width(prefix,42),107,'客厅媒体库',28,INK)
+        s+=button(1508,138,316,'搜索媒体',False,'search')+text(96,231,'继续观看',34,weight=600)
+        if empty:s+=centered(960,462,'暂无观看历史',32,MUTED)
         else:
-            for i,t in enumerate(g['TITLES'][:3]):
-                x=100+i*584;s+=g['poster'](x,264,552,260,t,'继续播放 · 已观看 00:36:00',i,i==0)
-                s+=rect(x+16,508,520,5,'#414760',2)+rect(x+16,508,205,5,'#ac9aff',2)
-        s+=text(96,608,'探索媒体库',34,weight=600)
-        for i,(t,count) in enumerate([('电影','86 部电影'),('剧集','12 部剧集'),('最近添加','98 项 · 按添加时间')]):s+=g['poster'](100+i*584,642,552,260,t,count,i+1)
+            for i,(title,position,duration) in enumerate(zip(g['TITLES'][:3],[2400000,2160000,4500000],[6450000,6480000,7200000])):
+                x=100+i*584;ratio=position/duration
+                s+=f'<g data-role="resume-card" data-position-ms="{position}" data-duration-ms="{duration}" data-progress="{ratio}">'
+                s+=f'<defs><clipPath id="resume-art-{i}"><rect x="{x}" y="264" width="552" height="260" rx="16"/></clipPath></defs><g clip-path="url(#resume-art-{i})">'+scene(x,264,552,260,i)+'</g>'+rect(x,264,552,260,'none',16,'#fff' if i==0 else '#363e5d',4 if i==0 else 1)
+                s+=rect(x+16,512,520,6,'#414760',2)+rect(x+16,512,520*ratio,6,'#ac9aff',2)
+                s+=centered(x+276,580,title,32,INK,600)+'</g>'
+        s+=text(96,694,'探索媒体库',34,weight=600)
+        for i,(title,count) in enumerate([('电影','86'),('剧集','12'),('最近添加','98')]):
+            x=100+i*584
+            s+=f'<defs><clipPath id="entry-art-{i}"><rect x="{x}" y="722" width="552" height="260" rx="16"/></clipPath></defs><g clip-path="url(#entry-art-{i})">'+scene(x,722,552,260,i+1)+rect(x,722,552,260,'#10182b',16,fill_opacity=.28)+'</g>'
+            s+=centered(x+276,840,title,32,INK,600)+centered(x+276,896,count,24,MUTED)
         return s
 
     def poster(x,y,w,h,title,sub='',kind=0,focus=False):
@@ -91,7 +99,7 @@ def install(g):
             s+=f'<g class="motion-label" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;{-travel} 0;{-travel} 0;0 0" keyTimes="0;.16;.65;.8;1" begin="1.2s" dur="12s" repeatCount="indefinite"/>'+text(x+18,y+h-22*fs,full,28*fs,INK,600)+'</g></g><style>@media(prefers-reduced-motion:reduce){.motion-label{display:none!important}.static-label{visibility:visible!important}}</style>'
         else:s+=centered(x+w/2,y+h-22*fs,shown,28*fs,INK,600)
         s+='</g>'
-        s+=text(x,y+h+34*fs,year,24*fs,MUTED)
+        s+=centered(x+w/2,y+h+34*fs,year,24*fs,MUTED)
         if focus:s+=rect(x,y,w,h,'none',14,'#fff',4)
         return s
 
@@ -113,7 +121,7 @@ def install(g):
         cols=5 if large else 6;w=318 if large else 260;step=350 if large else 292;y=286 if large else 270
         for i,t in enumerate(g['TITLES'][:cols]):s+=portrait(100+i*step,y,t if not large or i else '山河之间：归途与远方','2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],i,i==0 and focused,w,fs)
         pager_y=900 if large else 848
-        s+=rect(744,pager_y,72,72,'#171c32',14,'#30364e')+icon('back',764,pager_y+20,32,'#596078')+centered(960,pager_y+47,f'1–{cols} / '+('98' if recent else '18' if filtered else '86'),26,MUTED)+rect(1104,pager_y,72,72,'#242a46',14,'#596078')+icon('forward',1124,pager_y+20,32)
+        s+=rect(744,pager_y,72,72,'#171c32',14,'#30364e')+icon('back',764,pager_y+20,32,'#596078')+centered(960,pager_y+47,f'1-{cols}',26,MUTED)+rect(1104,pager_y,72,72,'#242a46',14,'#596078')+icon('forward',1124,pager_y+20,32)
         return s
 
     def movie_details(large=False):

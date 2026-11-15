@@ -9,9 +9,9 @@ from build_designs import header, footer, rect, text, line
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'designs'
 screens=[dict(item,number=i+1) for i,item in enumerate(json.loads((OUT/'manifest.json').read_text())) if not item.get('retired',False)]
-PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏、节目单与直播源'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、选择子菜单、媒体库连接与机顶盒配置')]
+PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏与节目单'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、直播源、媒体库连接与机顶盒配置')]
 def part_for(screen):
-    if screen['id'].startswith('17-settings'): return 'settings'
+    if screen['id'].startswith('17-settings') or screen['id'].startswith('09-sources') or screen['id'].startswith('09-box-config') or screen['id']=='10-source-editor': return 'settings'
     number=screen['number']
     if number in (1,2,24): return 'startup'
     if number in (21,22,23) or screen['id']=='18-jellyfin-ime': return 'settings'
@@ -32,7 +32,8 @@ for screen in screens:
     screen['part']=part_for(screen)
     screen['revision']=hashlib.sha256((OUT/'svg'/f"{screen['id']}.svg").read_bytes()).hexdigest()[:10]
 rules=json.loads((Path(__file__).parent/'design_rules.json').read_text())
-rule_cards=''.join('<article class="spec"><h3>'+escape(rule['title'])+'</h3>'+''.join('<p>'+escape(p)+'</p>' for p in rule['paragraphs'])+'</article>' for rule in rules)
+def rules_markup(items): return ''.join('<article class="spec"><h3>'+escape(rule['title'])+'</h3>'+''.join('<p>'+escape(p)+'</p>' for p in rule['paragraphs'])+'</article>' for rule in items)
+rule_cards=rules_markup(rules)
 (OUT/'INTERACTION_RULES.txt').write_text('JellyLive 当前交互规则 · 2026-11-11\n\n'+'\n\n'.join(rule['title']+'\n'+'\n'.join(rule['paragraphs']) for rule in rules)+'\n')
 main_count=sum(s['kind']=='main' for s in screens)
 state_count=len(screens)-main_count
@@ -89,11 +90,12 @@ document.querySelector('#prev').onclick=()=>step(-1);document.querySelector('#ne
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(f=>f.setAttribute('aria-pressed',String(f===b)));document.querySelectorAll('.card').forEach(c=>c.hidden=b.dataset.filter!=='all'&&c.dataset.kind!==b.dataset.filter);document.querySelectorAll('.flow-group,.design-part').forEach(part=>part.hidden=![...part.querySelectorAll('.card')].some(c=>!c.hidden))}));
 </script></html>'''
 for current_part in [None,*[key for key,_,_ in PARTS],'tv-review']:
+    current_rules=rules_markup([rule for rule in rules if not(current_part=='live' and rule['title']=='设置中的直播源')])
     review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,101)}
     review=current_part=='tv-review'
     selected=[screen for screen in screens if (screen['number'] in review_numbers if review else current_part is None or screen['part']==current_part)]
     navigation=part_navigation.replace(f'href="{current_part or "index"}.html"',f'href="{current_part or "index"}.html" aria-current="page"')
-    page=template.replace('__MAIN__',str(sum(s['kind']=='main' for s in selected))).replace('__STATE__',str(sum(s['kind']=='state' for s in selected))).replace('__TOTAL__',str(len(selected))).replace('__RULE_CARDS__',rule_cards).replace('__PARTS__',part_sections(None,review_numbers) if review else part_sections(current_part)).replace('__PART_NAV__',navigation).replace('__MANIFEST__',json.dumps(screens,ensure_ascii=False))
+    page=template.replace('__MAIN__',str(sum(s['kind']=='main' for s in selected))).replace('__STATE__',str(sum(s['kind']=='state' for s in selected))).replace('__TOTAL__',str(len(selected))).replace('__RULE_CARDS__',current_rules).replace('__PARTS__',part_sections(None,review_numbers) if review else part_sections(current_part)).replace('__PART_NAV__',navigation).replace('__MANIFEST__',json.dumps(screens,ensure_ascii=False))
     if current_part:
         label='本轮TV审查修订' if review else next(title for key,title,_ in PARTS if key==current_part)
         page=page.replace('<title>JellyLive · 电视界面设计册</title>',f'<title>JellyLive · {label}设计</title>')

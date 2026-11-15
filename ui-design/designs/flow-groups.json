@@ -57,27 +57,6 @@
         12,
         26
       ]
-    },
-    {
-      "id": "sources",
-      "title": "直播源管理",
-      "figures": [
-        13,
-        37,
-        38,
-        14
-      ]
-    },
-    {
-      "id": "box",
-      "title": "机顶盒配置入口与读取失败",
-      "figures": [
-        87,
-        88,
-        89
-      ],
-      "related": "settings.html#flow-settings-box",
-      "relatedTitle": "后续导入、修改、高级参数与保存流程"
     }
   ],
   "media": [
@@ -201,8 +180,23 @@
         76,
         77
       ],
-      "related": "live.html#flow-live-box",
-      "relatedTitle": "直播源中的同一配置入口"
+      "related": "settings.html#flow-settings-sources",
+      "relatedTitle": "直播源列表中的同一配置入口"
+    },
+    {
+      "id": "sources",
+      "title": "直播源：设置内直接管理",
+      "figures": [
+        13,
+        37,
+        38,
+        14,
+        87,
+        88,
+        89
+      ],
+      "related": "settings.html#flow-settings-box",
+      "relatedTitle": "共用机顶盒配置的导入、修改、保存流程"
     },
     {
       "id": "about",

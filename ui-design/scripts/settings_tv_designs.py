@@ -133,6 +133,38 @@ def install(g):
             for j,letter in enumerate(letters):s+=action(x+j*116,584+i*100,100,letter,i==0 and j==0,h=76)
         for x,w,label in [(330,260,'中文 / 英文'),(622,430,'空格'),(1084,240,'删除'),(1356,234,'完成')]:s+=action(x,914,w,label,h=82)
         return s
+    def sources(populated=False,add_menu=False,configured=True,large=False):
+        fs=1.5 if large else 1
+        s=frame(4,nav_focus=False,large=large)
+        s+=tx(760,272,'3 个直播源' if populated else '1 个直播源',26,MUTED)
+        s+=action(1492,226,296,'添加直播源',h=76)
+        entries=[('电视直播源','145 个频道 · 今天 20:50 更新' if configured else '尚未配置',True,True)]
+        if populated:entries += [('家庭 IPTV','M3U · 32 个频道 · 已启用',False,True),('客厅 Jellyfin','Jellyfin · 18 个频道 · 已启用',False,True)]
+        for i,(name,info,tv,enabled) in enumerate(entries):
+            y=328+i*(208 if large else 180);height=192 if large else 160
+            s+=rect(548,y,1240,height,'#171d32',14,'#343d56')
+            s+=tx(580,y+(62 if large else 54),fit(name,32*fs,560 if tv else 500),32*fs,weight=600)
+            s+=tx(580,y+(122 if large else 108),fit(info,24*fs,560 if tv else 500),24*fs,MUTED)
+            ay=y+(height-(132 if large else 88))/2;ah=132 if large else 88
+            if tv:
+                s+=action(1204,ay,244,'刷新频道',focus=configured and not add_menu,h=ah,disabled=not configured)
+                s+=action(1472,ay,300,'机顶盒配置',focus=not configured and not add_menu,h=ah)
+            else:
+                for j,label in enumerate(['刷新','编辑','停用' if enabled else '启用','删除']):s+=action(1160+j*156,ay,140,label,h=ah)
+        if add_menu:
+            x,y,w,h=1188,316,600,216
+            s+=g['frosted_backdrop'](s,x,y,w,h)+rect(x,y,w,h,'#1b2238',16,'#59627d',1,fill_opacity=.85)
+            for i,label in enumerate(['M3U 直播源','Jellyfin 服务器']):s+=action(x+16,y+16+i*96,w-32,label,focus=i==0,h=88)
+        return s
+    def source_editor():
+        s=frame(4,'添加直播源')
+        for y,label,value in [(340,'来源名称','家庭 IPTV'),(498,'M3U 播放列表地址','https://example.com/live/channels.m3u'),(656,'XMLTV 节目单地址（可选）','https://example.com/live/guide.xml')]:
+            s+=tx(548,y,label,28,MUTED)+rect(548,y+24,1240,80,'#20263e',14,'#fff' if y==498 else '#3a425f',4 if y==498 else 1)+tx(576,y+76,value,30)
+        s+=tx(548,816,'待检测',26,MUTED)
+        for x,w,label in [(548,296,'检测来源'),(868,296,'保存来源'),(1188,220,'取消')]:s+=action(x,852,w,label,h=88)
+        return s
+    g['sources_page']=sources
+    g['source_editor_design']=source_editor
     def box_summary():
         s=frame(3)+tx(548,332,'已保存配置 · 安徽移动百视通',28,MUTED)
         for i,title in enumerate(['从机顶盒导入','导入配置文件','手动修改','导出配置文件']):s+=row(374+i*132,title,focus=i==0)
