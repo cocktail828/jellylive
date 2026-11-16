@@ -164,7 +164,7 @@ class JellyLibraryActivity : FragmentActivity() {
         applyTheme()
         super.onCreate(state)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        ui = TvUi(this)
+        ui = TvUi(this,true)
         cctvMode=intent.hasExtra("cctv_album")
         if(!cctvMode)connections.prepare(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { back() } })
@@ -487,12 +487,13 @@ class JellyLibraryActivity : FragmentActivity() {
                 val selected=withContext(Dispatchers.Default){LibraryBrowse.select(catalog,query).filter {text.isBlank()||it.name.orEmpty().contains(text,true)||it.originalTitle.orEmpty().contains(text,true)||it.seriesName.orEmpty().contains(text,true)}}
                 if(page!==host||activeSessionKey()!=session||query!=state.query||text!=state.text)return@launch
                 val filtered=filterCount(query)>0||text.isNotBlank()
-                browser.title("${names[section]} · ${selected.size}")
-                TvIcons.text(browser.search,if(text.isBlank())"搜索媒体" else "搜索：$text")
+                browser.title(names[section])
+                TvIcons.text(browser.search,if(text.isBlank())when(section){1->"搜索电影";2->"搜索电视剧";else->"搜索电影、电视剧"} else "搜索：$text")
                 TvIcons.text(browser.genre,"类型：${query.genre ?: "全部"}")
                 TvIcons.text(browser.year,"年份：${if(query.unknownYear)"未知年份" else query.year?.toString() ?: "全部"}")
                 TvIcons.text(browser.rating,"评分：${query.minimumRating?.let {"${it.toInt()}分以上"} ?: "不限"}")
                 TvIcons.text(browser.progress,"进度：${query.state.label}")
+                browser.controlsSelected(listOf(query.genre!=null,query.year!=null||query.unknownYear,query.minimumRating!=null,query.state!=LibraryBrowse.State.ALL))
                 TvIcons.text(browser.sort,sortLabel(query.sort,query.ascending))
                 browser.clear.visibility=if(filtered)View.VISIBLE else View.GONE
                 val first=!hasResult;hasResult=true
@@ -851,10 +852,18 @@ class JellyLibraryActivity : FragmentActivity() {
         val exo=ExoPlayer.Builder(this,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(http))).build()
         player=exo;videoSurface?.player=exo
         applyMediaAspect();exo.setPlaybackSpeed(mediaSpeed)
-        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).build()
+        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).setForceHighestSupportedBitrate(cctvMode).build()
+        var highestApplied=!cctvMode
         exo.addListener(object:Player.Listener {
             override fun onPlayerError(error:PlaybackException){cancelAutoNext();overlay.blocked=true;showPlaybackRetry(item)}
-            override fun onTracksChanged(tracks:Tracks){updateTrackLabels()}
+            override fun onTracksChanged(tracks:Tracks){
+                if(!highestApplied){
+                    val choices=MediaTracks.choices(exo,C.TRACK_TYPE_VIDEO)
+                    val index=CctvPlayback.highestQuality(choices.map {choice->val format=choice.group.getTrackFormat(choice.index);Triple(format.height,format.width,format.bitrate)})
+                    if(index>=0){highestApplied=true;if(!MediaTracks.select(exo,C.TRACK_TYPE_VIDEO,choices[index]))highestApplied=false}
+                }
+                updateTrackLabels()
+            }
             override fun onPlayWhenReadyChanged(playWhenReady:Boolean,reason:Int){overlay.paused=!playWhenReady;armPlayerIdle()}
             override fun onTimelineChanged(timeline:Timeline,reason:Int){updateSeekAvailability()}
             override fun onPlaybackStateChanged(state:Int){

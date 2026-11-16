@@ -21,7 +21,8 @@ public final class TvUi {
     public final Activity activity;
     public final float scale;
     public final float fontScale;
-    public TvUi(Activity a){activity=a;scale=Math.min(a.getResources().getDisplayMetrics().widthPixels/960f,a.getResources().getDisplayMetrics().heightPixels/540f);fontScale=Math.max(.5f,a.getResources().getConfiguration().fontScale)*(a.getSharedPreferences("bestv_live",0).getBoolean("large_text",false)?1.17f:1f);}
+    public TvUi(Activity a){this(a,false);}
+    public TvUi(Activity a,boolean fullDisplay){activity=a;android.util.DisplayMetrics metrics=new android.util.DisplayMetrics();if(fullDisplay)a.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);else metrics.setTo(a.getResources().getDisplayMetrics());scale=Math.min(metrics.widthPixels/960f,metrics.heightPixels/540f);fontScale=Math.max(.5f,a.getResources().getConfiguration().fontScale)*(a.getSharedPreferences("bestv_live",0).getBoolean("large_text",false)?1.17f:1f);}
     public int px(float n){return Math.round(n*scale);}
     public GradientDrawable surface(int color,boolean focus){
         GradientDrawable d=focus?new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff6652d5,0xff3a327d}):new GradientDrawable();

@@ -10,5 +10,8 @@ fun main(){
  check(CctvPlayback.episode(item.id,listOf(first,next))==first)
  check(CctvPlayback.next(first,listOf(first,next))==next)
  check(CctvPlayback.next(next,listOf(first,next))==null)
- println("CCTV shared playback identity/order PASS")
+ check(CctvPlayback.highestQuality(listOf(Triple(720,1280,8_000_000),Triple(1080,1920,6_000_000)))==1)
+ check(CctvPlayback.highestQuality(listOf(Triple(1080,1920,6_000_000),Triple(1080,1920,8_000_000)))==1)
+ check(CctvPlayback.highestQuality(emptyList())==-1)
+ println("CCTV shared playback identity/order and highest-quality policy PASS")
 }
