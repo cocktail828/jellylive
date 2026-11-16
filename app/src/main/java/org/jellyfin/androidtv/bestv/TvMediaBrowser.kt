@@ -257,6 +257,7 @@ class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: Str
             val scroll=ScrollView(ui.activity).apply {addView(body);isVerticalScrollBarEnabled=false}
             val dialog=AlertDialog.Builder(ui.activity).setView(scroll).create()
             val buttons=values.mapIndexed {index,value->ui.button(value){onSelect(index);dialog.dismiss()}.apply {
+                isFocusableInTouchMode=true
                 TvBrowserStyle.button(ui,this,selected=index==selected);setSingleLine();ellipsize=TextUtils.TruncateAt.END
                 if(index==selected)setCompoundDrawablesRelative(null,null,TvBrowserStyle.icon(ui,"check"),null)
                 body.addView(this,LinearLayout.LayoutParams(-1,ui.px(if(ui.largeText())54f else 36f)))
@@ -269,11 +270,12 @@ class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: Str
             val w=ui.px(if(ui.largeText())320f else if(title=="排序")262f else 225f)
             val h=minOf(ui.px(430f),ui.px(52f+values.size*(if(ui.largeText())54f else 36f)))
             dialog.window?.apply {
+                decorView.systemUiVisibility=ui.activity.window.decorView.systemUiVisibility
                 setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));setDimAmount(0f)
                 setGravity(Gravity.TOP or Gravity.START);setLayout(w,h)
                 attributes=attributes.apply {x=point[0].coerceIn(ui.px(32f),ui.px(928f)-w);y=(point[1]+(anchor?.height ?: 0)+ui.px(8f)).coerceIn(ui.px(32f),ui.px(508f)-h)}
             }
-            buttons.getOrNull(selected)?.requestFocus()
+            buttons.getOrNull(selected)?.let {button->button.post {button.requestFocus()}}
             return dialog
         }
     }
