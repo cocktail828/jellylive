@@ -503,7 +503,8 @@ class JellyLibraryActivity : FragmentActivity() {
                         if(filtered){state.query=clearQuery(state.query);state.text="";render(true);browser.genre.requestFocus()}else gridReloads[host]?.invoke()
                     },first)
                 }else{
-                    browser.show(selected.map {item->TvMediaBrowser.Card(item.id.toString(),cardTitle(item),cardMeta(item),repo.image(item),LibraryMetadata.rating(item),LibraryBrowse.progress(item))},preserve=!reset&&!first){card->selected.firstOrNull {it.id.toString()==card.id}?.let {detail(it)}}
+                    val episodes=catalog.filter {it.type==BaseItemKind.EPISODE&&it.seriesId!=null}.groupBy {it.seriesId}
+                    browser.show(selected.map {item->TvMediaBrowser.Card(item.id.toString(),cardTitle(item),cardMeta(item),repo.image(item),LibraryMetadata.rating(item),LibraryBrowse.progress(item),LibraryBrowse.quality(item,episodes[item.id].orEmpty()))},preserve=!reset&&!first){card->selected.firstOrNull {it.id.toString()==card.id}?.let {detail(it)}}
                     if(first){state.position?.let {browser.restore(it)} ?: browser.focusFirst()}
                 }
             }

@@ -18,7 +18,7 @@ import org.jellyfin.androidtv.ui.AsyncImageView
 class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: String,
     sections: List<String>,selectedSection: Int,onSection: (Int)->Unit) {
     data class Card(val id: String,val title: String,val metadata: String,val imageUrl: String?=null,
-        val score: String?=null,val progress: Double?=null)
+        val score: String?=null,val progress: Double?=null,val quality:String?=null)
     data class Position(val id: String?,val index: Int,val offset: Int)
     fun position()=Position(focusedId,lastIndex,scroll.scrollY)
     fun restore(position: Position){
@@ -198,6 +198,12 @@ class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: Str
             val badge=ui.text(value,11,0xffe9d4a9.toInt()).apply {gravity=Gravity.CENTER;setSingleLine();ellipsize=TextUtils.TruncateAt.END;background=ui.surface(0xff11151e.toInt(),false)}
             ui.at(imageHost,badge,7f,7f,(badge.paint.measureText(value)/ui.scale+12f).coerceIn(36f,b.width-14f),19f)
         }
+        model.quality?.let {value->
+            val badge=ui.text(value,11,TvBrowserStyle.INK).apply {gravity=Gravity.CENTER;setSingleLine();background=TvBrowserStyle.surface(ui,0xd911151e.toInt())}
+            val width=(badge.paint.measureText(value)/ui.scale+12f).coerceIn(26f,b.width-14f)
+            val height=maxOf(19f,(badge.paint.fontMetrics.bottom-badge.paint.fontMetrics.top)/ui.scale+3f)
+            ui.at(imageHost,badge,b.width-7f-width,h-15f-height,width,height)
+        }
         model.progress?.takeIf {it.isFinite()}?.let {fraction->
             ui.at(imageHost,View(activity).apply {background=ui.surface(0xff5b5968.toInt(),false)},7f,h-9f,b.width-14f,3f)
             if(fraction>0)ui.at(imageHost,View(activity).apply {setBackgroundColor(0xffc3b0e7.toInt())},7f,h-9f,(b.width-14f)*fraction.coerceIn(0.0,1.0).toFloat(),3f)
@@ -210,7 +216,7 @@ class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: Str
         }
         card.setOnFocusChangeListener {_,has->imageHost.isSelected=has}
         scrollTitleOnFocus(card,caption,ui)
-        card.contentDescription=listOfNotNull(model.title,model.metadata,model.score).joinToString("，")
+        card.contentDescription=listOfNotNull(model.title,model.metadata,model.score,model.quality).joinToString("，")
         return card
     }
     private class PosterPlaceholder(context: android.content.Context,private val seed: Int): View(context){

@@ -43,6 +43,16 @@ object LibraryBrowse {
             when {w>=3840||h>=2160->2160;w>=1920||h>=1080->1080;w>=1280||h>=720->720;w>0&&h>0->480;else->null}
         }.maxOrNull()
     }
+    /** Highest available source tier; unknown sizes stay absent, including series without episode data. */
+    fun quality(item:BaseItemDto,episodes:List<BaseItemDto> = emptyList()):String? {
+        val items=listOf(item)+if(item.type==BaseItemKind.SERIES)episodes.filter {it.seriesId==item.id} else emptyList()
+        return items.flatMap {it.mediaStreams.orEmpty()+it.mediaSources.orEmpty().flatMap {source->source.mediaStreams.orEmpty()}}
+            .filter {it.type==MediaStreamType.VIDEO}.mapNotNull {stream->
+                val w=stream.width?:0;val h=stream.height?:0
+                when {w>=7680||h>=4320->4320;w>=3840||h>=2160->2160;w>=2560||h>=1440->1440;
+                    w>=1920||h>=1080->1080;w>=1280||h>=720->720;h>0->h;else->null}
+            }.maxOrNull()?.let {when(it){4320->"8K";2160->"4K";else->"${it}p"}}
+    }
     fun regions(item: BaseItemDto)=item.productionLocations.orEmpty().map {it.trim()}.filter {it.isNotEmpty()}.distinct()
     fun top(item: BaseItemDto) = item.type in listOf(BaseItemKind.MOVIE,BaseItemKind.SERIES,BaseItemKind.VIDEO)
     fun search(items: List<BaseItemDto>,query: String,kind: BaseItemKind?=null): List<BaseItemDto> {
