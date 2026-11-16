@@ -47,8 +47,8 @@ internal object TvBrowserStyle {
         }
     }
     fun background(ui:TvUi,host:FrameLayout){
-        host.background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xff1b1c29.toInt(),0xff10131c.toInt(),0xff0c1017.toInt()))
-        ui.at(host,android.view.View(ui.activity).apply {background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(0xff171924.toInt(),0x33171924))},0f,0f,176f,540f)
-        ui.at(host,android.view.View(ui.activity).apply {setBackgroundColor(0x301b1c29)},176f,0f,784f,80f)
+        host.background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(0xff171b28.toInt(),0xff10141e.toInt(),0xff0c1017.toInt()))
+        ui.at(host,android.view.View(ui.activity).apply {setBackgroundColor(0xff232738.toInt())},0f,0f,176f,540f)
+        ui.at(host,android.view.View(ui.activity).apply {setBackgroundColor(0xff191d2b.toInt())},176f,0f,784f,80f)
     }
 }

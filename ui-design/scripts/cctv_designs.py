@@ -22,13 +22,13 @@ OPTIONS={
 def begin(title,note):
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2160" viewBox="0 0 3840 2160" role="img" aria-labelledby="title desc">
 <title id="title">{escape(title)}</title><desc id="desc">{escape(note)}</desc><defs>
-<linearGradient id="background" x2="1" y2="1"><stop stop-color="#1b1c29"/><stop offset=".5" stop-color="#10131c"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
-<linearGradient id="sidebar" x2="1" y2="0"><stop stop-color="#171924"/><stop offset="1" stop-color="#171924" stop-opacity=".2"/></linearGradient>
+<linearGradient id="background" x2="1" y2="1"><stop stop-color="#171b28"/><stop offset=".5" stop-color="#10141e"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
+<linearGradient id="sidebar" x2="1" y2="0"><stop stop-color="#232738"/><stop offset="1" stop-color="#232738"/></linearGradient>
 <linearGradient id="purple"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient>
 <filter id="card-shadow" x="-15%" y="-10%" width="130%" height="130%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="22"/><feOffset dy="20"/><feComponentTransfer><feFuncA type="linear" slope=".24"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 <linearGradient id="fade" x2="0" y2="1"><stop stop-color="#0d1119" stop-opacity="0"/><stop offset="1" stop-color="#0d1119"/></linearGradient>
 <clipPath id="viewport"><rect x="774" y="526" width="2964" height="1506"/></clipPath>
-</defs><rect width="3840" height="2160" fill="url(#background)"/><rect width="704" height="2160" fill="url(#sidebar)"/>
+</defs><rect width="3840" height="2160" fill="url(#background)"/><rect width="704" height="2160" fill="url(#sidebar)"/><rect x="704" width="3136" height="320" fill="#191d2b"/>
 <g font-family="Noto Sans CJK SC, sans-serif">'''
 
 

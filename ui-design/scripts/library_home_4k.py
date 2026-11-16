@@ -147,8 +147,8 @@ def home(section='全部媒体',focus='card-0',filters=None,sort='名称升序',
 <title id="title">媒体库首页 · 4K 遥控器设计</title>
 <desc id="desc">左上当前媒体库名称，左侧全部媒体、电影、电视剧、观看记录、收藏。顶部搜索和四项筛选，内容区右上排序，五列占位海报。首张卡片白框为遥控焦点。媒体信息均为示例。</desc>
 <defs>
-<linearGradient id="background" x2="1" y2="1"><stop stop-color="#1b1c29"/><stop offset=".5" stop-color="#10131c"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
-<linearGradient id="sidebar" x2="1" y2="0"><stop stop-color="#171924"/><stop offset="1" stop-color="#171924" stop-opacity=".2"/></linearGradient>
+<linearGradient id="background" x2="1" y2="1"><stop stop-color="#171b28"/><stop offset=".5" stop-color="#10141e"/><stop offset="1" stop-color="#0c1017"/></linearGradient>
+<linearGradient id="sidebar" x2="1" y2="0"><stop stop-color="#232738"/><stop offset="1" stop-color="#232738"/></linearGradient>
 <linearGradient id="selection"><stop stop-color="#373047"/><stop offset="1" stop-color="#302c40"/></linearGradient>
 <linearGradient id="bottom-fade" x2="0" y2="1"><stop stop-color="#0d1119" stop-opacity="0"/><stop offset="1" stop-color="#0d1119"/></linearGradient>
 <filter id="card-shadow" x="-15%" y="-10%" width="130%" height="130%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceAlpha" stdDeviation="22"/><feOffset dx="0" dy="20"/><feComponentTransfer><feFuncA type="linear" slope=".24"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
@@ -156,6 +156,7 @@ def home(section='全部媒体',focus='card-0',filters=None,sort='名称升序',
 </defs>
 <rect width="3840" height="2160" fill="url(#background)"/>
 <rect width="704" height="2160" fill="url(#sidebar)"/>
+<rect x="704" width="3136" height="320" fill="#191d2b"/>
 <g font-family="Noto Sans CJK SC, sans-serif">
 '''
     s += text(128,226,'客厅媒体库',72 if large else 64,FG,600)
