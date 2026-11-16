@@ -53,7 +53,7 @@ def icon(name, x, y, size=48, color=SECONDARY):
     return f'<g transform="translate({x} {y}) scale({size/36})"><path d="{paths[name]}" fill="none" stroke="{color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>'
 
 
-def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,watch_state=None,focus_sw=8,quality=None):
+def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,watch_state=None,focus_sw=8,quality=None,caption=True):
     palettes = [('#2e3e43', '#152126', '#a4bdb4'), ('#39354c', '#1c1b2a', '#b4a5ce'),
                 ('#454034', '#24221c', '#c8b792'), ('#35414d', '#18232d', '#99b4c8'),
                 ('#4b3539', '#281b23', '#d2a3a9')]
@@ -91,10 +91,11 @@ def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,wa
     if focus:
         margin = 10 if fs == 1 else 8
         s += box(x-margin,y-margin,544+2*margin,816+2*margin,'none',42,'#f6f4ff',focus_sw)
-    s += '<g data-role="card-caption">'
-    s += text(x+272,y+900,shorten(title,60*fs,504),60*fs,FG,600,'middle')
-    s += text(x+272,y+972,shorten(f'{year or "年份未知"} · {kind}',48*fs,504),48*fs,SECONDARY,400,'middle')
-    s += '</g>'
+    if caption:
+        s += '<g data-role="card-caption">'
+        s += text(x+272,y+900,shorten(title,60*fs,504),60*fs,FG,600,'middle')
+        s += text(x+272,y+972,shorten(f'{year or "年份未知"} · {kind}',48*fs,504),48*fs,SECONDARY,400,'middle')
+        s += '</g>'
     # Full title is retained for the focused marquee below the artwork.
     s += f'<desc data-role="focus-title" data-delay-ms="800" data-speed-4k-px-s="60">{escape(title)}</desc>'
     return s+'</g>'

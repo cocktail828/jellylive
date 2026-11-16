@@ -41,11 +41,6 @@
       "scene": "loading"
     },
     {
-      "number": 58,
-      "id": "12-library-large-text",
-      "scene": "large-text"
-    },
-    {
       "number": 63,
       "id": "12-library-recent",
       "scene": "history"

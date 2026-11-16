@@ -7,7 +7,7 @@ LEGACY = {
     'empty-library':'23-library-empty', 'filter-type':'12-library-filter',
     'sort':'12-library-sort', 'empty-history':'11-library-empty-history',
     'no-results':'12-library-no-results', 'loading':'12-library-loading',
-    'large-text':'12-library-large-text', 'history':'12-library-recent',
+    'history':'12-library-recent',
 }
 # Explicit order keeps new figure numbers stable, independent of preview ordering.
 ADDITIONAL = ['series','history-sort','filter-year','filter-rating','filter-progress',
@@ -60,7 +60,7 @@ def merge(screens,output):
         (output/'svg'/f'{legacy_id}.svg').write_text(scene_svg(title,params,note))
     assert len(screens)==120
     integrated = [dict(number=n,id=s['id'],scene=s['libraryScene'])
-                  for n,s in enumerate(screens,1) if s.get('libraryScene')]
+                  for n,s in enumerate(screens,1) if s.get('libraryScene') and not s.get('retired')]
     (output/'library-integration.json').write_text(json.dumps({
         'figures':integrated,
         'nativeResolution':[3840,2160],'previewResolution':[1920,1080],

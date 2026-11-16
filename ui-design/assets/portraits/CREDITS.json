@@ -1,0 +1,58 @@
+[
+  {
+    "key": "byron",
+    "source": "https://commons.wikimedia.org/wiki/File:Byron_Howard.jpg",
+    "author": "Boungawa",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  {
+    "key": "ginnifer",
+    "source": "https://commons.wikimedia.org/wiki/File:Ginnifer_Goodwin_by_Gage_Skidmore.jpg",
+    "author": "Gage Skidmore",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0"
+  },
+  {
+    "key": "jason",
+    "source": "https://commons.wikimedia.org/wiki/File:Jason_Bateman,_2011.jpg",
+    "author": "Eva Rinaldi",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  {
+    "key": "quan",
+    "source": "https://commons.wikimedia.org/wiki/File:Ke_Huy_Quan_01.jpg",
+    "author": "GabboT",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  {
+    "key": "idris",
+    "source": "https://commons.wikimedia.org/wiki/File:Idris_Elba_A_House_of_Dynamite-21_(cropped).jpg",
+    "author": "Bryan Berlin",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  {
+    "key": "jenny",
+    "source": "https://commons.wikimedia.org/wiki/File:Jenny_Slate_(cropped).jpg",
+    "author": "Colleen Sturtevant",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0"
+  },
+  {
+    "key": "shakira",
+    "source": "https://commons.wikimedia.org/wiki/File:2023-11-16_Gala_de_los_Latin_Grammy,_03_(cropped)02.jpg",
+    "author": "Junta de Andalucía",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  {
+    "key": "jared",
+    "source": "https://commons.wikimedia.org/wiki/File:Jared_Bush.jpg",
+    "author": "Boungawa",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en"
+  }
+]

@@ -22,11 +22,11 @@ def main():
     generated={ident:scene_svg(title,params,note) for _,ident,title,params,note,_ in entries()}
     manifest=json.loads((D/'manifest.json').read_text())
     integrated=json.loads((D/'library-integration.json').read_text())['figures']
-    assert len(manifest)==150 and len(integrated)==25
+    assert len(manifest)==151 and len(integrated)==24
     active={n for n,s in enumerate(manifest,1) if not s.get('retired')}
     flows=json.loads((D/'flow-groups.json').read_text())
     ordered=[n for groups in flows.values() for group in groups for n in group['figures']]
-    assert len(ordered)==len(set(ordered))==142 and set(ordered)==active
+    assert len(ordered)==len(set(ordered))==133 and set(ordered)==active
     errors=[]
     for item in integrated:
         number,slug,scene=item['number'],item['id'],item['scene']
@@ -50,11 +50,11 @@ def main():
                 assert (D/path).exists(), f'{page}: broken local resource {path}'
         assert "(s.libraryScene||s.cctvScene)?'native-4k':'previews'" in markup
     assert manifest[62]['title']=='媒体库：观看记录'
-    assert all(not s['flow'].startswith('面板') for s in manifest if s.get('libraryScene') in ('large-text','filtered','metadata'))
+    assert all(not s['flow'].startswith('面板') for s in manifest if s.get('libraryScene') in ('filtered','metadata'))
     assert '图106电视剧分类' in manifest[105]['note']
     assert not any('最近添加' in s['title'] for s in manifest if not s.get('retired'))
     assert {p.name for p in D.glob('*.html')}=={'index.html','startup.html','live.html','media.html','cctv.html','settings.html'}
-    result=dict(integrated=25,updatedLegacy=10,newFigures=list(range(106,121)),slots=len(manifest),
+    result=dict(integrated=24,updatedLegacy=9,newFigures=list(range(106,121)),slots=len(manifest),
                 active=len(active),flowGroups=sum(map(len,flows.values())),
                 errors=[],scope='Local container artifact/geometry/integration checks; no physical TV or Android validation')
     (D/'library-integration-verification.json').write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n')

@@ -69,9 +69,8 @@ def install(g):
         if selected==0:
             for i,title in enumerate(playback):s+=row(320+i*(156 if large else 112),title,focus=not focus_menu and i==0,kind='toggle',checked=True,large=large)
         elif selected==1:
-            s+=row(320,'字号','跟随系统',focus=not focus_menu)
-            s+=row(432,'频道侧栏透明度','35%')
-            s+=tx(548,602,'显示预览',28,MUTED,600)+preview()
+            s+=row(320,'频道侧栏透明度','35%',focus=not focus_menu)
+            s+=tx(548,490,'显示预览',28,MUTED,600)+preview(520)
         return s
     def choice(title,options,current=0,focus=None,large=False):
         focus=current if focus is None else focus;s=frame(1 if title=='字号' else 0,title,large=large)

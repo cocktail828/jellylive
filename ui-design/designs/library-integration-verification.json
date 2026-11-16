@@ -1,6 +1,6 @@
 {
-  "integrated": 25,
-  "updatedLegacy": 10,
+  "integrated": 24,
+  "updatedLegacy": 9,
   "newFigures": [
     106,
     107,
@@ -18,8 +18,8 @@
     119,
     120
   ],
-  "slots": 150,
-  "active": 142,
+  "slots": 151,
+  "active": 133,
   "flowGroups": 20,
   "errors": [],
   "scope": "Local container artifact/geometry/integration checks; no physical TV or Android validation"

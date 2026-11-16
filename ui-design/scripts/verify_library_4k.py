@@ -77,9 +77,9 @@ class Links(HTMLParser):
 
 def main():
     manifest=json.loads((OUT/'manifest.json').read_text())
-    scenes=[scene for scene in manifest if scene.get('libraryScene') and not scene.get('detailScene')]
+    scenes=[scene for scene in manifest if scene.get('libraryScene') and not scene.get('detailScene') and not scene.get('detailLayout') and not scene.get('retired')]
     errors=[]
-    assert len(scenes)==25
+    assert len(scenes)==24
     for scene in scenes:
         slug=scene['id'];source=(OUT/'svg'/f'{slug}.svg').read_text();root=ET.fromstring(source)
         assert root.get('viewBox')=='0 0 3840 2160'

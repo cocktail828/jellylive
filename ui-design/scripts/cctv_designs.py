@@ -142,34 +142,8 @@ def browse(data,cat='电视剧',focus='card-0',menu=None,state='ready',chosen=No
 
 
 def details(data,episode_focus=False,error=None,episode_start=1):
-    s=shell('电视剧','none')
-    item=data['categories']['电视剧']['items'][0]
-    title=clean_title(item['title'])
-    s+=card(item,800,552,0,False,progress=.32)
-    s+=ui.text(1488,650,ui.shorten(title,96,2150),96,ui.FG,650)
-    meta=' · '.join(str(v) for v in [item.get('year'),item.get('sc'),item.get('channel')] if v)
-    s+=ui.text(1488,758,meta,48,ui.SECONDARY)
-    s+=ui.text(1488,854,'收录'+str(item.get('count',''))+'集',48,ui.SECONDARY)
-    if error:
-        heading='暂时无法加载分集' if error=='episode' else '暂时无法播放本集'
-        message='节目资料已保留，请重试加载分集。' if error=='episode' else '节目与选集位置已保留，可以重试或重新选集。'
-        s+=ui.icon('alert',2536,928,128)
-        s+=ui.text(2600,1190,heading,80,ui.FG,600,'middle')+ui.text(2600,1310,message,48,ui.SECONDARY,400,'middle')
-        s+=ui.control(1952,1456,608,'重试分集' if error=='episode' else '重试播放',True,size=56,center=True)
-        s+=ui.control(2608,1456,608,'返回节目' if error=='episode' else '返回选集',size=56,center=True)
-        return s
-    s+=ui.text(1488,992,'节目简介',56,ui.FG,600)
-    s+=ui.text(1488,1084,'节目介绍按来源资料展示，长内容可展开阅读。',52,ui.SECONDARY)
-    s+=ui.control(1488,1180,736,'继续播放 · 第7集',not episode_focus,size=56,center=True)
-    s+=ui.control(2272,1180,608,'查看分集',size=56,center=True)
-    s+=ui.control(2928,1180,608,'收藏',size=56,center=True)
-    s+=ui.text(1488,1460,'选集',64,ui.FG,600)
-    s+=ui.control(1900,1364,688,'1–10集',size=56,center=True,selected=episode_start==1)
-    s+=ui.control(2636,1364,688,'11–20集',size=56,center=True,selected=episode_start==11)
-    for i in range(10):
-        x,y=1488+i%5*452,1536+i//5*184
-        s+=ui.control(x,y,416,f'第{i+episode_start}集',episode_focus and i==(6 if episode_start==1 else 0),size=56,center=True)
-    return s
+    from detail_edge_designs import cctv_detail
+    return cctv_detail(data,episode_focus,error,episode_start)
 
 
 SCENES=[
@@ -232,5 +206,7 @@ if __name__=='__main__':
     merge(screens,OUT)
     from detail_edge_designs import merge as merge_detail_edges
     merge_detail_edges(screens,OUT)
+    from retire_font_designs import retire
+    retire(screens,OUT)
     (OUT/'manifest.json').write_text(json.dumps(screens,ensure_ascii=False,indent=2)+'\n')
     print('Merged',len(SCENES),'CCTV scenes; previous figure numbers preserved.')

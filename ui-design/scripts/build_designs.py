@@ -702,10 +702,12 @@ if __name__=='__main__':
     merge_cctv_designs(SCREENS,OUT)
     from detail_edge_designs import merge as merge_detail_edges
     merge_detail_edges(SCREENS,OUT)
+    from retire_font_designs import retire
+    retire(SCREENS,OUT)
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
         if screen.get('retired'):
-            for folder,suffix in [('svg','svg'),('previews','png')]:
+            for folder,suffix in [('svg','svg'),('previews','png'),('native-4k','png')]:
                 (OUT/folder/f"{screen['id']}.{suffix}").unlink(missing_ok=True)
     (OUT/'manifest.json').write_text(json.dumps(SCREENS,ensure_ascii=False,indent=2))
     print(f'Built {len(SCREENS)} SVG designs.')

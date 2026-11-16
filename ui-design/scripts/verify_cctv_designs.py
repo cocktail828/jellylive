@@ -11,9 +11,9 @@ D=ROOT/'designs'
 def main():
     manifest=json.loads((D/'manifest.json').read_text())
     mapping=json.loads((D/'cctv-integration.json').read_text())
-    scenes=[(i,s) for i,s in enumerate(manifest,1) if s.get('cctvScene')]
-    assert len(scenes)==27 and mapping['merged'] is True
-    assert [i for i,s in scenes]==list(range(121,147))+[149]
+    scenes=[(i,s) for i,s in enumerate(manifest,1) if s.get('cctvScene') and not s.get('retired')]
+    assert len(scenes)==26 and mapping['merged'] is True
+    assert [i for i,s in scenes]==[n for n in range(121,147) if n!=144]+[149]
     errors=[]
     for number,scene in scenes:
         ident=scene['id'];root=ET.parse(D/'svg'/f'{ident}.svg').getroot()
@@ -24,7 +24,8 @@ def main():
         assert [n.get('data-category') for n in root.findall('.//s:g[@data-role="sidebar-entry"]',NS)]==['电视剧','动画片','纪录片','特别节目','观看记录','收藏']
         for card in root.findall('.//s:g[@data-role="media-card"]',NS):
             assert not any(n.text in ('未看','在看','已看','进度未知') for n in card.findall('.//s:text',NS)),ident
-            assert len(card.findall('./s:g[@data-role="card-caption"]',NS))==1
+            is_detail=root.find('.//s:g[@data-role="detail-body"]',NS) is not None
+            assert len(card.findall('./s:g[@data-role="card-caption"]',NS))==(0 if is_detail else 1)
         for folder,dims in [('previews',(1920,1080)),('native-4k',(3840,2160))]:
             assert struct.unpack('>II',(D/folder/f'{ident}.png').read_bytes()[16:24])==dims
         assert 'App内部' in scene['note']
@@ -45,7 +46,7 @@ def main():
             path=urlsplit(link).path
             if path and not urlsplit(link).scheme:assert (D/path).exists(),(page,path)
     sections=json.loads((D/'sections.json').read_text())
-    assert next(s for s in sections if s['id']=='cctv')['figures']==list(range(121,147))+[149]
+    assert next(s for s in sections if s['id']=='cctv')['figures']==[n for n in range(121,147) if n!=144]+[149]
     assert not set(range(121,147)) & set(next(s for s in sections if s['id']=='media')['figures'])
     for number in (3,4,25,30,31,105):
         item=manifest[number-1]
