@@ -68,7 +68,7 @@ class CctvActivity:FragmentActivity() {
     private fun choice(title:String,key:String,options:List<String>){val all=listOf("")+options;val selected=all.indexOf(values()[key].orEmpty()).coerceAtLeast(0);dialog=TvMediaBrowser.choices(ui,title,all.map {it.ifBlank {"全部"}.substringBefore(',')},selected){i->remember();if(i==0)values().remove(key)else values()[key]=all[i];leaveDetail();if(section<4)load(true)else render();controls()}}
     private fun chooseLetter(){
         val anchor=currentFocus;val letters=listOf("")+('A'..'Z').map(Char::toString)
-        val cell=if(ui.largeText())56f else 42f;val size=cell-6f
+        val cell=42f;val size=cell-6f
         val panel=FrameLayout(this).apply {background=TvBrowserStyle.surface(ui,0xff252633.toInt())}
         ui.heading(panel,"首字母",14,12f,6f,cell*6,26f)
         val picker=AlertDialog.Builder(this).setView(panel).create()
@@ -106,13 +106,13 @@ class CctvActivity:FragmentActivity() {
         if(fetch){episodesLoaded=false;detailEpisodes=emptyList();detailError=null;rangeButton=null;group=0}
         host=ui.canvas();setContentView(host)
         val shell=TvMediaBrowser(ui,host,"央视频",sections,section,::select);controls(shell)
-        val large=ui.largeText();val body=FrameLayout(this)
-        val scroll=ScrollView(this).apply {isVerticalScrollBarEnabled=false;isFocusable=false;addView(body,android.view.ViewGroup.LayoutParams(ui.px(728f),ui.px(if(large)520f else 350f)))}
+        val body=FrameLayout(this)
+        val scroll=ScrollView(this).apply {isVerticalScrollBarEnabled=false;isFocusable=false;addView(body,android.view.ViewGroup.LayoutParams(ui.px(728f),ui.px(350f)))}
         shell.content(scroll)
         val record=state?.entries?.get(album.id)
         val resume=record?.episode?.takeIf {!record.completed}
         val artwork=FrameLayout(this).apply {background=TvBrowserStyle.surface(ui,TvUi.PANEL);clipToOutline=true}
-        val artH=if(large)258f else 204f;val artW=if(large)172f else 136f
+        val artH=204f;val artW=136f
         ui.at(body,artwork,0f,0f,artW,artH)
         if(album.imageUrl.isNotBlank()){
             val image=org.jellyfin.androidtv.ui.AsyncImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP}
@@ -125,10 +125,10 @@ class CctvActivity:FragmentActivity() {
         }
         ui.text(body,displayTitle(album),15,TvBrowserStyle.INK,0f,artH+8f,artW,30f).apply {gravity=android.view.Gravity.CENTER;setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
         ui.text(body,cardMetadata(album),12,TvBrowserStyle.MUTED,0f,artH+36f,artW,24f).gravity=android.view.Gravity.CENTER
-        val x=if(large)200f else 172f;val width=728f-x
-        ui.text(body,displayTitle(album),24,TvBrowserStyle.INK,x,0f,width,if(large)64f else 40f).apply {setTypeface(null,Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
-        ui.text(body,metadata(album),12,TvBrowserStyle.MUTED,x,if(large)67f else 39f,width,28f).apply {setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
-        ui.text(body,countText(album)?.let {"收录$it"}.orEmpty(),12,TvBrowserStyle.MUTED,x,if(large)101f else 65f,width,24f)
+        val x=172f;val width=728f-x
+        ui.text(body,displayTitle(album),24,TvBrowserStyle.INK,x,0f,width,40f).apply {setTypeface(null,Typeface.BOLD);maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        ui.text(body,metadata(album),12,TvBrowserStyle.MUTED,x,39f,width,28f).apply {setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
+        ui.text(body,countText(album)?.let {"收录$it"}.orEmpty(),12,TvBrowserStyle.MUTED,x,65f,width,24f)
         if(detailError!=null){
             ui.text(body,"暂时无法加载分集",20,TvBrowserStyle.INK,x,130f,width,45f).gravity=android.view.Gravity.CENTER
             ui.text(body,"节目资料已保留，请重试加载分集。",12,TvBrowserStyle.MUTED,x,180f,width,36f).gravity=android.view.Gravity.CENTER
@@ -136,24 +136,24 @@ class CctvActivity:FragmentActivity() {
             ui.button(body,"返回节目",x+256f,230f,220f,40f){detailError=null;showDetail(album,false)}.apply {TvBrowserStyle.button(ui,this,center=true)}
             return
         }
-        ui.heading(body,"节目简介",14,x,if(large)139f else 96f,width,26f)
-        val description=ui.text(body,album.brief.ifBlank {"暂无节目介绍"},13,TvBrowserStyle.MUTED,x,if(large)168f else 121f,width,if(large)44f else 36f).apply {maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END;isFocusable=true;tag="cctv-description"}
+        ui.heading(body,"节目简介",14,x,96f,width,26f)
+        val description=ui.text(body,album.brief.ifBlank {"暂无节目介绍"},13,TvBrowserStyle.MUTED,x,121f,width,36f).apply {maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END;isFocusable=true;tag="cctv-description"}
         description.setOnClickListener {val text=ui.text(album.brief.ifBlank {"暂无节目介绍"},14,TvBrowserStyle.INK);val content=ScrollView(this).apply {setPadding(ui.px(16f),ui.px(12f),ui.px(16f),ui.px(12f));addView(text)};dialog=AlertDialog.Builder(this).setTitle("节目简介").setView(content).create().also {it.show();it.window?.setLayout(ui.px(700f),ui.px(380f))}}
-        val actionY=if(large)222f else 157f
+        val actionY=157f
         fun action(label:String,tagName:String,left:Float,w:Float,click:()->Unit)=ui.button(body,label,left,actionY,w,36f,click).apply {tag=tagName;TvBrowserStyle.button(ui,this,center=true);setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
-        val play=action(if(resume!=null)"继续播放 · ${if(album.category=="特别节目")resume.title else "第${resume.part}集"}"else if(album.category=="特别节目")"播放节目"else "从第1集播放","cctv-play",x,if(large)176f else 184f){
+        val play=action(if(resume!=null)"继续播放 · ${if(album.category=="特别节目")resume.title else "第${resume.part}集"}"else if(album.category=="特别节目")"播放节目"else "从第1集播放","cctv-play",x,184f){
             val episode=resume?.let {saved->detailEpisodes.firstOrNull {it.guid==saved.guid}} ?: detailEpisodes.firstOrNull()
             if(episode!=null)launch(album,episode,if(episode.guid==resume?.guid)record!!.resumePosition else 0)
         }
         detailPlay=play;shell.contentFocus(play);play.isEnabled=episodesLoaded&&detailEpisodes.isNotEmpty()
-        val viewEpisodes=action("查看分集","cctv-view-episodes",x+(if(large)188f else 196f),if(large)158f else 152f){rangeButton?.requestFocus()}
-        val favorite=action(if((record?.favoriteAt?:0)>0)"取消收藏"else "收藏","cctv-favorite",x+(if(large)358f else 360f),if(large)158f else 152f){
+        val viewEpisodes=action("查看分集","cctv-view-episodes",x+(196f),152f){rangeButton?.requestFocus()}
+        val favorite=action(if((record?.favoriteAt?:0)>0)"取消收藏"else "收藏","cctv-favorite",x+(360f),152f){
             try{state=store.favorite(album,(state?.entries?.get(album.id)?.favoriteAt?:0)==0L);showDetail(album,false);host.findViewWithTag<View>("cctv-favorite")?.requestFocus()}catch(e:Exception){Toast.makeText(this,e.message,Toast.LENGTH_LONG).show()}
         }
         favorite.isEnabled=stateError==null;description.nextFocusDownId=play.id
         listOf(play,viewEpisodes,favorite).forEachIndexed {i,b->b.nextFocusLeftId=listOf(play,viewEpisodes,favorite).getOrNull(i-1)?.id ?: host.findViewWithTag<View>("browser-nav-$section")!!.id;b.nextFocusRightId=listOf(play,viewEpisodes,favorite).getOrNull(i+1)?.id ?: b.id;b.nextFocusUpId=description.id}
-        if(episodesLoaded)drawEpisodes(album,body,x,if(large)278f else 203f,listOf(play,viewEpisodes,favorite))
-        else ui.text(body,"正在加载选集…",14,TvBrowserStyle.MUTED,x,if(large)290f else 220f,width,50f).gravity=android.view.Gravity.CENTER
+        if(episodesLoaded)drawEpisodes(album,body,x,203f,listOf(play,viewEpisodes,favorite))
+        else ui.text(body,"正在加载选集…",14,TvBrowserStyle.MUTED,x,220f,width,50f).gravity=android.view.Gravity.CENTER
         (previous?.let {host.findViewWithTag<View>(it)}?.takeIf {it.isEnabled} ?: if(play.isEnabled)play else favorite).requestFocus()
         if(fetch)loadEpisodes(album)
     }
@@ -166,7 +166,7 @@ class CctvActivity:FragmentActivity() {
         }
     }
     private fun drawEpisodes(album:CctvAlbum,body:FrameLayout,x:Float,y:Float,actions:List<Button>){
-        val columns=if(ui.largeText())4 else 5;val size=columns*2;val chunks=detailEpisodes.chunked(size)
+        val columns=5;val size=columns*2;val chunks=detailEpisodes.chunked(size)
         group=group.coerceIn(0,chunks.lastIndex.coerceAtLeast(0))
         ui.heading(body,"选集",16,x,y+3f,100f,36f)
         val ranges=HorizontalScrollView(this).apply {isHorizontalScrollBarEnabled=false;isFocusable=false}

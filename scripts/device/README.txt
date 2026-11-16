@@ -48,8 +48,8 @@ phase 只接受字母、数字、下划线与连字符。字体/显示设置由�
   -e liveReview true：实际CCTV-1/高清版本、默认高清与来回切换、列表/收藏保留及受控原流恢复。
   -e channelAudit true：只读审计频道标识/全名的重复数量，不去重，不打印私有标识。
 
-正式矩阵设置wm size为3840x2160，font_scale分别1.0与1.5，逐模式force-stop后启动。
-每份report.display应记录3840×2160、density及实际fontScale；PNG也必须3840×2160。
+统一在3840×2160（4K、16:9）下验证；不再切换系统字号或执行字号矩阵。
+每份report.display记录3840×2160与density；PNG也必须3840×2160。
 焦点getLocationOnScreen与getRealMetrics使用同一完整屏幕坐标；资源可用区可能只有2048px高，
 不能用它裁判2160px完整截图的安全区。检查完整可见矩形，并人工查看标题/说明/弹层与IME排版。
 配置放弃必须验证实际Activity已关闭且来源取得窗口焦点，不能只读取后台旧焦点标签。
@@ -65,9 +65,9 @@ phase 只接受字母、数字、下划线与连字符。字体/显示设置由�
   -e settingsReview true -e quick true：只跑本轮设置/返回/触摸与实际透明度，跳过旧配置/文件/IME全流程。
   -e opacityFocusReview true：仅定位触摸后返回的类别/原行焦点。
   -e settingsBackReview true：仅验证触摸/系统返回层级、遥控返回，以及新增首帧直达空白表单和取消保留原库。
-保持当前字号1.0与3840×2160；本轮按用户要求不重复媒体库字号矩阵或整套回归。
+保持3840×2160，只执行受影响路径的必要检查。
 原生报告与当前APK范围见docs/SETTINGS_CONNECTION_UPDATE_VALIDATION.txt，loopback结果不冒充真实NAS结果。
 
-媒体库入口增量（保持4K/当前字号）：
+媒体库入口增量（统一4K）：
   -e entryRecoveryReview true：居中/默认焦点、真实loopback503/401、当前库重试、切换失败/取消/成功与目标重新登录。finally恢复原选择、清理合成记录。
   -e aboutReview true：关于两张实屏截图，以及通过正式入口打开真实媒体库、注入失败展示后重试当前库。

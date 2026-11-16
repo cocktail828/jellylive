@@ -68,20 +68,20 @@ object LibraryBrowseDialogs {
             update: (LibraryBrowse.Query, T?) -> LibraryBrowse.Query,
         ) {
             val heading = ui.text(title, 14, TvUi.MUTED)
-            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(22f*ui.fontScale)).apply {
+            body.addView(heading, LinearLayout.LayoutParams(-1, ui.px(22f)).apply {
                 topMargin = ui.px(if (body.childCount == 0) 0f else 10f)
                 bottomMargin = ui.px(8f)
             })
-            val actualColumns=if(ui.fontScale>1.4f) minOf(columns,2) else columns
+            val actualColumns=columns
             val choices: List<T?> = listOf(null) + values
             val space = 7f
             val width = (268f - space * (actualColumns - 1)) / actualColumns
-            val height = maxOf(35f, 29f*ui.fontScale)
+            val height = maxOf(35f, 29f)
             val grid = FrameLayout(activity)
             choices.forEachIndexed { index, value ->
                 val button = ui.button(if (value == null) "全部" else label(value)) { edit(update(selection.current, value)) }
                 button.background = choiceBackground(ui)
-                button.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13f * ui.scale * ui.fontScale)
+                button.setTextSize(TypedValue.COMPLEX_UNIT_PX, 13f * ui.scale)
                 button.maxLines = 2
                 button.ellipsize = TextUtils.TruncateAt.END
                 selections += Selection(button) { selected(it, value) }
@@ -157,7 +157,7 @@ object LibraryBrowseDialogs {
         val sortBody=FrameLayout(activity)
         val sortScroll=ScrollView(activity).apply {addView(sortBody)}
         ui.at(panel,sortScroll,22f,71f,268f,365f)
-        val rowHeight=maxOf(38f,29f*ui.fontScale)
+        val rowHeight=maxOf(38f,29f)
         val rowStep=rowHeight+8f
         listOf(LibraryBrowse.Sort.NAME,LibraryBrowse.Sort.ADDED,LibraryBrowse.Sort.YEAR,LibraryBrowse.Sort.RATING,LibraryBrowse.Sort.DURATION).forEachIndexed { index, option ->
             val button = ui.button(sortBody, option.label, 0f, index * rowStep, 268f, rowHeight) {
@@ -166,7 +166,7 @@ object LibraryBrowseDialogs {
             button.background = choiceBackground(ui)
             sortButtons += option to button
         }
-        ui.text(sortBody, "排列方向", 14, TvUi.MUTED, 0f, maxOf(250f,5*rowStep+10f), 268f, 24f*ui.fontScale)
+        ui.text(sortBody, "排列方向", 14, TvUi.MUTED, 0f, maxOf(250f,5*rowStep+10f), 268f, 24f)
         ascending = ui.button(sortBody, "", 0f, maxOf(287f,5*rowStep+42f), 128f, rowHeight) { if (selection.setAscending(true)) refresh() }
         descending = ui.button(sortBody, "", 140f, maxOf(287f,5*rowStep+42f), 128f, rowHeight) { if (selection.setAscending(false)) refresh() }
         ascending.background = choiceBackground(ui)

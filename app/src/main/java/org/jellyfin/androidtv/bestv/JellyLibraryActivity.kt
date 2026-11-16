@@ -370,7 +370,7 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         address.addTextChangedListener(clearForeignPassword);username.addTextChangedListener(clearForeignPassword)
         label("连接提示",640f,234f,260f,35f,17)
-        label("使用媒体服务器账号。\n\n更换地址或账号后重新登录。\n\n媒体库与电视直播独立使用。",640f,273f,260f,minOf(225f,maxOf(140f,140f*ui.fontScale)),14,true)
+        label("使用媒体服务器账号。\n\n更换地址或账号后重新登录。\n\n媒体库与电视直播独立使用。",640f,273f,260f,minOf(225f,maxOf(140f,140f)),14,true)
         val status=label("",50f,370f,540f,40f,13,true)
         var connecting=false;var discovering=false;lateinit var submit:Button;lateinit var discover:Button
         fun cancelConnection(){val pending=task;status.text="正在取消…";pending?.cancel();val stamp=generation;pending?.invokeOnCompletion {runOnUiThread {if(stamp==generation){connecting=false;discovering=false;fields.forEach {it.isEnabled=true;it.isFocusable=true};discover.isEnabled=true;discover.isFocusable=true;submit.text="检测并连接";status.text="已取消，原连接未改变。";submit.requestFocus()}}}}
@@ -415,7 +415,7 @@ class JellyLibraryActivity : FragmentActivity() {
                         val list=ScrollView(this@JellyLibraryActivity);val rows=LinearLayout(this@JellyLibraryActivity).apply {orientation=LinearLayout.VERTICAL};list.addView(rows);ui.at(viewport,list,24f,76f,796f,340f)
                         val popup=AlertDialog.Builder(this@JellyLibraryActivity).create();popup.setView(viewport,0,0,0,0);dialog=popup
                         val choices=found.map {server->
-                            val row=FrameLayout(this@JellyLibraryActivity);val h=maxOf(52f,44f*ui.fontScale)
+                            val row=FrameLayout(this@JellyLibraryActivity);val h=maxOf(52f,44f)
                             val button=ui.button(row,"",0f,0f,784f,h){address.setText(server.address);popup.dismiss();username.requestFocus()}
                             ui.heading(row,server.name,17,16f,0f,344f,h).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
                             ui.text(row,server.address,14,TvUi.MUTED,380f,0f,384f,h).apply {maxLines=1;gravity=Gravity.CENTER_VERTICAL or Gravity.END;ellipsize=android.text.TextUtils.TruncateAt.END}
@@ -616,20 +616,20 @@ class JellyLibraryActivity : FragmentActivity() {
         }
     }
     private fun movie(item: BaseItemDto,push: Boolean=false) {
-        fresh("movie",push);val large=ui.largeText()
+        fresh("movie",push);
         art(page,item,0f,0f,960f,540f,true)
         ui.at(page,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(0xfa101326.toInt(),0xeb101326.toInt(),0x7a101326))},0f,0f,960f,540f)
         header(if(item.type==BaseItemKind.EPISODE)"剧集详情" else "电影详情")
         art(page,item,48f,107f,140f,210f)
-        label(item.name ?: "未命名媒体",212f,109f,700f,if(large)65f else 43f,32).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        item.taglines?.firstOrNull()?.let {label(it,212f,if(large)151f else 153f,700f,if(large)36f else 24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
-        label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,if(large)190f else 180f,700f,if(large)38f else 25f,14,true)
-        label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,if(large)221f else 209f,700f,if(large)38f else 25f,13,true)
-        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,if(large)252f else 246f,700f,if(large)72f else 50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(if(large)0f else 7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
+        label(item.name ?: "未命名媒体",212f,109f,700f,43f,32).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        item.taglines?.firstOrNull()?.let {label(it,212f,153f,700f,24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
+        label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,180f,700f,25f,14,true)
+        label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,209f,700f,25f,13,true)
+        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,246f,700f,50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
         val position=resumeMs(item)
-        val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,if(large)330f else 311f,if(large)342f else 224f,if(large)50f else 38f){play(item,position)}
-        ui.button(page,"从头播放",if(large)566f else 448f,if(large)330f else 311f,if(large)342f else 224f,if(large)50f else 38f){play(item,0)}
-        val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",if(large)212f else 684f,if(large)393f else 311f,if(large)342f else 224f,if(large)50f else 38f){}
+        val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,311f,224f,38f){play(item,position)}
+        ui.button(page,"从头播放",448f,311f,224f,38f){play(item,0)}
+        val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",684f,311f,224f,38f){}
         var isPlayed=item.userData?.played==true
         watched.setOnClickListener {
             watched.isEnabled=false;val session=activeSessionKey();val host=page
@@ -639,28 +639,28 @@ class JellyLibraryActivity : FragmentActivity() {
                 finally {if(page===host)watched.isEnabled=true}
             }
         }
-        favoriteButton(item,if(large)566f else 684f,if(large)393f else 359f,if(large)342f else 224f,if(large)50f else 38f)
+        favoriteButton(item,684f,359f,224f,38f)
         val directors=item.people.orEmpty().filter {it.type==PersonKind.DIRECTOR}.mapNotNull {it.name}
         val actors=item.people.orEmpty().filter {it.type==PersonKind.ACTOR}.mapNotNull {it.name}
-        if(!large)label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,if(large)455f else 362f,450f,if(large)42f else 28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        label(listOfNotNull(if(item.type==BaseItemKind.EPISODE)"剧集" else "电影",LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"}).joinToString(" · "),48f,345f,140f,if(large)36f else 24f,13,true)
-        label(item.genres.orEmpty().take(2).joinToString(" / "),48f,if(large)385f else 370f,140f,if(large)36f else 24f,13,true)
+        label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,362f,450f,28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        label(listOfNotNull(if(item.type==BaseItemKind.EPISODE)"剧集" else "电影",LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"}).joinToString(" · "),48f,345f,140f,24f,13,true)
+        label(item.genres.orEmpty().take(2).joinToString(" / "),48f,370f,140f,24f,13,true)
         val people=item.people.orEmpty().take(8)
         if(people.isNotEmpty()){
-            label("演职人员",48f,if(large)454f else 397f,600f,if(large)45f else 30f,16)
-            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;scroll.isFocusable=true;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,48f,if(large)500f else 432f,864f,if(large)104f else 76f)
+            label("演职人员",48f,397f,600f,30f,16)
+            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;scroll.isFocusable=true;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,48f,432f,864f,76f)
             people.forEach {person->
-                val card=FrameLayout(this);card.background=ui.surface(TvUi.PANEL,false);row.addView(card,LinearLayout.LayoutParams(ui.px(165f),ui.px(if(large)104f else 76f)).apply {marginEnd=ui.px(12f)})
+                val card=FrameLayout(this);card.background=ui.surface(TvUi.PANEL,false);row.addView(card,LinearLayout.LayoutParams(ui.px(165f),ui.px(76f)).apply {marginEnd=ui.px(12f)})
                 val image=AsyncImageView(this);image.allowHardwareBitmaps=false;image.scaleType=ImageView.ScaleType.CENTER_CROP
                 ui.at(card,image,8f,8f,48f,60f);image.load(url=repo.personImage(person),placeholder=androidx.core.content.ContextCompat.getDrawable(this,org.jellyfin.androidtv.R.drawable.ic_user))
-                ui.text(card,person.name.orEmpty(),15,TvUi.INK,61f,13f,99f,if(large)38f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-                ui.text(card,person.role ?: if(person.type==PersonKind.DIRECTOR)"导演" else "演员",12,TvUi.MUTED,61f,if(large)58f else 44f,99f,if(large)30f else 20f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                ui.text(card,person.name.orEmpty(),15,TvUi.INK,61f,13f,99f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+                ui.text(card,person.role ?: if(person.type==PersonKind.DIRECTOR)"导演" else "演员",12,TvUi.MUTED,61f,44f,99f,20f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
             }
         }
-        if(large)scrollContent(690f)
+
         focus(first)
     }
-    /** A scrollable logical canvas keeps large text and system IME content reachable. */
+    /** A scrollable logical canvas keeps system IME content reachable. */
     private fun scrollContent(height: Float): ScrollView {
         val content=FrameLayout(this);val children=(0 until page.childCount).map {page.getChildAt(it)}
         children.forEach {view->val params=view.layoutParams;page.removeView(view);content.addView(view,params)}
@@ -727,13 +727,13 @@ class JellyLibraryActivity : FragmentActivity() {
         val body=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL};searchResults=body
         val results=ScrollView(this).apply {isHorizontalScrollBarEnabled=false;addView(body)};ui.at(page,results,415f,105f,497f,394f)
         val keyboard=ScrollView(this).apply {isFocusable=false;isVerticalScrollBarEnabled=true}
-        val keys=FrameLayout(this);val actionHeight=maxOf(41f,32f*ui.fontScale)
+        val keys=FrameLayout(this);val actionHeight=maxOf(41f,32f)
         keyboard.addView(keys,FrameLayout.LayoutParams(ui.px(350f),ui.px(264f+actionHeight*2+9f)));ui.at(page,keyboard,50f,150f,350f,357f)
         fun resultTarget(view:View):View? {if(view.isFocusable&&view.isEnabled&&view.isShown)return view;if(view is ViewGroup)for(i in 0 until view.childCount)resultTarget(view.getChildAt(i))?.let {return it};return null}
         fun insert(value:String){val at=input.selectionStart.coerceIn(0,input.length());input.text.insert(at,value);input.setSelection(at+value.length)}
         val rows=mutableListOf<List<Button>>()
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".chunked(6).forEachIndexed {row,letters->rows+=letters.mapIndexed {col,c->ui.button(keys,c.toString(),col*58f,row*42f,50f,38f){insert(c.toString())}}}
-        val languageWidth=if(ui.largeText())200f else 122f
+        val languageWidth=122f
         val language=ui.button(keys,"中文 / 英文",0f,264f,languageWidth,actionHeight){input.beginEditing()}
         val space=ui.button(keys,"空格",languageWidth+8f,264f,342f-languageWidth,actionHeight){insert(" ")}
         val delete=ui.button(keys,"删除",0f,273f+actionHeight,164f,actionHeight){val at=input.selectionStart.coerceIn(0,input.length());if(at>0){input.text.delete(at-1,at);input.setSelection(at-1)}}
@@ -741,7 +741,7 @@ class JellyLibraryActivity : FragmentActivity() {
         rows+=listOf(language,space);rows+=listOf(delete,clear)
         fun middle(v:View):Int {val p=v.layoutParams as FrameLayout.LayoutParams;return p.leftMargin+p.width/2}
         rows.forEachIndexed {row,line->line.forEachIndexed {col,b->
-            b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,15f*ui.scale*ui.fontScale);b.setSingleLine();b.contentDescription=when(b){delete->"删除光标前一个字符";clear->"清除全部查询";else->b.text}
+            b.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,15f*ui.scale);b.setSingleLine();b.contentDescription=when(b){delete->"删除光标前一个字符";clear->"清除全部查询";else->b.text}
             b.nextFocusUpId=if(row==0)input.id else rows[row-1].minBy {kotlin.math.abs(middle(it)-middle(b))}.id
             b.nextFocusDownId=if(row==rows.lastIndex)b.id else rows[row+1].minBy {kotlin.math.abs(middle(it)-middle(b))}.id
             b.nextFocusLeftId=line.getOrNull(col-1)?.id ?: b.id;b.nextFocusRightId=line.getOrNull(col+1)?.id ?: b.id
@@ -794,7 +794,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val video=PlayerView(this);video.useController=false;video.isFocusable=false;videoSurface=video;ui.at(page,video,0f,0f,960f,540f)
         makeControls(item)
         buffering=FrameLayout(this).also {panel->
-            val h=maxOf(64f,42f*ui.fontScale);val w=maxOf(200f,180f*ui.fontScale)
+            val h=maxOf(64f,42f);val w=maxOf(200f,180f)
             panel.visibility=View.GONE;panel.background=ui.surface(0xf0101629.toInt(),false);ui.at(page,panel,(960-w)/2,(540-h)/2,w,h)
             val indicator=ProgressBar(this);indicator.isFocusable=false;indicator.indeterminateTintList=android.content.res.ColorStateList.valueOf(0xffc5b4ff.toInt())
             ui.at(panel,indicator,26f,(h-24f)/2,24f,24f)
@@ -948,10 +948,10 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.protectControls(panel)
         playerHeading=FrameLayout(this).also {top->
             top.visibility=View.GONE;top.background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xf0101326.toInt(),0xeb101326.toInt(),0x00101326));ui.at(page,top,0f,0f,960f,135f)
-            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,if(ui.largeText())48f else 33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-            playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,if(ui.largeText())792f else 848f,28f,if(ui.largeText())120f else 64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
-            if(cctvMode)ui.text(top,item.name.orEmpty(),13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-            else if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,848f,28f,64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
+            if(cctvMode)ui.text(top,item.name.orEmpty(),13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            else if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         }
         ui.at(panel,View(this).apply {setBackgroundColor(0xff4b5268.toInt())},16f,15f,864f,3f)
         val progress=SeekBar(this);seek=progress;progress.id=View.generateViewId();progress.max=10000;progress.visibility=View.GONE;progress.setPadding(0,0,0,0)
@@ -971,7 +971,7 @@ class JellyLibraryActivity : FragmentActivity() {
         speedAction=ui.quietButton(speedLabel(),"倍速，${speedLabel()}"){speeds()};ui.at(panel,speedAction!!,PlaybackLayout.mediaActionX(1),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         audioAction=ui.quietButton(if(cctvMode)"画质" else "音轨",if(cctvMode)"画质" else "音轨"){if(cctvMode)qualities()else tracks(C.TRACK_TYPE_AUDIO)};ui.at(panel,audioAction!!,PlaybackLayout.mediaActionX(2),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         subtitleAction=ui.quietButton(if(cctvMode)"选集" else "字幕",if(cctvMode)"选集" else "字幕"){if(cctvMode)cctvOptions()else tracks(C.TRACK_TYPE_TEXT)};ui.at(panel,subtitleAction!!,PlaybackLayout.mediaActionX(3),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
-        listOf(pause!!,rewind,forward).forEach {it.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,16f*ui.scale*ui.fontScale)}
+        listOf(pause!!,rewind,forward).forEach {it.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,16f*ui.scale)}
         val actions=listOf(pause!!,rewind,forward,aspectAction!!,speedAction!!,audioAction!!,subtitleAction!!)
         actions.forEachIndexed {index,button->button.nextFocusLeftId=actions.getOrNull(index-1)?.id ?: button.id;button.nextFocusRightId=actions.getOrNull(index+1)?.id ?: button.id;button.nextFocusUpId=progress.id;button.nextFocusDownId=button.id;button.setOnFocusChangeListener {_,focused->if(focused){lastPlayerAction=button;armPlayerIdle()}}}
         updateSeekAvailability()

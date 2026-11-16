@@ -41,27 +41,26 @@ object LibraryPageLayout {
     val GRID_SEARCH = Box(444f, 68f, 148f, 38f)
     val GRID_FILTER = Box(604f, 68f, 148f, 38f)
     val GRID_SORT = Box(764f, 68f, 148f, 38f)
-    fun toolbar(box: Box, large: Boolean) = if(large) box.copy(y=75f,height=50f) else box
+    fun toolbar(box: Box) = box
 
-    fun columns(large: Boolean) = if (large) 5 else 6
+    fun columns() = 6
 
-    fun poster(index: Int, large: Boolean=false): Box {
-        require(index in 0 until columns(large))
-        // Five larger posters or six normal posters fit the approved 5% TV safe area.
-        return if (large) Box(50f + index * 175f, 143f, 159f, 272f)
-            else Box(50f + index * 146f, 135f, 130f, 222f)
+    fun poster(index: Int): Box {
+        require(index in 0 until columns())
+        // Legacy compatibility geometry retains its regular six-poster bounds.
+        return Box(50f + index * 146f, 135f, 130f, 222f)
     }
 
-    fun scrollViewport(large: Boolean=false): Box {
-        val top=poster(0,large).y-4f
+    fun scrollViewport(): Box {
+        val top=poster(0).y-4f
         return Box(48f,top,864f,513f-top)
     }
-    fun scrollPoster(index: Int,large: Boolean=false): Box {
-        val base=poster(index % columns(large),large)
-        return base.copy(x=base.x-48f,y=4f+(index / columns(large))*(base.height+16f))
+    fun scrollPoster(index: Int): Box {
+        val base=poster(index % columns())
+        return base.copy(x=base.x-48f,y=4f+(index / columns())*(base.height+16f))
     }
-    fun appendLimit(shown: Int,total: Int,focused: Int,large: Boolean=false): Int {
-        val columns=columns(large)
+    fun appendLimit(shown: Int,total: Int,focused: Int): Int {
+        val columns=columns()
         return when {
             shown==0 -> minOf(total,columns*3)
             focused>=shown-columns*2 -> minOf(total,shown+columns*2)
@@ -69,9 +68,9 @@ object LibraryPageLayout {
         }
     }
 
-    fun posterImageHeight(large: Boolean=false) = poster(0, large).width * 1.5f
-    fun posterTitle(large: Boolean=false) =
-        Box(9f, posterImageHeight(large) - (if(large) 48f else 32f), poster(0, large).width - 18f, if(large) 48f else 32f)
-    fun posterMetadata(large: Boolean=false) =
-        Box(0f, posterImageHeight(large) + 4f, poster(0, large).width, if(large) 28f else 22f)
+    fun posterImageHeight() = poster(0).width * 1.5f
+    fun posterTitle() =
+        Box(9f, posterImageHeight() - (32f), poster(0).width - 18f, 32f)
+    fun posterMetadata() =
+        Box(0f, posterImageHeight() + 4f, poster(0).width, 22f)
 }

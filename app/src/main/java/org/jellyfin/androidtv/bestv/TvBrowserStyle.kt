@@ -37,7 +37,7 @@ internal object TvBrowserStyle {
     }
     fun button(ui:TvUi,button:Button,leading:String?=null,down:Boolean=false,selected:Boolean=false,center:Boolean=false){
         button.setTextColor(INK);button.setTypeface(null,Typeface.NORMAL)
-        button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,12f*ui.scale*ui.fontScale)
+        button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,12f*ui.scale)
         button.gravity=(if(center)Gravity.CENTER_HORIZONTAL else Gravity.START) or Gravity.CENTER_VERTICAL
         button.setPadding(ui.px(8f),0,ui.px(8f),0);button.compoundDrawablePadding=ui.px(6f)
         button.setCompoundDrawablesRelative(leading?.let {icon(ui,it)},null,if(down)icon(ui,"down",10f)else null,null)

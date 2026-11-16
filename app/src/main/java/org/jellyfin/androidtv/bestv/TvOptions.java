@@ -15,14 +15,14 @@ public final class TvOptions {
         boolean sourceTypes=title==null&&names.length==2&&names[0].startsWith("M3U");
         boolean groupMenu=title==null&&names.length==4&&names[0].equals("全部频道");
         if(groupMenu)rowHeight=40;
-        rowHeight=Math.max(rowHeight,27f*ui.fontScale);
-        if(ui.largeText()&&!groupMenu&&!sourceTypes)maxWidth=Math.max(maxWidth,310f);
+        rowHeight=Math.max(rowHeight,27f);
+        ;
         float width=minWidth;
         TextView measure=ui.text("",13,TvUi.INK);
         for(int i=0;i<names.length;i++){float measured=measure.getPaint().measureText(names[i]);if(!sourceTypes&&details!=null&&i<details.length&&!details[i].isEmpty())measured+=ui.px(20)+measure.getPaint().measureText(details[i]);width=Math.max(width,measured/ui.scale+45);}
         width=Math.min(maxWidth,width);
         float heading=groupMenu||sourceTypes?7:title==null||title.isEmpty()?10:title.equals("倍速")?40:32;
-        float titleHeight=Math.max(27,21*ui.fontScale);if(title!=null&&!title.isEmpty())heading=Math.max(heading,titleHeight+8);
+        float titleHeight=Math.max(27,21);if(title!=null&&!title.isEmpty())heading=Math.max(heading,titleHeight+8);
         float height=Math.min(400,heading+names.length*rowHeight+(groupMenu?5:sourceTypes?6:9));
         FrameLayout panel=new FrameLayout(activity);panel.setBackground(ui.glass(TvUi.PANEL));
         AlertDialog popup=new AlertDialog.Builder(activity).create();popup.setView(panel,0,0,0,0);popup.setCanceledOnTouchOutside(true);
