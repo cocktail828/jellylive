@@ -77,7 +77,7 @@ class Links(HTMLParser):
 
 def main():
     manifest=json.loads((OUT/'manifest.json').read_text())
-    scenes=[scene for scene in manifest if scene.get('libraryScene')]
+    scenes=[scene for scene in manifest if scene.get('libraryScene') and not scene.get('detailScene')]
     errors=[]
     assert len(scenes)==25
     for scene in scenes:

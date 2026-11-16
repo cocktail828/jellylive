@@ -12,8 +12,8 @@ def main():
     manifest=json.loads((D/'manifest.json').read_text())
     mapping=json.loads((D/'cctv-integration.json').read_text())
     scenes=[(i,s) for i,s in enumerate(manifest,1) if s.get('cctvScene')]
-    assert len(scenes)==26 and mapping['merged'] is True
-    assert [i for i,s in scenes]==list(range(121,147))
+    assert len(scenes)==27 and mapping['merged'] is True
+    assert [i for i,s in scenes]==list(range(121,147))+[149]
     errors=[]
     for number,scene in scenes:
         ident=scene['id'];root=ET.parse(D/'svg'/f'{ident}.svg').getroot()
@@ -45,7 +45,7 @@ def main():
             path=urlsplit(link).path
             if path and not urlsplit(link).scheme:assert (D/path).exists(),(page,path)
     sections=json.loads((D/'sections.json').read_text())
-    assert next(s for s in sections if s['id']=='cctv')['figures']==list(range(121,147))
+    assert next(s for s in sections if s['id']=='cctv')['figures']==list(range(121,147))+[149]
     assert not set(range(121,147)) & set(next(s for s in sections if s['id']=='media')['figures'])
     for number in (3,4,25,30,31,105):
         item=manifest[number-1]

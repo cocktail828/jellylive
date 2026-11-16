@@ -18,9 +18,9 @@
     119,
     120
   ],
-  "slots": 146,
-  "active": 138,
-  "flowGroups": 18,
+  "slots": 150,
+  "active": 142,
+  "flowGroups": 20,
   "errors": [],
   "scope": "Local container artifact/geometry/integration checks; no physical TV or Android validation"
 }

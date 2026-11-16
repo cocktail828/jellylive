@@ -228,7 +228,9 @@ def merge(screens,output):
 
 if __name__=='__main__':
     screens=json.loads((OUT/'manifest.json').read_text())
-    screens=[s for s in screens if not s.get('cctvScene')]
+    screens=[s for s in screens if not s.get('cctvScene') and not s.get('detailScene')]
     merge(screens,OUT)
+    from detail_edge_designs import merge as merge_detail_edges
+    merge_detail_edges(screens,OUT)
     (OUT/'manifest.json').write_text(json.dumps(screens,ensure_ascii=False,indent=2)+'\n')
     print('Merged',len(SCENES),'CCTV scenes; previous figure numbers preserved.')

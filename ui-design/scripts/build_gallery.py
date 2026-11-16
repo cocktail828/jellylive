@@ -19,7 +19,7 @@ def part_for(screen):
     if number in (*range(15,21),27,28,29,39,40,41) or screen['id'].startswith(('15-media-','12-library-','24-library-','13-movie-')): return 'media'
     return 'live'
 flows=json.loads((Path(__file__).parent/'gallery_flows.json').read_text())
-reading_order=['JellyLive 设计阅读顺序（保留原图号；媒体库与央视频补充至图146）']
+reading_order=['JellyLive 设计阅读顺序（保留原图号；媒体库与央视频补充至图150）']
 for key,title,_ in PARTS:
     reading_order.extend(['',title])
     for flow in flows[key]:

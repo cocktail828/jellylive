@@ -53,7 +53,7 @@ def icon(name, x, y, size=48, color=SECONDARY):
     return f'<g transform="translate({x} {y}) scale({size/36})"><path d="{paths[name]}" fill="none" stroke="{color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>'
 
 
-def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,watch_state=None,focus_sw=8):
+def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,watch_state=None,focus_sw=8,quality=None):
     palettes = [('#2e3e43', '#152126', '#a4bdb4'), ('#39354c', '#1c1b2a', '#b4a5ce'),
                 ('#454034', '#24221c', '#c8b792'), ('#35414d', '#18232d', '#99b4c8'),
                 ('#4b3539', '#281b23', '#d2a3a9')]
@@ -78,6 +78,9 @@ def poster(x, y, index, title, year, score, kind, progress, focus=False, fs=1,wa
     s += '</g>'
     if score is not None:
         s += box(x+28,y+28,144,76,'#11151e',18)+icon('star',x+44,y+47,34,'#e0c790')+text(x+90,y+82,score,44,'#e9d4a9',600)
+    if quality:
+        w=176 if len(quality)>3 else 104
+        s += '<g data-role="quality-badge">'+box(x+516-w,y+680,w,76,'#11151e',18)+text(x+516-w/2,y+733,quality,44,FG,500,'middle')+'</g>'
     status = watch_state or ('进度未知' if progress is None else '已看' if progress == 1 else '未看' if progress == 0 else '在看')
     if progress is not None:
         s += f'<g data-role="watch-progress" data-progress="{progress}"><title>{status} · {round(progress*100)}%</title>'
@@ -203,11 +206,12 @@ def home(section='全部媒体',focus='card-0',filters=None,sort='名称升序',
     s += '<g clip-path="url(#grid-viewport)" data-role="focus-following-grid">'
     for i,entry in enumerate(entries[:4] if large else entries):
         active = focus == f'card-{i}' and not menu
+        quality=None if edge and i==0 else ('4K' if i%3==0 else '1080p' if i%3==1 else '720p')
         if large:
             scale = 688/544
-            s += f'<g transform="translate({800+i*736} {grid_y}) scale({scale})">'+poster(0,0,i,*entry,focus=active,fs=1.5/scale,focus_sw=8/scale)+'</g>'
+            s += f'<g transform="translate({800+i*736} {grid_y}) scale({scale})">'+poster(0,0,i,*entry,focus=active,fs=1.5/scale,focus_sw=8/scale,quality=quality)+'</g>'
         else:
-            s += poster(800+i%5*588,grid_y+i//5*1088,i,*entry,focus=active,watch_state='在看' if edge and i==2 else None)
+            s += poster(800+i%5*588,grid_y+i//5*1088,i,*entry,focus=active,watch_state='在看' if edge and i==2 else None,quality=quality)
     if state == 'loading':
         for i in range(5):
             x = 800+i*588

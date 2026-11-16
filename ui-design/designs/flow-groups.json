@@ -148,6 +148,15 @@
       ],
       "related": "settings.html#flow-settings-connection",
       "relatedTitle": "连接表单与服务器发现"
+    },
+    {
+      "id": "detail-edges",
+      "title": "详情边界：长简介、演职人员与多季分集",
+      "figures": [
+        147,
+        148,
+        150
+      ]
     }
   ],
   "cctv": [
@@ -181,6 +190,13 @@
         144,
         145,
         146
+      ]
+    },
+    {
+      "id": "detail-edges",
+      "title": "详情边界：长节目名与大量期数",
+      "figures": [
+        149
       ]
     }
   ],

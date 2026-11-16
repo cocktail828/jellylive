@@ -700,6 +700,8 @@ if __name__=='__main__':
     merge_library_designs(SCREENS,OUT)
     from cctv_designs import merge as merge_cctv_designs
     merge_cctv_designs(SCREENS,OUT)
+    from detail_edge_designs import merge as merge_detail_edges
+    merge_detail_edges(SCREENS,OUT)
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
         if screen.get('retired'):
