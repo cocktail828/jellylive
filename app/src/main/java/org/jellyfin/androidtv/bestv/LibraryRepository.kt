@@ -154,6 +154,15 @@ class LibraryRepository : KoinComponent {
         if(played) api.playStateApi.markPlayedItem(itemId=id) else api.playStateApi.markUnplayedItem(itemId=id)
         catalogCache.invalidate()
     }
+    /** Mutations use the current server account and invalidate only after its acknowledgement. */
+    suspend fun setFavorite(id: UUID,favorite: Boolean) = withContext(Dispatchers.IO) {
+        val session=sessionKey
+        val result=if(legacyProvider)api.request(if(favorite)HttpMethod.POST else HttpMethod.DELETE,"${userPath()}/FavoriteItems/$id").createContent<UserItemDataDto>()
+            else if(favorite)api.userLibraryApi.markFavoriteItem(itemId=id).content else api.userLibraryApi.unmarkFavoriteItem(itemId=id).content
+        check(session==sessionKey){"媒体库已切换"}
+        catalogCache.invalidate()
+        result
+    }
     fun personImage(person: BaseItemPerson): String? = person.primaryImage?.getUrl(api,maxWidth=160)
     suspend fun seasons(series: UUID) = withContext(Dispatchers.IO) { api.tvShowsApi.getSeasons(seriesId=series).content.items }
     suspend fun episodes(series: UUID, season: UUID?=null) = withContext(Dispatchers.IO) {

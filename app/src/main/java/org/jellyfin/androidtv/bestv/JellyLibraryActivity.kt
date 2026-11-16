@@ -123,9 +123,10 @@ class JellyLibraryActivity : FragmentActivity() {
     private var searchInput: EditText? = null
     private var searchResults: LinearLayout? = null
     private var searchJob: Job? = null
-    private data class MediaSearchScope(val session: String,val parent: UUID?,val kind: BaseItemKind?)
+    private data class MediaSearchScope(val session: String,val parent: UUID?,val kind: BaseItemKind?,val query: LibraryBrowse.Query?=null)
     private var mediaSearchScope: MediaSearchScope?=null
     private var mediaSearchSerial=0
+    private var browserSearchChanged: ((String)->Unit)?=null
     private var bootstrap: LibraryBootstrap? = null
     private val hideControls = Runnable { if(overlay.expire(android.os.SystemClock.uptimeMillis()))applyControlsVisibility() }
     private val updatePlayer = object : Runnable {
@@ -436,239 +437,116 @@ class JellyLibraryActivity : FragmentActivity() {
         box.setOnFocusChangeListener {_,focused->box.foreground=if(focused)android.graphics.drawable.GradientDrawable().apply {setColor(Color.TRANSPARENT);cornerRadius=ui.px(8f).toFloat();setStroke(ui.px(2f),Color.WHITE)}else null}
         box.setOnClickListener {action()};return box
     }
-    /** Gallery 15: navigation cards and resume playback, with no category poster grid. */
-    private fun home(push: Boolean=true,refresh: Boolean=false) {
-        if(!repo.connected){disconnected(push);return}
-        fresh("home",push)
-        val heading=ui.header(page,"我的媒体库 · ",""){back()}.apply {setSingleLine()}
-        val headingIndex=page.indexOfChild(heading);val headingBounds=heading.layoutParams;page.removeView(heading)
-        val titleRow=LinearLayout(this).apply {orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;isBaselineAligned=false;tag="library-heading"}
-        titleRow.addView(heading,LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.MATCH_PARENT))
-        val libraryName=ui.text(repo.serverName,14,0xffb9b0cf.toInt()).apply {tag="library-name";setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END}
-        titleRow.addView(libraryName,LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.MATCH_PARENT,1f));page.addView(titleRow,headingIndex,headingBounds)
-        titleRow.post {
-            val mainInk=android.graphics.Rect();val nameInk=android.graphics.Rect()
-            heading.paint.getTextBounds(heading.text.toString(),0,heading.length(),mainInk)
-            libraryName.paint.getTextBounds(libraryName.text.toString(),0,libraryName.length(),nameInk)
-            libraryName.translationY=heading.baseline+mainInk.exactCenterY()-libraryName.baseline-nameInk.exactCenterY()
-        }
-        val host=page;val session=repo.sessionKey;val initialInteraction=interaction
-        val search=place(host,ui.button("⌕ 搜索媒体"){search()},LibraryPageLayout.HOME_SEARCH)
-        pageText(host,"继续观看",17,TvUi.INK,LibraryPageLayout.HOME_RESUME_LABEL).apply {setTypeface(null,Typeface.BOLD)}
-        val resumeArea=place(host,FrameLayout(this),LibraryPageLayout.HOME_RESUME_ROW)
-        resumeStatus(resumeArea,"正在加载继续观看…")
-        pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
-        val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
-        val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
-            val card=homeCard(entry.title,"",illustrations[index]){renderGrid(entry.title,null,entry.query())}
-            card.tag="library-entry-${entry.name.lowercase()}";place(host,card,LibraryPageLayout.homeEntry(index))
-        }
-        entries.forEachIndexed {index,card->card.nextFocusLeftId=entries.getOrNull(index-1)?.id ?: card.id;card.nextFocusRightId=entries.getOrNull(index+1)?.id ?: card.id;card.nextFocusUpId=search.id;card.nextFocusDownId=card.id}
-        search.nextFocusDownId=entries.first().id;focus(entries.first(),initialInteraction)
-        lifecycleScope.launch {
-            val catalog=try {withTimeout(25000){repo.catalog(refresh=refresh)}}catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;return@launch}catch(error: Exception){if(page===host)libraryError(error){home(false,true)};return@launch}
-            if(page!==host||session!=repo.sessionKey)return@launch
-            val counts=withContext(Dispatchers.Default){LibraryPageLayout.Entry.entries.map {LibraryBrowse.select(catalog,it.query()).size}}
-            if(page!==host||session!=repo.sessionKey)return@launch
-            if(counts.sum()==0){if(page===host)empty(retry={home(false,true)});return@launch}
-            LibraryPageLayout.Entry.entries.forEachIndexed {index,_->
-                val count=counts[index]
-                entries[index].findViewWithTag<TextView>("entry-subtitle")?.text=count.toString()
-            }
-        }
-        host.tag=Runnable {refreshHomeResume(host,resumeArea,search,entries,null)}
-        refreshHomeResume(host,resumeArea,search,entries,initialInteraction)
-    }
-    private fun resumeStatus(area: FrameLayout,message: String){
-        area.removeAllViews()
-        val bounds=LibraryPageLayout.HOME_RESUME_ROW
-        ui.text(area,message,14,TvUi.MUTED,0f,0f,bounds.width,bounds.height).apply {gravity=Gravity.CENTER;tag="home-resume-status"}
-    }
-    private fun refreshHomeResume(host: FrameLayout,area: FrameLayout,search: View,entries: List<View>,initialInteraction: Int?){
-        val session=repo.sessionKey;val prefix=currentPositionPrefix()
-        homeResumeJob?.cancel()
-        homeResumeJob=lifecycleScope.launch {
-            val ids=LibraryResume.localIds(local.all,prefix)
-            val (server,localItems)=coroutineScope {
-                val remote=async {
-                    try {withTimeout(8000){repo.resume()}}
-                    catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
-                    catch(_: Exception){null}
-                }
-                // Resolve saved IDs through this session so removed/inaccessible items and
-                // remotely completed titles cannot reappear from an old catalog snapshot.
-                val saved=async {ids.map {id->async {
-                    try {withTimeout(6000){repo.detail(id)}}
-                    catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;null}
-                    catch(_: Exception){null}
-                }}.awaitAll().filterNotNull()}
-                remote.await() to saved.await()
-            }
-            if(page!==host||session!=repo.sessionKey)return@launch
-            val resumes=LibraryResume.select(server.orEmpty(),localItems,::resumeMs,{item->if(local.getLong(positionKey(item),0)>0)local.getLong("seen_${positionKey(item)}",0)else 0})
-            val previous=currentFocus?.takeIf {isWithin(it,area)}?.tag
-            area.removeAllViews()
-            entries.forEach {it.nextFocusUpId=search.id};search.nextFocusDownId=entries.first().id
-            if(resumes.isEmpty()){
-                resumeStatus(area,if(server==null||ids.isNotEmpty()&&localItems.isEmpty())"暂时无法读取观看历史，请检查媒体库连接。" else "暂无观看历史")
-                if(previous!=null)entries.first().requestFocus()
-            }else{
-                val scroller=HorizontalScrollView(this@JellyLibraryActivity);scroller.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this@JellyLibraryActivity);scroller.addView(row)
-                val cards=resumes.map {item->homeCard(cardTitle(item),"",item=item){play(item,resumeMs(item))}.also {it.tag="resume-item-${item.id}";row.addView(it,LinearLayout.LayoutParams(ui.px(276f),ui.px(LibraryPageLayout.HOME_RESUME_ROW.height)).apply {marginEnd=ui.px(16f)})}}
-                ui.at(area,scroller,0f,0f,LibraryPageLayout.HOME_RESUME_ROW.width,LibraryPageLayout.HOME_RESUME_ROW.height)
-                cards.forEachIndexed {i,card->card.nextFocusUpId=search.id;card.nextFocusDownId=entries[i.coerceAtMost(entries.lastIndex)].id}
-                entries.forEachIndexed {i,card->card.nextFocusUpId=cards[i.coerceAtMost(cards.lastIndex)].id}
-                search.nextFocusDownId=cards.first().id
-                if(previous!=null)(cards.firstOrNull {it.tag==previous} ?: cards.first()).requestFocus()
-                else if(initialInteraction!=null)focus(cards.first(),initialInteraction)
-            }
-        }
-    }
-    private fun isWithin(view: View,parent: View): Boolean {
-        var current: View?=view
-        while(current!=null){if(current===parent)return true;current=current.parent as? View}
-        return false
-    }
-    private fun homeCard(name: String,subtitle: String,illustration: Int?=null,item: BaseItemDto?=null,click: ()->Unit): FrameLayout {
-        val card=focusCard(FrameLayout(this),click)
-        card.background=ColorDrawable(Color.TRANSPARENT);card.clipToOutline=false
-        val artworkHeight=LibraryPageLayout.HOME_CARD_ARTWORK_HEIGHT
-        val imageHost=FrameLayout(this).apply {background=ui.surface(TvUi.PANEL,false);clipToOutline=true};ui.at(card,imageHost,0f,0f,276f,artworkHeight)
-        if(item!=null)art(imageHost,item,0f,0f,276f,artworkHeight,true)
-        else ui.at(imageHost,ImageView(this).apply {scaleType=ImageView.ScaleType.CENTER_CROP;setImageResource(requireNotNull(illustration))},0f,0f,276f,artworkHeight)
-        val title=LibraryPageLayout.HOME_CARD_TITLE.let {if(item!=null)it.copy(y=artworkHeight+6f,height=32f)else if(ui.largeText())it.copy(y=29f,height=38f)else it.copy(y=38f,height=28f)}
-        pageText(card,name,16,TvUi.INK,title).apply {gravity=Gravity.CENTER;setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item==null)pageText(card,subtitle,12,TvUi.MUTED,LibraryPageLayout.HOME_CARD_SUBTITLE.let {if(ui.largeText())it.copy(y=71f,height=30f)else it.copy(y=70f,height=22f)}).apply {gravity=Gravity.CENTER;tag="entry-subtitle";maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item!=null&&LibraryMetadata.durationTicks(item)!=null){val b=LibraryPageLayout.HOME_CARD_PROGRESS;ui.at(imageHost,View(this).apply {setBackgroundColor(0xff414760.toInt())},b.x,b.y,b.width,b.height);ui.at(imageHost,View(this).apply {setBackgroundColor(0xffac9aff.toInt())},b.x,b.y,b.width*LibraryMetadata.progress(item,resumeMs(item)).toFloat(),b.height)}
-        card.setOnFocusChangeListener {_,focused->card.foreground=if(focused)android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(if(item!=null)LibraryPageLayout.HOME_RESUME_ROW.height-artworkHeight else 0f))else null}
-        card.contentDescription=if(item!=null)"$name，${time(resumeMs(item))}" else name;return card
-    }
-    private fun filterCount(query: LibraryBrowse.Query)=listOf(query.state!=LibraryBrowse.State.ALL,query.genre!=null,query.year!=null,query.resolution!=null,query.region!=null).count {it}
+    /** The same shell serves the library home, categories, history and server favorites. */
+    private fun home(push: Boolean=true,refresh: Boolean=false) =
+        renderGrid("全部媒体",null,LibraryBrowse.Query(),push=push,refresh=refresh)
+    private fun filterCount(query: LibraryBrowse.Query)=listOf(query.state!=LibraryBrowse.State.ALL,query.genre!=null,query.year!=null,query.resolution!=null,query.region!=null,query.minimumRating!=null,query.unknownYear).count {it}
     private fun browseDialog(create: ()->AlertDialog){
         val anchor=currentFocus;val popup=create();dialog=popup
         popup.setOnDismissListener {if(dialog===popup)dialog=null;anchor?.takeIf {it.isAttachedToWindow&&it.isShown}?.requestFocus()}
     }
-    /** Gallery 16/63: append poster rows as remote focus descends, preserving the saved view. */
+    private data class BrowserState(var query: LibraryBrowse.Query,var text: String="",var position: TvMediaBrowser.Position?=null)
+    private val browserStates=mutableMapOf<String,BrowserState>()
     private fun renderGrid(title: String,parent: UUID?,initialQuery: LibraryBrowse.Query,start: Int=0,push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
-        fresh("grid",push);header(title,"正在准备媒体目录…");val session=repo.sessionKey
-        ui.heading(page,"正在读取媒体目录…",17,48f,102f,864f,28f)
-        ui.text(page,"首次打开大型媒体库可能需要一点时间。",14,TvUi.MUTED,48f,132f,864f,28f)
-        repeat(LibraryPageLayout.columns(ui.largeText())) {index->
-            val box=LibraryPageLayout.poster(index,ui.largeText());ui.at(page,View(this).apply {background=ui.surface(0xff171d32.toInt(),false)},box.x,171f,box.width,195f)
-            ui.at(page,View(this).apply {setBackgroundColor(0xff30364e.toInt())},box.x+11f,335f,75f,8f)
+        val session=repo.sessionKey
+        val section=when {initialQuery.favorites->4;initialQuery.recent->3;initialQuery.kind==BaseItemKind.MOVIE->1;initialQuery.kind==BaseItemKind.SERIES->2;else->0}
+        val names=listOf("全部媒体","电影","电视剧","观看记录","收藏")
+        val key="$session|$parent|$section"
+        browserStates.keys.filterNot {it.startsWith("$session|")}.forEach {browserStates.remove(it)}
+        val state=browserStates.getOrPut(key){BrowserState(initialQuery)}
+        fresh("grid",push);centerEntryPage();val host=page
+        lateinit var browser: TvMediaBrowser
+        browser=TvMediaBrowser(ui,host,repo.serverName,names,section){index->
+            state.position=browser.position()
+            val query=when(index){1->LibraryBrowse.Query(kind=BaseItemKind.MOVIE);2->LibraryBrowse.Query(kind=BaseItemKind.SERIES);3->LibraryBrowse.Query(recent=true,sort=LibraryBrowse.Sort.WATCHED,ascending=false);4->LibraryBrowse.Query(favorites=true);else->LibraryBrowse.Query()}
+            renderGrid(names[index],parent,query,push=false)
         }
-        val cancel=ui.button(page,"返回媒体库",350f,419f,260f,42f){back()};focus(cancel)
-        load({repo.catalog(parent,refresh)}) {catalog->
-            if(session!=repo.sessionKey){home(false);return@load}
-            fresh("grid",false);val host=page;val large=ui.largeText()
-            ui.header(host,title,"",{back()})
-            val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,48f,if(large)78f else 65f,690f,if(large)30f else 23f)
-            var query=initialQuery;val updates=LibraryGridUpdates()
-            val posterHost=FrameLayout(this);posterHost.isFocusable=false
-            val scroller=ScrollView(this).apply {
-                isVerticalScrollBarEnabled=false;isFocusable=false;isSmoothScrollingEnabled=false
-                descendantFocusability=ViewGroup.FOCUS_AFTER_DESCENDANTS
-                addView(posterHost,ViewGroup.LayoutParams(ui.px(864f),ui.px(1f)))
-                place(host,this,LibraryPageLayout.scrollViewport(large))
-            }
-            val search=place(host,ui.button("⌕ 搜索媒体"){search(parent=parent,kind=query.kind)},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SEARCH,large)).apply {tag="grid-search"}
-            val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_FILTER,large)).apply {tag="grid-filter"}
-            val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SORT,large)).apply {tag="grid-sort"}
-            search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=search.id
-            listOf(search,filter,sort).forEach {it.setSingleLine();it.ellipsize=android.text.TextUtils.TruncateAt.END}
-            fun update(){
-                if(page!==host||session!=repo.sessionKey)return
-                gridRenderJob?.cancel();val request=updates.begin(query,0) ?: return
-                val requestedQuery=request.query
-                gridRenderJob=lifecycleScope.launch {
-                    val result=withContext(Dispatchers.Default){LibraryBrowse.page(LibraryBrowse.select(catalog,requestedQuery),0,maxOf(1,catalog.size))}
-                    if(page!==host||session!=repo.sessionKey)return@launch
-                    val firstRender=!updates.hasResult;if(!updates.accept(request,result.start))return@launch
-                    val previousFocus=currentFocus;posterHost.removeAllViews();scroller.scrollTo(0,0)
-                    val count=filterCount(requestedQuery)
-                    subtitle.text="${if(requestedQuery.kind==BaseItemKind.MOVIE)"全部电影" else if(requestedQuery.kind==BaseItemKind.SERIES)"全部剧集" else "全部媒体"} · ${result.total} ${if(requestedQuery.kind==BaseItemKind.MOVIE)"部" else "项"}${if(count>0)" · 已筛选" else ""}"
-                    TvIcons.text(filter,if(count==0)"类型：全部" else if(count==1&&requestedQuery.genre!=null)"类型：${requestedQuery.genre}" else "筛选：${count}项")
-                    val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"发布时间升序" else "发布时间降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序";LibraryBrowse.Sort.DURATION->if(requestedQuery.ascending)"时长升序" else "时长降序"}
-                    TvIcons.text(sort,"排序：$order")
-                    val cards=mutableListOf<FrameLayout>()
-                    var onCardFocus: (Int)->Unit={}
-                    fun wireCards(){
-                        val cols=LibraryPageLayout.columns(large)
-                        cards.forEachIndexed {i,card->
-                            card.nextFocusLeftId=if(i%cols>0)cards[i-1].id else card.id
-                            card.nextFocusRightId=if(i%cols<cols-1)cards.getOrNull(i+1)?.id ?: card.id else card.id
-                            card.nextFocusUpId=if(i>=cols)cards[i-cols].id else listOf(search,filter,sort)[(i%cols*3/cols).coerceAtMost(2)].id
-                            card.nextFocusDownId=if(i/cols<(cards.size-1)/cols)cards[minOf(i+cols,cards.lastIndex)].id else card.id
-                        }
-                    }
-                    fun append(focused: Int){
-                        if(page!==host||session!=repo.sessionKey)return
-                        val limit=LibraryPageLayout.appendLimit(cards.size,result.items.size,focused,large)
-                        if(limit==cards.size)return
-                        for(index in cards.size until limit){
-                            val item=result.items[index]
-                            val card=posterCard(item,large){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
-                            card.setOnFocusChangeListener {view,hasFocus->
-                                existing?.onFocusChange(view,hasFocus)
-                                if(hasFocus){
-                                    host.post {
-                                        if(page===host&&view.isAttachedToWindow&&view.hasFocus())onCardFocus(index)
-                                    }
-                                }
-                            }
-                            cards+=card
-                            place(posterHost,card,LibraryPageLayout.scrollPoster(index,large))
-                        }
-                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(cards.lastOrNull()?.let {LibraryPageLayout.scrollPoster(cards.lastIndex,large).bottom+4f} ?: 1f)}
-                        wireCards()
-                    }
-                    onCardFocus={index: Int->
-                        append(index)
-                        scroller.smoothScrollTo(0,ui.px(LibraryPageLayout.scrollPoster(index,large).y-4f))
-                    }
-                    append(0)
-                    var recovery: Button?=null
-                    if(cards.isEmpty()){
-                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(380f)}
-                        ui.text(posterHost,"⌕",48,0xffb7a2ff.toInt(),408f,40f,48f,48f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",22,TvUi.INK,0f,110f,864f,36f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",14,TvUi.MUTED,0f,147f,864f,28f).gravity=Gravity.CENTER
-                        recovery=ui.button(posterHost,if(count>0)"清除筛选" else "刷新分类",302f,195f,260f,42f){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);update()}else renderGrid(title,parent,query,0,false,true)}
-                    }
-                    val target=cards.firstOrNull() ?: recovery ?: filter
-                    recovery?.apply {nextFocusUpId=filter.id;nextFocusLeftId=id;nextFocusRightId=id;nextFocusDownId=id}
-                    listOf(search,filter,sort).forEach {it.nextFocusDownId=target.id}
-                    if(dialog?.isShowing!=true){
-                        when {firstRender->focus(target);previousFocus?.isAttachedToWindow==true->Unit;else->focus(target)}
-                    }
+        browser.loading()
+        var catalog=emptyList<BaseItemDto>()
+        var hasResult=false
+        var rendering: Job?=null
+        fun choices(title: String,labels: List<String>,selected: Int,change: (Int)->Unit){browseDialog {TvMediaBrowser.choices(ui,title,labels,selected,change)}}
+        fun render(reset: Boolean=false){
+            rendering?.cancel()
+            val query=state.query;val text=state.text
+            rendering=lifecycleScope.launch {
+                val selected=withContext(Dispatchers.Default){LibraryBrowse.select(catalog,query).filter {text.isBlank()||it.name.orEmpty().contains(text,true)||it.originalTitle.orEmpty().contains(text,true)||it.seriesName.orEmpty().contains(text,true)}}
+                if(page!==host||repo.sessionKey!=session||query!=state.query||text!=state.text)return@launch
+                val filtered=filterCount(query)>0||text.isNotBlank()
+                browser.title("${names[section]} · ${selected.size}")
+                TvIcons.text(browser.search,if(text.isBlank())"搜索媒体" else "搜索：$text")
+                TvIcons.text(browser.genre,"类型：${query.genre ?: "全部"}")
+                TvIcons.text(browser.year,"年份：${if(query.unknownYear)"未知年份" else query.year?.toString() ?: "全部"}")
+                TvIcons.text(browser.rating,"评分：${query.minimumRating?.let {"${it.toInt()}分以上"} ?: "不限"}")
+                TvIcons.text(browser.progress,"进度：${query.state.label}")
+                TvIcons.text(browser.sort,sortLabel(query.sort,query.ascending))
+                browser.clear.visibility=if(filtered)View.VISIBLE else View.GONE
+                val first=!hasResult;hasResult=true
+                if(selected.isEmpty()){
+                    val emptyTitle=when {filtered||text.isNotBlank()->"没有符合条件的内容";section==3->"暂无观看记录";section==4->"暂无收藏";else->"媒体库暂无内容"}
+                    browser.state(emptyTitle,when(section){3->"观看记录来自当前媒体服务器与账号。";4->"在媒体详情中收藏，成功后会显示在这里。";else->"可重新加载媒体库，或更改搜索与筛选。"},TvMediaBrowser.Action(if(filtered)"清除筛选" else "重新加载"){
+                        if(filtered){state.query=clearQuery(state.query);state.text="";render(true);browser.genre.requestFocus()}else gridReloads[host]?.invoke()
+                    },first)
+                }else{
+                    browser.show(selected.map {item->TvMediaBrowser.Card(item.id.toString(),cardTitle(item),cardMeta(item),repo.image(item),LibraryMetadata.rating(item),LibraryBrowse.progress(item))},preserve=!reset&&!first){card->selected.firstOrNull {it.id.toString()==card.id}?.let {detail(it)}}
+                    if(first){state.position?.let {browser.restore(it)} ?: browser.focusFirst()}
                 }
             }
-            gridReloads[host]={renderGrid(title,parent,query,0,false,true)}
-            host.tag=Runnable {update()};update()
         }
+        browser.search.setOnClickListener {state.position=browser.position();search(state.text,parent=parent,kind=state.query.kind,browseQuery=state.query,onQueryChanged={state.text=it})}
+        browser.genre.setOnClickListener {
+            val values=LibraryBrowse.select(catalog,clearQuery(state.query)).flatMap {it.genres.orEmpty()}.filter {it.isNotBlank()}.distinct().sorted()
+            choices("类型",listOf("全部")+values,values.indexOf(state.query.genre)+1){state.query=state.query.copy(genre=values.getOrNull(it-1));render(true)}
+        }
+        browser.year.setOnClickListener {
+            val scope=LibraryBrowse.select(catalog,clearQuery(state.query));val years=scope.mapNotNull {LibraryMetadata.year(it)}.distinct().sortedDescending()
+            val unknown=scope.any {LibraryMetadata.year(it)==null};val labels=listOf("全部")+years.map {it.toString()}+if(unknown)listOf("未知年份")else emptyList()
+            val selected=if(state.query.unknownYear)labels.lastIndex else years.indexOf(state.query.year)+1
+            choices("年份",labels,selected){state.query=state.query.copy(year=years.getOrNull(it-1),unknownYear=unknown&&it==labels.lastIndex);render(true)}
+        }
+        browser.rating.setOnClickListener {choices("评分",listOf("不限","6分及以上","7分及以上","8分及以上","9分及以上"),state.query.minimumRating?.toInt()?.minus(5) ?: 0){state.query=state.query.copy(minimumRating=if(it==0)null else (it+5).toDouble());render(true)}}
+        browser.progress.setOnClickListener {choices("进度",LibraryBrowse.State.entries.map {it.label},state.query.state.ordinal){state.query=state.query.copy(state=LibraryBrowse.State.entries[it]);render(true)}}
+        browser.sort.setOnClickListener {
+            val sorts=(if(section==3)listOf(LibraryBrowse.Sort.WATCHED)else emptyList())+listOf(LibraryBrowse.Sort.NAME,LibraryBrowse.Sort.ADDED,LibraryBrowse.Sort.YEAR,LibraryBrowse.Sort.RATING)
+            val values=sorts.flatMap {sort->listOf(sort to true,sort to false)}
+            choices("排序",values.map {sortLabel(it.first,it.second)},values.indexOf(state.query.sort to state.query.ascending).coerceAtLeast(0)){state.query=state.query.copy(sort=values[it].first,ascending=values[it].second);render(true)}
+        }
+        browser.clear.setOnClickListener {state.query=clearQuery(state.query);state.text="";render(true);browser.genre.requestFocus()}
+        fun fetch(force: Boolean){
+            task?.cancel()
+            task=lifecycleScope.launch {
+                try {
+                    val result=withTimeout(25000){repo.catalog(parent,force)}
+                    if(page!==host||repo.sessionKey!=session)return@launch
+                    catalog=result
+                    if(section in listOf(3,4)&&catalog.isNotEmpty()&&catalog.none {if(section==4)it.userData?.isFavorite!=null else it.userData?.played!=null||LibraryBrowse.seen(it)}){
+                        browser.state(if(section==4)"服务器未提供收藏数据" else "服务器未提供观看数据","当前服务或账号暂不支持此功能，可切换媒体库或账号。",TvMediaBrowser.Action("重新读取"){fetchBrowserOrigin(host)},!hasResult)
+                    }else render()
+                }catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error
+                    if(page===host){if(hasResult)browser.retry("读取超时",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})else browser.state("读取超时","请检查媒体服务器与网络后重试。",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})}
+                }catch(error: Exception){if(page!==host||repo.sessionKey!=session)return@launch
+                    if(hasResult){browser.retry("读取失败，已保留当前列表",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})}
+                    else browser.state(if(LibraryFailure.from(error)==LibraryFailure.PERMISSION)"当前账号没有访问权限" else "暂时无法读取媒体库","请检查服务器连接或账号授权。",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})
+                }
+            }
+        }
+        gridReloads[host]={fetch(true)}
+        host.tag=Runnable {fetch(true)}
+        fetch(refresh)
     }
-    private fun posterCard(item: BaseItemDto,large: Boolean,click: ()->Unit): FrameLayout {
-        val card=focusCard(FrameLayout(this),click);val bounds=LibraryPageLayout.poster(0,large)
-        card.background=ColorDrawable(Color.TRANSPARENT);card.clipToOutline=false
-        val imageHost=FrameLayout(this).apply {background=ui.surface(TvUi.PANEL,false);clipToOutline=true};ui.at(card,imageHost,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
-        art(imageHost,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight(large))
-        val imageHeight=LibraryPageLayout.posterImageHeight(large)
-        ui.at(card,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0x0010182a,0xee10182a.toInt()))},0f,imageHeight-48f,bounds.width,48f)
-        val caption=pageText(card,cardTitle(item),14,TvUi.INK,LibraryPageLayout.posterTitle(large)).apply {
-            setTypeface(null,Typeface.BOLD);setSingleLine();gravity=Gravity.CENTER;ellipsize=android.text.TextUtils.TruncateAt.END;marqueeRepeatLimit=-1
-        }
-        val original=card.onFocusChangeListener
-        card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);if(focused)card.foreground=android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(bounds.height-imageHeight));caption.ellipsize=if(focused&&!ui.reduceMotion())android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused&&!ui.reduceMotion()}
-        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata(large)).apply {gravity=Gravity.TOP or Gravity.CENTER_HORIZONTAL;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,13,0xfff7d68d.toInt(),7f,7f,41f,21f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
-        if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
-        else if(resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(LibraryMetadata.progress(item,resumeMs(item))*1000).toInt();ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight(large)-4f,bounds.width-8f,3f)}
-        card.contentDescription=listOfNotNull(cardTitle(item),LibraryMetadata.rating(item)?.let {"评分 $it"},cardMeta(item).takeIf {it.isNotBlank()},if(item.userData?.played==true)"已看" else null).joinToString("，")
-        return card
+    private fun fetchBrowserOrigin(host: FrameLayout){gridReloads[host]?.invoke()}
+    private fun clearQuery(q: LibraryBrowse.Query)=q.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,unknownYear=false,minimumRating=null,resolution=null,region=null)
+    private fun sortLabel(sort: LibraryBrowse.Sort,ascending: Boolean)=when(sort){
+        LibraryBrowse.Sort.NAME->if(ascending)"名称升序" else "名称降序"
+        LibraryBrowse.Sort.WATCHED->if(ascending)"最早观看" else "最近观看"
+        LibraryBrowse.Sort.ADDED->if(ascending)"添加时间：从旧到新" else "添加时间：从新到旧"
+        LibraryBrowse.Sort.YEAR->if(ascending)"发布时间：从旧到新" else "发布时间：从新到旧"
+        LibraryBrowse.Sort.RATING->if(ascending)"评分：从低到高" else "评分：从高到低"
+        LibraryBrowse.Sort.DURATION->if(ascending)"时长升序" else "时长降序"
     }
     private fun cardTitle(item: BaseItemDto)=if(item.type==BaseItemKind.EPISODE)item.seriesName ?: item.name ?: "未命名剧集" else item.name ?: "未命名媒体"
-    private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),item.genres?.firstOrNull()).joinToString(" · ")
+    private fun cardMeta(item: BaseItemDto)=listOf(LibraryMetadata.year(item)?.toString() ?: "年份未知",if(item.type in listOf(BaseItemKind.SERIES,BaseItemKind.EPISODE))"电视剧" else "电影").joinToString(" · ")
     private fun section(body: LinearLayout, title: String) { body.addView(ui.text(title,17,TvUi.INK),LinearLayout.LayoutParams(-1,ui.px(35f)).apply {topMargin=ui.px(7f);bottomMargin=ui.px(6f)}) }
     private fun horizontal(body: LinearLayout, items: List<BaseItemDto>, progress: Boolean=false, click: (BaseItemDto)->Unit) {
         val sc=HorizontalScrollView(this);sc.isHorizontalScrollBarEnabled=false
@@ -686,16 +564,16 @@ class JellyLibraryActivity : FragmentActivity() {
         val textWidth=w-textX-8f
         if(item!=null) art(box,poster ?: item,0f,if(compact)6f else 0f,artW.toFloat(),artH.toFloat(),landscape)
         else {val v=ui.text("▱",36,0xff8275bd.toInt());v.gravity=Gravity.CENTER;ui.at(box,v,0f,0f,w.toFloat(),artH.toFloat())}
-        ui.text(box,name,14,TvUi.INK,textX,if(compact)12f else artH+4f,textWidth,if(landscape&&!compact)22f else 34f).apply {maxLines=if(landscape&&!compact)1 else 2;ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
+        val caption=ui.text(box,name,14,TvUi.INK,textX,if(compact)12f else artH+4f,textWidth,if(landscape&&!compact)22f else 34f).apply {setSingleLine();ellipsize=android.text.TextUtils.TruncateAt.END;setTypeface(null,Typeface.BOLD)}
         ui.text(box,sub,11,TvUi.MUTED,textX,if(compact)h-32f else artH+if(landscape)27f else 40f,textWidth,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        if(item?.userData?.played==true)ui.text(box,"已看",10,TvUi.INK,w-43f,7f,36f,18f).apply{gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
-        else if(item!=null&&resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null){
-            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=(LibraryMetadata.progress(item,resumeMs(item))*1000).toInt()
+        if(item!=null&&(item.userData?.played==true||resumeMs(item)>0)&&LibraryMetadata.durationTicks(item)!=null){
+            val p=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);p.max=1000;p.progress=if(item.userData?.played==true)1000 else (LibraryMetadata.progress(item,resumeMs(item))*1000).toInt()
             ui.at(box,p,4f,artH-4f,artW-8f,3f)
         }
         box.setOnFocusChangeListener { _, focused ->
             box.foreground=if(focused) android.graphics.drawable.GradientDrawable().apply {setColor(Color.TRANSPARENT);cornerRadius=ui.px(8f).toFloat();setStroke(ui.px(2f),Color.WHITE)} else null
         }
+        TvMediaBrowser.scrollTitleOnFocus(box,caption,ui)
         box.setOnClickListener {click()};return box
     }
     private fun art(parent: FrameLayout,item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,backdrop: Boolean=false) {
@@ -746,9 +624,10 @@ class JellyLibraryActivity : FragmentActivity() {
                 finally {if(page===host)watched.isEnabled=true}
             }
         }
+        favoriteButton(item,if(large)566f else 684f,if(large)393f else 359f,if(large)342f else 224f,if(large)50f else 38f)
         val directors=item.people.orEmpty().filter {it.type==PersonKind.DIRECTOR}.mapNotNull {it.name}
         val actors=item.people.orEmpty().filter {it.type==PersonKind.ACTOR}.mapNotNull {it.name}
-        if(!large)label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,if(large)455f else 362f,700f,if(large)42f else 28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        if(!large)label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,if(large)455f else 362f,450f,if(large)42f else 28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         label(listOfNotNull(if(item.type==BaseItemKind.EPISODE)"剧集" else "电影",LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"}).joinToString(" · "),48f,345f,140f,if(large)36f else 24f,13,true)
         label(item.genres.orEmpty().take(2).joinToString(" / "),48f,if(large)385f else 370f,140f,if(large)36f else 24f,13,true)
         val people=item.people.orEmpty().take(8)
@@ -773,6 +652,25 @@ class JellyLibraryActivity : FragmentActivity() {
         val scroll=ScrollView(this).apply {isFillViewport=false;isVerticalScrollBarEnabled=false;clipToPadding=true;setPadding(0,0,0,ui.px(27f));addView(content,ViewGroup.LayoutParams(ui.px(960f),ui.px(height)))}
         page.addView(scroll,FrameLayout.LayoutParams(-1,-1));return scroll
     }
+    private fun favoriteButton(item: BaseItemDto,x: Float,y: Float,width: Float,height: Float){
+        var favorite=item.userData?.isFavorite
+        val button=ui.button(page,if(favorite==true)"取消收藏" else if(favorite==false)"收藏到服务器" else "服务器未提供收藏",x,y,width,height){}
+        button.isEnabled=favorite!=null
+        button.setOnClickListener {
+            val session=repo.sessionKey;val host=page;val target=favorite!=true
+            button.isEnabled=false;TvIcons.text(button,"正在保存…")
+            lifecycleScope.launch {
+                try {val result=repo.setFavorite(item.id,target)
+                    if(page===host&&session==repo.sessionKey){
+                        favorite=result.isFavorite
+                        TvIcons.text(button,if(favorite==true)"取消收藏" else "收藏到服务器")
+                    }
+                }catch(error: CancellationException){throw error}
+                catch(_: Exception){if(page===host&&session==repo.sessionKey){TvIcons.text(button,if(favorite==true)"取消收藏 · 重试" else "收藏 · 重试");Toast.makeText(this@JellyLibraryActivity,"服务器未保存收藏，请重试",Toast.LENGTH_LONG).show()}}
+                finally {if(page===host&&session==repo.sessionKey)button.isEnabled=true}
+            }
+        }
+    }
     private fun series(item: BaseItemDto,push: Boolean=false,selected: UUID?=null) {
         fresh("series",push);header("剧集详情","正在加载季和剧集…")
         load({
@@ -788,6 +686,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val toPlay=next ?: episodes.firstOrNull {it.userData?.played!=true} ?: episodes.firstOrNull()
             val first=ui.button(page,if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集",48f,225f,165f,38f) {toPlay?.let {play(it,resumeMs(it))}}
             first.isEnabled=toPlay!=null
+            favoriteButton(item,225f,225f,165f,38f)
             val chosen=seasons.firstOrNull {it.id==selected} ?: seasons.firstOrNull()
             ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",48f,294f,130f,38f) {
                 if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(item,false,seasons[it].id)}
@@ -805,8 +704,9 @@ class JellyLibraryActivity : FragmentActivity() {
             if(first.isEnabled)focus(first)
         }
     }
-    private fun search(initial: String="",push: Boolean=true,parent: UUID?=null,kind: BaseItemKind?=null) {
-        mediaSearchScope=MediaSearchScope(repo.sessionKey,parent,kind)
+    private fun search(initial: String="",push: Boolean=true,parent: UUID?=null,kind: BaseItemKind?=null,browseQuery: LibraryBrowse.Query?=null,onQueryChanged: ((String)->Unit)?=null) {
+        browserSearchChanged=onQueryChanged
+        mediaSearchScope=MediaSearchScope(repo.sessionKey,parent,kind,browseQuery)
         fresh("search",push);header("媒体搜索","${repo.serverName} · ${when(kind){BaseItemKind.MOVIE->"电影";BaseItemKind.SERIES->"剧集";else->"电影和剧集"}}")
         val input=TvFormField(this,ui,"输入片名、剧集名",initial,false);ui.at(page,input,50f,100f,350f,43f);input.setSelection(input.length());searchInput=input
         val body=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL};searchResults=body
@@ -851,6 +751,7 @@ class JellyLibraryActivity : FragmentActivity() {
         runSearch(initial);focus(rows[0][0])
     }
     private fun runSearch(query: String) {
+        browserSearchChanged?.invoke(query)
         searchJob?.cancel();val serial=++mediaSearchSerial;val stamp=generation;val scope=mediaSearchScope ?: return;val resultBody=searchResults ?: return
         fun isCurrent()=stamp==generation&&serial==mediaSearchSerial&&scope==mediaSearchScope&&scope.session==repo.sessionKey
         resultBody.removeAllViews()
@@ -860,7 +761,7 @@ class JellyLibraryActivity : FragmentActivity() {
             delay(300)
             try {
                 if(scope.session!=repo.sessionKey){resultBody.removeAllViews();resultBody.addView(ui.text("媒体库已切换，请重新打开搜索。",14,TvUi.MUTED));return@launch}
-                val result=withTimeout(20000) {withContext(Dispatchers.IO){LibraryBrowse.search(repo.catalog(scope.parent),query,scope.kind)}}
+                val result=withTimeout(20000) {withContext(Dispatchers.IO){LibraryBrowse.search(scope.query?.let {LibraryBrowse.select(repo.catalog(scope.parent),it)} ?: repo.catalog(scope.parent),query,scope.kind)}}
                 if(!isCurrent())return@launch
                 resultBody.removeAllViews();section(resultBody,"媒体 · ${result.size}")
                 if(result.isEmpty())resultBody.addView(ui.text("没有找到相关媒体，试试其他关键词。",14,TvUi.MUTED))
