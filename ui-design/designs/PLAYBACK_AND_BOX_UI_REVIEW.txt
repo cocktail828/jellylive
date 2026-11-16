@@ -5,7 +5,7 @@
 图号与查看
 原图号保持，新图85媒体比例、86初次等待、87来源配置、88配置大字、89读取失败。
 播放器相关图19/45–48/50/57/61/64同步四项底栏；启动图01及动态预览同步前置背景约束。
-媒体看media.html；来源配置看live.html；启动看startup-animation.html；设置28张，最新规则见SETTINGS_TV_REVIEW.txt。
+媒体看media.html；来源配置看live.html；启动看startup.html；设置28张，最新规则见SETTINGS_TV_REVIEW.txt。
 
 媒体画面比例
 底栏仍144px、两行：第一行全宽进度，第二行左侧传输动作/HH:mm:ss、右侧四项功能。

@@ -359,7 +359,7 @@ def homepage(focus='list',no_epg=False,selected=0):
     s+=rect(1192,64,664,716,'#14192e')
     s+=source_tabs(1208,80,632)
     s+=line(1216,145,1832,145)+channel_list(1208,163,632,selected if focus=='list' else -1,no_epg=no_epg,playing=selected)
-    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+    for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
         x=64+i*456
         active=focus==name
         s+=rect(x,826,424,176,'url(#purple)' if active else '#242a46',18,'#fff' if active else '#363e5d',4 if active else 1)
@@ -467,7 +467,7 @@ def home_unconfigured():
     s+='<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,256,80,'#bba8ff')
     s+=centered_text(626,408,'未配置直播源',42,weight=650)+centered_text(626,462,'完成机顶盒配置，或添加其他直播源。',26,MUTED)
     s+=centered_button(296,510,320,'机顶盒配置',True,h=84)+centered_button(646,510,310,'检查直播源',h=84)+'</g>'
-    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+    for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
         x=100+i*438
         s+=rect(x,826,406,176,'#242a46',18,'#363e5d')
         start=x+(406-(44+20+len(name)*36))/2
@@ -585,7 +585,7 @@ def make():
     emit('12-library-grid','媒体分类与海报列表',library_grid())
     emit('13-movie','电影详情',movie_details())
     s=header('剧集详情')+scene(1218,182,606,320,1)+text(96,260,'海岸日记',60,weight=650)+text(96,323,'2025 · 旅行纪实 · 共 8 集',28,MUTED)+text(96,390,'沿着海岸线，记录八座城市的生活与风景。',28)
-    s+=button(100,450,330,'继续播放 第 3 集',True,'play')+button(100,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
+    s+=button(100,450,330,'继续播放 第 3 集',True,'play')+button(466,450,260,'收藏',False,'star')+button(100,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
     for i in range(4):s+=poster(100+i*440,700,400,226,f'第 {i+1} 集',['初见海岸','潮起潮落','远方灯塔','海边来信'][i],i)
     s+=footer()
     emit('14-series','剧集详情',s)
@@ -696,6 +696,10 @@ if __name__=='__main__':
     library_connection_states(globals())
     emit('25-home-unconfigured','主页：未配置直播源',home_unconfigured())
     favorite_flow()
+    from library_design_integration import merge as merge_library_designs
+    merge_library_designs(SCREENS,OUT)
+    from cctv_designs import merge as merge_cctv_designs
+    merge_cctv_designs(SCREENS,OUT)
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
         if screen.get('retired'):

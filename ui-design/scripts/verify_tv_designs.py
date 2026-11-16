@@ -12,11 +12,20 @@ fontSet=fn(p,'pango_layout_set_font_description',[C.c_void_p,C.c_void_p],None);t
 class Box(C.Structure):_fields_=[('x',C.c_int),('y',C.c_int),('width',C.c_int),('height',C.c_int)]
 getExt=fn(p,'pango_layout_get_pixel_extents',[C.c_void_p,C.POINTER(Box),C.POINTER(Box)],None);getBase=fn(p,'pango_layout_get_baseline',[C.c_void_p],C.c_int)
 manifest=json.loads((D/'manifest.json').read_text());issues=[];measurements=[];focus=[]
+native_figures=[];native_text_count=0
 for n,item in enumerate(manifest,1):
  f=D/'svg'/f"{item['id']}.svg"
  if item.get('retired'):
   assert not f.exists() and not (D/'previews'/f"{item['id']}.png").exists();continue
  tree=ET.parse(f);root=tree.getroot();parents={child:parent for parent in root.iter() for child in parent}
+ if item.get('libraryScene') or item.get('cctvScene'):
+  from verify_library_4k import geometry
+  assert root.get('viewBox')=='0 0 3840 2160' and item.get('nativeResolution')==[3840,2160]
+  native_issues=[];geometry(root,item['id'],native_issues)
+  issues.extend({'figure':n,'problem':problem,'nativeResolution':[3840,2160]} for problem in native_issues)
+  assert len(root.findall('.//{http://www.w3.org/2000/svg}g[@data-focused="true"]'))==1
+  native_figures.append(n);native_text_count+=len(root.findall('.//{http://www.w3.org/2000/svg}text'))
+  continue
  assert root.get('viewBox')=='0 0 1920 1080'
  for e in root.iter():
   tag=e.tag.split('}')[-1]
@@ -36,6 +45,7 @@ for n,item in enumerate(manifest,1):
   entry={'figure':n,'text':value,'size':sz,'bounds':bounds,'clippedIntentionally':clipped};measurements.append(entry)
   if sz<24:issues.append(dict(entry,problem='below secondary type floor'))
   if not clipped and (bounds[0]<95.5 or bounds[2]>1824.5 or bounds[1]<53.5 or bounds[3]>1026.5):issues.append(dict(entry,problem='outside TV safe area'))
-report={'scope':'SVG/Pango design-font geometry only; not Android runtime screenshots or focus execution','slots':len(manifest),'active':sum(not x.get('retired') for x in manifest),'textCount':len(measurements),'textIssues':issues,'focusIssues':focus,'measurements':measurements}
+report={'scope':'SVG/Pango design-font geometry only; legacy 1080p and native 4K library geometry; not Android runtime screenshots or focus execution','slots':len(manifest),'active':sum(not x.get('retired') for x in manifest),'textCount':len(measurements)+native_text_count,'native4kFigures':native_figures,'native4kTextCount':native_text_count,'textIssues':issues,'focusIssues':focus,'measurements':measurements}
 (D/'tv-design-verification.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
 print(json.dumps({k:v for k,v in report.items() if k!='measurements'},ensure_ascii=False,indent=2))
+assert not issues and not focus, 'Design geometry verification failed; see tv-design-verification.json'

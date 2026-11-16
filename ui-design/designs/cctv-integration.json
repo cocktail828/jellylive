@@ -1,0 +1,137 @@
+{
+  "figures": [
+    {
+      "number": 121,
+      "id": "cctv-drama",
+      "scene": "drama"
+    },
+    {
+      "number": 122,
+      "id": "cctv-animation",
+      "scene": "animation"
+    },
+    {
+      "number": 123,
+      "id": "cctv-documentary",
+      "scene": "documentary"
+    },
+    {
+      "number": 124,
+      "id": "cctv-special",
+      "scene": "special"
+    },
+    {
+      "number": 125,
+      "id": "cctv-history",
+      "scene": "history"
+    },
+    {
+      "number": 126,
+      "id": "cctv-favorites",
+      "scene": "favorites"
+    },
+    {
+      "number": 127,
+      "id": "cctv-history-empty",
+      "scene": "history-empty"
+    },
+    {
+      "number": 128,
+      "id": "cctv-favorites-empty",
+      "scene": "favorites-empty"
+    },
+    {
+      "number": 129,
+      "id": "cctv-alphabet",
+      "scene": "alphabet"
+    },
+    {
+      "number": 130,
+      "id": "cctv-genre",
+      "scene": "genre"
+    },
+    {
+      "number": 131,
+      "id": "cctv-year",
+      "scene": "year"
+    },
+    {
+      "number": 132,
+      "id": "cctv-channel",
+      "scene": "channel"
+    },
+    {
+      "number": 133,
+      "id": "cctv-festival",
+      "scene": "festival"
+    },
+    {
+      "number": 134,
+      "id": "cctv-filtered",
+      "scene": "filtered"
+    },
+    {
+      "number": 135,
+      "id": "cctv-detail",
+      "scene": "detail"
+    },
+    {
+      "number": 136,
+      "id": "cctv-episodes",
+      "scene": "episodes"
+    },
+    {
+      "number": 137,
+      "id": "cctv-episodes-later",
+      "scene": "episodes-later"
+    },
+    {
+      "number": 138,
+      "id": "cctv-loading",
+      "scene": "loading"
+    },
+    {
+      "number": 139,
+      "id": "cctv-empty",
+      "scene": "empty"
+    },
+    {
+      "number": 140,
+      "id": "cctv-offline",
+      "scene": "offline"
+    },
+    {
+      "number": 141,
+      "id": "cctv-append-error",
+      "scene": "append-error"
+    },
+    {
+      "number": 142,
+      "id": "cctv-episode-error",
+      "scene": "episode-error"
+    },
+    {
+      "number": 143,
+      "id": "cctv-play-error",
+      "scene": "play-error"
+    },
+    {
+      "number": 144,
+      "id": "cctv-large",
+      "scene": "large"
+    },
+    {
+      "number": 145,
+      "id": "cctv-metadata",
+      "scene": "metadata"
+    },
+    {
+      "number": 146,
+      "id": "cctv-sidebar",
+      "scene": "sidebar"
+    }
+  ],
+  "sourceSamples": "scripts/data/cctv-source-samples.json",
+  "storage": "app-internal-cctv",
+  "merged": true
+}

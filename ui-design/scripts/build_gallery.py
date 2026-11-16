@@ -9,16 +9,17 @@ from build_designs import header, footer, rect, text, line
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'designs'
 screens=[dict(item,number=i+1) for i,item in enumerate(json.loads((OUT/'manifest.json').read_text())) if not item.get('retired',False)]
-PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏与节目单'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、直播源、媒体库连接与机顶盒配置')]
+PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏与节目单'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('cctv','央视频','四类节目、观看记录与收藏'),('settings','设置','全局设置、直播源、媒体库连接与机顶盒配置')]
 def part_for(screen):
     if screen['id'].startswith('17-settings') or screen['id'].startswith('09-sources') or screen['id'].startswith('09-box-config') or screen['id']=='10-source-editor': return 'settings'
     number=screen['number']
     if number in (1,2,24): return 'startup'
     if number in (21,22,23) or screen['id']=='18-jellyfin-ime': return 'settings'
+    if screen.get('cctvScene'): return 'cctv'
     if number in (*range(15,21),27,28,29,39,40,41) or screen['id'].startswith(('15-media-','12-library-','24-library-','13-movie-')): return 'media'
     return 'live'
 flows=json.loads((Path(__file__).parent/'gallery_flows.json').read_text())
-reading_order=['JellyLive 设计阅读顺序（保留图号，不重绘）']
+reading_order=['JellyLive 设计阅读顺序（保留原图号；媒体库与央视频补充至图146）']
 for key,title,_ in PARTS:
     reading_order.extend(['',title])
     for flow in flows[key]:
@@ -34,7 +35,7 @@ for screen in screens:
 rules=json.loads((Path(__file__).parent/'design_rules.json').read_text())
 def rules_markup(items): return ''.join('<article class="spec"><h3>'+escape(rule['title'])+'</h3>'+''.join('<p>'+escape(p)+'</p>' for p in rule['paragraphs'])+'</article>' for rule in items)
 rule_cards=rules_markup(rules)
-(OUT/'INTERACTION_RULES.txt').write_text('JellyLive 当前交互规则 · 2026-11-11\n\n'+'\n\n'.join(rule['title']+'\n'+'\n'.join(rule['paragraphs']) for rule in rules)+'\n')
+(OUT/'INTERACTION_RULES.txt').write_text('JellyLive 当前交互规则 · 2026-11-16\n\n'+'\n\n'.join(rule['title']+'\n'+'\n'.join(rule['paragraphs']) for rule in rules)+'\n')
 main_count=sum(s['kind']=='main' for s in screens)
 state_count=len(screens)-main_count
 cards=[]
@@ -59,7 +60,7 @@ def part_sections(only=None,only_numbers=None):
         result.append(f'<section class="design-part" id="part-{key}" data-part="{key}"><h2>{title} <small>· {count} 张</small></h2><p class="intro">按入口、操作、子菜单和异常状态排列，保留原图号。<a href="{key}.html">单独查看{title}部分</a></p><nav aria-label="{title}流程目录">'+''.join(navigation)+'</nav>'+''.join(groups)+'</section>')
     return ''.join(result)
 
-part_navigation='<nav class="part-nav" aria-label="设计分区"><a class="utility" href="tv-review.html">本轮更新</a><a class="utility" href="adaptation.html">TV适配效果</a><a class="utility" href="index.html">全部分区</a>'+''.join(f'<a class="utility" href="{key}.html">{title} · {sum(s["part"]==key for s in screens)}</a>' for key,title,_ in PARTS)+'</nav>'
+part_navigation='<nav class="part-nav" aria-label="设计分区"><a class="utility" href="index.html">全部分区</a>'+''.join(f'<a class="utility" href="{key}.html">{title} · {sum(s["part"]==key for s in screens)}</a>' for key,title,_ in PARTS)+'</nav>'
 
 template='''<!doctype html>
 <html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -70,34 +71,32 @@ template='''<!doctype html>
 @media print{body{background:white;color:black}header,main,footer{padding:15px}nav,.tip,.specs,dialog{display:none}.grid{display:block}.card{display:block;width:100%;break-inside:avoid;background:white;color:black;margin-bottom:25px}.caption p{color:#333}.card[hidden]{display:none}.thumbnail{max-height:60vh}.caption{padding:12px}.intro{color:#333}}
 </style>
 <header><div class="eyebrow">JELLYLIVE / CURRENT DESIGN / 2026.11.10</div><h1>打开电视，<span>回到观看。</span></h1>
-<p class="intro">当前设计 · 2026-11-11。按启动、直播、影视、设置四部分查看，保留原图号。直播与媒体使用同高两行信息栏，媒体新增画面比例；加载提示统一为正在缓冲；直播源配置使用电视大行弹窗。按钮只显示当前选项，字幕关闭时显示“字幕”。频道侧栏宽560px，音轨/字幕采用紧凑单行浮层，媒体列表为2:3竖版海报。图片与文字均为设计示意，原生实现与验收另见代码仓库文档。</p>
+<p class="intro">当前设计 · 2026-11-16。按启动、直播、影视、央视频、设置五部分查看，保留原图号。直播与媒体使用同高两行信息栏，媒体新增画面比例；加载提示统一为正在缓冲；直播源配置使用电视大行弹窗。按钮只显示当前选项，字幕关闭时显示“字幕”。频道侧栏宽560px，音轨/字幕采用紧凑单行浮层，媒体列表为2:3竖版海报。图片与文字均为设计示意，原生实现与验收另见代码仓库文档。</p>
 <div class="tags"><span>__MAIN__ 个主要界面 + __STATE__ 个状态界面</span><span>1920 × 1080</span><span>SVG 可编辑 / PNG 高清预览</span><span>遥控器优先</span><span>离线可浏览</span></div></header>
-<main><section aria-labelledby="pages"><h2 id="pages">按功能查看设计</h2>__PART_NAV__<nav aria-label="界面分类"><button class="filter" data-filter="all" aria-pressed="true">全部 __TOTAL__</button><button class="filter" data-filter="main" aria-pressed="false">主要界面 __MAIN__</button><button class="filter" data-filter="state" aria-pressed="false">状态界面 __STATE__</button><a class="utility" href="previews/05-live-playback-settings.png">画面比例浮层</a><a class="utility" href="previews/12-library-filter.png">筛选设计</a><a class="utility" href="previews/12-library-sort.png">排序设计</a><a class="utility" href="previews/15-media-speed.png">倍速浮层</a><a class="utility" href="previews/15-media-next.png">自动下一集</a><a class="utility" href="previews/11-library-empty-history.png">暂无观看历史</a><a class="utility" href="previews/06-channel-drawer.png">透明频道侧栏</a><a class="utility" href="startup-animation.html">播放启动动画</a><a class="utility" href="previews/live-favorite-flow.png">长按收藏反馈</a><a class="utility" href="#behavior">操作与状态规则</a><a class="utility" href="#relationships">页面关系图</a></nav>
+<main><section aria-labelledby="pages"><h2 id="pages">按功能查看设计</h2>__PART_NAV__<nav aria-label="界面分类"><button class="filter" data-filter="all" aria-pressed="true">全部 __TOTAL__</button><button class="filter" data-filter="main" aria-pressed="false">主要界面 __MAIN__</button><button class="filter" data-filter="state" aria-pressed="false">状态界面 __STATE__</button><a class="utility" href="previews/05-live-playback-settings.png">画面比例浮层</a><a class="utility" href="previews/12-library-filter.png">筛选设计</a><a class="utility" href="previews/12-library-sort.png">排序设计</a><a class="utility" href="previews/15-media-speed.png">倍速浮层</a><a class="utility" href="previews/15-media-next.png">自动下一集</a><a class="utility" href="previews/11-library-empty-history.png">暂无观看记录</a><a class="utility" href="../TV_CCTV_DESIGN.md">央视频设计规范</a><a class="utility" href="previews/06-channel-drawer.png">透明频道侧栏</a><a class="utility" href="previews/live-favorite-flow.png">长按收藏反馈</a><a class="utility" href="#behavior">操作与状态规则</a><a class="utility" href="#relationships">页面关系图</a></nav>
 <p class="tip">点击图稿放大。放大后使用 ← → 浏览设计图，Esc 关闭；这不是 App 交互原型。</p>__PARTS__</section>
-<section id="startup"><h2>启动动画 · 图标旋转，文字固定</h2><p class="intro">左侧 Jellyfin 图标每 2 秒匀速旋转一圈，右侧 JellyLive 固定；背景与系统启动页、应用首帧保持一致。应用就绪即转入主页，不额外等动画结束。</p><a class="utility" href="startup-animation.html">打开动态预览与播放控制</a></section>
+<section id="startup"><h2>启动动画 · 图标旋转，文字固定</h2><p class="intro">左侧 Jellyfin 图标每 2 秒匀速旋转一圈，右侧 JellyLive 固定；背景与系统启动页、应用首帧保持一致。应用就绪即转入主页，不额外等动画结束。</p></section>
 <section id="relationships"><h2>页面关系</h2><a href="svg/25-page-map.svg"><img class="flow" src="previews/25-page-map.png" alt="JellyLive 页面导航关系图" loading="lazy"></a></section>
 <section id="behavior"><h2>当前交互规则</h2><div class="specs">__RULE_CARDS__</div></section>
 <section><h2>已取消页面</h2><p>图05独立频道浏览、图32自动首次收藏说明、图42直播播放列表已取消，当前画册和设计包不含旧图像。原编号占位保留，其他图号不重排。</p></section><section><h2>视觉基准</h2><div class="swatches"><div class="swatch"><i style="background:#101326"></i>背景 #101326</div><div class="swatch"><i style="background:#171c32"></i>面板 #171C32</div><div class="swatch"><i style="background:#7561ed"></i>品牌 #7561ED</div><div class="swatch"><i style="background:#f6f5ff"></i>文字 #F6F5FF</div><div class="swatch"><i style="background:#a9adc6"></i>辅助 #A9ADC6</div></div></section>
-</main><footer>当前设计与交互说明更新于2026-11-11；设计规范与原生验收独立记录。图17/19参考 Jellyfin 的结构，以当前 JellyLive 风格重新绘制；场景、频道与媒体信息均为示意。矢量风景为原创素材。<br>原始设计：svg/ · 高清预览：previews/ · 页面清单：manifest.json · 生成方式见 README.txt。</footer>
+</main><footer>当前设计与交互说明更新于2026-11-16；设计规范与原生验收独立记录。图17/19参考 Jellyfin 的结构，以当前 JellyLive 风格重新绘制；场景、频道与媒体信息均为示意。矢量风景为原创素材。<br>原始设计：svg/ · 高清预览：previews/ · 页面清单：manifest.json · 生成方式见 README.txt。</footer>
 <dialog id="viewer" aria-labelledby="viewer-title"><div class="viewer-top"><h2 id="viewer-title"></h2><div class="viewer-actions"><button id="prev" aria-label="上一张">← 上一张</button><button id="next" aria-label="下一张">下一张 →</button><button id="close">关闭 Esc</button></div></div><img id="large" alt=""><p id="note"></p><p id="route"></p><div id="downloads"><a id="svg-link">打开 SVG 原稿</a><a id="png-link">打开高清 PNG</a></div></dialog>
 <script>
 const screens=__MANIFEST__;
 const dialog=document.querySelector('#viewer');let active=0,opener=null;
-function show(i){active=(i+screens.length)%screens.length;const s=screens[active];document.querySelector('#viewer-title').textContent=`${String(s.number).padStart(2,'0')} · ${s.title}`;const img=document.querySelector('#large');img.src=`previews/${s.id}.png?v=${s.revision}`;img.alt=s.title;document.querySelector('#note').textContent=s.note;document.querySelector('#route').textContent='操作去向：'+s.flow;document.querySelector('#svg-link').href=`svg/${s.id}.svg?v=${s.revision}`;document.querySelector('#png-link').href=`previews/${s.id}.png?v=${s.revision}`;}
+function show(i){active=(i+screens.length)%screens.length;const s=screens[active];document.querySelector('#viewer-title').textContent=`${String(s.number).padStart(2,'0')} · ${s.title}`;const img=document.querySelector('#large');const png=`${(s.libraryScene||s.cctvScene)?'native-4k':'previews'}/${s.id}.png?v=${s.revision}`;img.src=png;img.alt=s.title;document.querySelector('#note').textContent=s.note;document.querySelector('#route').textContent='操作去向：'+s.flow;document.querySelector('#svg-link').href=`svg/${s.id}.svg?v=${s.revision}`;document.querySelector('#png-link').href=png;document.querySelector('#png-link').textContent=(s.libraryScene||s.cctvScene)?'打开4K PNG原图':'打开高清 PNG';}
 document.querySelectorAll('.card').forEach(b=>b.addEventListener('click',()=>{opener=b;show(+b.dataset.index);dialog.showModal();document.querySelector('#close').focus();}));
 function step(amount){const indices=[...document.querySelectorAll('.card')].filter(c=>!c.hidden&&c.dataset.part===screens[active].part).map(c=>+c.dataset.index);if(indices.length)show(indices[(indices.indexOf(active)+amount+indices.length)%indices.length]);}
 document.querySelector('#prev').onclick=()=>step(-1);document.querySelector('#next').onclick=()=>step(1);document.querySelector('#close').onclick=()=>dialog.close();dialog.addEventListener('close',()=>opener?.focus());dialog.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();step(1)}if(e.key==='ArrowLeft'){e.preventDefault();step(-1)}});
 document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(f=>f.setAttribute('aria-pressed',String(f===b)));document.querySelectorAll('.card').forEach(c=>c.hidden=b.dataset.filter!=='all'&&c.dataset.kind!==b.dataset.filter);document.querySelectorAll('.flow-group,.design-part').forEach(part=>part.hidden=![...part.querySelectorAll('.card')].some(c=>!c.hidden))}));
 </script></html>'''
-for current_part in [None,*[key for key,_,_ in PARTS],'tv-review']:
+for current_part in [None,*[key for key,_,_ in PARTS]]:
     current_rules=rules_markup([rule for rule in rules if not(current_part=='live' and rule['title']=='设置中的直播源')])
-    review_numbers={1,13,19,21,22,23,45,46,47,48,50,57,59,61,64,*range(65,101)}
-    review=current_part=='tv-review'
-    selected=[screen for screen in screens if (screen['number'] in review_numbers if review else current_part is None or screen['part']==current_part)]
+    selected=[screen for screen in screens if current_part is None or screen['part']==current_part]
     navigation=part_navigation.replace(f'href="{current_part or "index"}.html"',f'href="{current_part or "index"}.html" aria-current="page"')
-    page=template.replace('__MAIN__',str(sum(s['kind']=='main' for s in selected))).replace('__STATE__',str(sum(s['kind']=='state' for s in selected))).replace('__TOTAL__',str(len(selected))).replace('__RULE_CARDS__',current_rules).replace('__PARTS__',part_sections(None,review_numbers) if review else part_sections(current_part)).replace('__PART_NAV__',navigation).replace('__MANIFEST__',json.dumps(screens,ensure_ascii=False))
+    page=template.replace('__MAIN__',str(sum(s['kind']=='main' for s in selected))).replace('__STATE__',str(sum(s['kind']=='state' for s in selected))).replace('__TOTAL__',str(len(selected))).replace('__RULE_CARDS__',current_rules).replace('__PARTS__',part_sections(current_part)).replace('__PART_NAV__',navigation).replace('__MANIFEST__',json.dumps(screens,ensure_ascii=False))
     if current_part:
-        label='本轮TV审查修订' if review else next(title for key,title,_ in PARTS if key==current_part)
+        label=next(title for key,title,_ in PARTS if key==current_part)
         page=page.replace('<title>JellyLive · 电视界面设计册</title>',f'<title>JellyLive · {label}设计</title>')
     (OUT/f'{current_part or "index"}.html').write_text(page)
 (OUT/'flow-groups.json').write_text(json.dumps(flows,ensure_ascii=False,indent=2))

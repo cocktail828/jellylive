@@ -1,0 +1,137 @@
+{
+  "figures": [
+    {
+      "number": 15,
+      "id": "11-library",
+      "scene": "home"
+    },
+    {
+      "number": 16,
+      "id": "12-library-grid",
+      "scene": "movies"
+    },
+    {
+      "number": 28,
+      "id": "23-library-empty",
+      "scene": "empty-library"
+    },
+    {
+      "number": 39,
+      "id": "12-library-filter",
+      "scene": "filter-type"
+    },
+    {
+      "number": 40,
+      "id": "12-library-sort",
+      "scene": "sort"
+    },
+    {
+      "number": 41,
+      "id": "11-library-empty-history",
+      "scene": "empty-history"
+    },
+    {
+      "number": 52,
+      "id": "12-library-no-results",
+      "scene": "no-results"
+    },
+    {
+      "number": 56,
+      "id": "12-library-loading",
+      "scene": "loading"
+    },
+    {
+      "number": 58,
+      "id": "12-library-large-text",
+      "scene": "large-text"
+    },
+    {
+      "number": 63,
+      "id": "12-library-recent",
+      "scene": "history"
+    },
+    {
+      "number": 106,
+      "id": "12-library-series",
+      "scene": "series"
+    },
+    {
+      "number": 107,
+      "id": "12-library-history-sort",
+      "scene": "history-sort"
+    },
+    {
+      "number": 108,
+      "id": "12-library-filter-year",
+      "scene": "filter-year"
+    },
+    {
+      "number": 109,
+      "id": "12-library-filter-rating",
+      "scene": "filter-rating"
+    },
+    {
+      "number": 110,
+      "id": "12-library-filter-progress",
+      "scene": "filter-progress"
+    },
+    {
+      "number": 111,
+      "id": "12-library-filtered",
+      "scene": "filtered"
+    },
+    {
+      "number": 112,
+      "id": "12-library-offline",
+      "scene": "offline"
+    },
+    {
+      "number": 113,
+      "id": "12-library-append-error",
+      "scene": "append-error"
+    },
+    {
+      "number": 114,
+      "id": "12-library-metadata",
+      "scene": "metadata"
+    },
+    {
+      "number": 115,
+      "id": "12-library-focus-sidebar",
+      "scene": "focus-sidebar"
+    },
+    {
+      "number": 116,
+      "id": "12-library-focus-search",
+      "scene": "focus-search"
+    },
+    {
+      "number": 117,
+      "id": "12-library-focus-sort",
+      "scene": "focus-sort"
+    },
+    {
+      "number": 118,
+      "id": "12-library-favorites",
+      "scene": "favorites"
+    },
+    {
+      "number": 119,
+      "id": "12-library-empty-favorites",
+      "scene": "empty-favorites"
+    },
+    {
+      "number": 120,
+      "id": "12-library-unsupported",
+      "scene": "unsupported"
+    }
+  ],
+  "nativeResolution": [
+    3840,
+    2160
+  ],
+  "previewResolution": [
+    1920,
+    1080
+  ]
+}

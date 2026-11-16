@@ -1,0 +1,11 @@
+{
+  "scenes": 26,
+  "merged": true,
+  "errors": [],
+  "storageScopes": [
+    "live-source-channel",
+    "media-server-account-item",
+    "app-internal-cctv-album"
+  ],
+  "scope": "Local container static design checks; no Android, actual server writes or CCTV playback validation."
+}

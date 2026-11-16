@@ -29,7 +29,7 @@ def install(g):
         s=rect(100,64,1052,716,'#04070d',20,'#fff' if focus=='preview' else '#414866',4 if focus=='preview' else 1)
         s+=scene(104,126,1044,588,selected%3)+rect(1184,64,640,716,'#14192e')
         s+=g['source_tabs'](1192,80,616)+g['channel_list'](1192,163,616,selected if focus=='list' else -1,no_epg=no_epg,playing=selected)
-        for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+        for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
             x=100+i*438;w=406;active=focus==name
             s+=rect(x,826,w,176,'url(#purple)' if active else '#242a46',18,'#fff' if active else '#363e5d',4 if active else 1)
             start=x+(w-(64+len(name)*36))/2
@@ -136,7 +136,7 @@ def install(g):
             s+=text(424,282,'山河之间',96,weight=700)+text(424,346,'一段穿越山河的归途',42,'#c4b7e8')
             s+=text(424,418,'评分 8.6 · 2025 · 中国大陆',42,MUTED)+text(424,480,'01:48:00 · 4K · 剧情 / 旅行',39,MUTED)
             s+=text(424,556,'一封迟到的来信，开启了一段穿越山河的旅程。',45)+text(424,610,'沿途的相遇，让归乡有了新的意义。',45)
-            for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看']):
+            for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看','收藏']):
                 x=424+(i%2)*708;y=660+(i//2)*126
                 s+=rect(x,y,684,100,'url(#purple)' if i==0 else '#242a46',14,'#fff' if i==0 else '#363e5d',4 if i==0 else 1)+centered(x+342,y+65,label,42,weight=600)
             s+=text(96,966,'演职人员',48,weight=600)
@@ -145,7 +145,7 @@ def install(g):
         s+=icon('star',424,367,28,'#f2cf83')+text(466,392,'8.6',28,'#f2cf83',600)+text(550,392,'2025 · 中国大陆 · 01:48:00',28,MUTED)
         s+=g['pill'](424,419,'4K',w=86)+g['pill'](526,419,'HDR',w=102)+text(660,449,'剧情 / 旅行',26,MUTED)
         s+=text(424,522,'一封迟到的来信，开启了一段穿越山河的旅程。',30)+text(424,566,'沿途的相遇，让归乡有了新的意义。',30)
-        for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看']):s+=center_button(424+i*472,622,448,label,i==0,h=76)
+        for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看','收藏']):s+=center_button(424+i*354,622,330,label,i==0,h=76)
         s+=text(96,718,'电影 · 4K',26,MUTED)+text(96,762,'剧情 / 旅行',26,MUTED)+text(424,756,'导演  林川',28,MUTED)+text(744,756,'主演  陈远 / 许宁',28,MUTED)+text(96,838,'演职人员',32,weight=600)
         for i,(name,role) in enumerate([('陈远','饰 林野'),('许宁','饰 沈禾'),('林川','导演')]):
             x=96+i*354;s+=rect(x,864,330,152,'#171c32',18,'#363e5d')+f'<circle cx="{x+66}" cy="911" r="23" fill="#696186"/><path d="M{x+30} 978 Q{x+30} 938 {x+66} 938 Q{x+102} 938 {x+102} 978" fill="#696186"/>'+text(x+122,926,name,30,weight=600)+text(x+122,974,role,24,MUTED)
