@@ -17,6 +17,20 @@ public final class LiveQuality {
         if(match.find()&&match.start()>0){String base=value.substring(0,match.start()).trim();if(!base.equalsIgnoreCase("CCTV"))value=base;}
         return value.replaceAll("[\\s\\p{Z}]+","").replaceFirst("(?i)^CCTV[-_]+(?=[0-9])","CCTV").toLowerCase(Locale.ROOT);
     }
+    /** Display the station once, leaving the quality labels in the actual variant menu. */
+    public static String displayName(String name){
+        String value=normalized(name);Matcher match=SUFFIX.matcher(value);
+        if(match.find()&&match.start()>0){String base=value.substring(0,match.start()).trim();if(!base.equalsIgnoreCase("CCTV"))value=base;}
+        if(value.matches("(?i)^CCTV[-_\\s]*[48]K$"))return value;
+        Matcher cctv=Pattern.compile("(?i)^CCTV[-_\\s]*([0-9]+)(.*)$").matcher(value);
+        return cctv.matches()?"CCTV-"+cctv.group(1)+cctv.group(2).trim():value;
+    }
+    /** Caller scopes these groups to one source. Empty names never become one channel. */
+    public static List<List<Integer>> groups(List<String> names){
+        java.util.LinkedHashMap<String,List<Integer>> groups=new java.util.LinkedHashMap<>();
+        for(int i=0;i<names.size();i++){String key=station(names.get(i));if(key.isEmpty())key="unknown:"+i;groups.computeIfAbsent(key,k->new java.util.ArrayList<>()).add(i);}
+        return new java.util.ArrayList<>(groups.values());
+    }
     public static boolean sameStation(String first,String second){String key=station(first);return !key.isEmpty()&&key.equals(station(second));}
     public static String label(String name){
         Matcher match=SUFFIX.matcher(normalized(name));if(!match.find())return "画质";

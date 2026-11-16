@@ -279,14 +279,38 @@ public final class LiveActivity extends Activity {
     private void focusPreview(){if(errorPanel!=null){focusRecovery();}else if(previewButton!=null)previewButton.requestFocus();}
     private LiveSourceStore.Source owner(JSONObject channel){LiveSourceStore.Source found=channelOwners.get(channel);return found==null?source:found;}
     private String channelKey(JSONObject channel){return channel==null?"":LiveFilter.key(owner(channel).id,channel.optString("ChannelCode"));}
-    private boolean isPlayingChannel(JSONObject channel){return channel!=null&&playingSource.equals(owner(channel).id)&&playingCode.equals(channel.optString("ChannelCode"));}
+    private boolean isPlayingChannel(JSONObject channel){JSONObject actual=actualPlayingChannel();return channel!=null&&playingSource.equals(owner(channel).id)&&(playingCode.equals(channel.optString("ChannelCode"))||actual!=null&&LiveQuality.sameStation(channel.optString("ChannelName"),actual.optString("ChannelName")));}
     private String filterKey(){return (drawerVisible?"drawer":route)+"/"+sourceScope+"/"+favoritesOnly;}
     private void rememberChannelFilter(){if(list==null)return;int at=list.getSelectedItemPosition();if(at>=0&&at<shown.size()){channelFocus.put(filterKey(),channelKey(shown.get(at)));View row=list.getChildAt(at-list.getFirstVisiblePosition());channelScroll.put(filterKey(),new int[]{at,row==null?0:row.getTop()});}}
     private String sourceScopeName(){return favoritesOnly?"收藏":sourceScope.isEmpty()?"全部频道":sourceScope.equals(LiveSourceStore.BUILTIN)?"电视直播源":"其他直播源";}
     private void filteredChannels(boolean favorites){
         if(!sourceScope.isEmpty()&&!sourceScope.equals(LiveFilter.OTHERS)){LiveSourceStore.Source selected=store.metadata(sourceScope);if(selected==null||!selected.enabled)sourceScope="";}
         shown=new ArrayList<>();channelOwners.clear();
-        for(LiveSourceStore.Source s:store.channelSnapshots())for(JSONObject channel:s.channels){channelOwners.put(channel,s);if(LiveFilter.includes(sourceScope,favorites||favoritesOnly,s.id,s.enabled,store.favorite(s.id,channel.optString("ChannelCode"))))shown.add(channel);}
+        for(LiveSourceStore.Source s:store.channelSnapshots()){
+            for(JSONObject channel:s.channels)channelOwners.put(channel,s);
+            if(LiveFilter.includes(sourceScope,false,s.id,s.enabled,false))shown.addAll(aggregateChannels(s,favorites||favoritesOnly));
+        }
+    }
+    private List<JSONObject> aggregateChannels(LiveSourceStore.Source snapshot,boolean favorites){
+        List<String> names=new ArrayList<>();for(JSONObject ch:snapshot.channels)names.add(ch.optString("ChannelName"));
+        List<JSONObject> result=new ArrayList<>();
+        for(List<Integer> group:LiveQuality.groups(names)){
+            JSONObject first=snapshot.channels.get(group.get(0)),selected=first;boolean favorite=false;
+            for(int index:group){JSONObject ch=snapshot.channels.get(index);favorite|=store.favorite(snapshot.id,ch.optString("ChannelCode"));if(snapshot.id.equals(playingSource)&&ch.optString("ChannelCode").equals(playingCode))selected=ch;}
+            if(favorites&&!favorite)continue;
+            try {JSONObject display=new JSONObject(selected.toString());display.put("ChannelName",LiveQuality.displayName(first.optString("ChannelName")));if(!first.optString("ChannelNo").isEmpty())display.put("ChannelNo",first.optString("ChannelNo"));else display.remove("ChannelNo");channelOwners.put(display,snapshot);result.add(display);}catch(JSONException ignored){result.add(selected);}
+        }
+        return result;
+    }
+    private boolean stationFavorite(LiveSourceStore.Source snapshot,JSONObject channel){
+        for(JSONObject ch:snapshot.channels)if((channel.optString("ChannelCode").equals(ch.optString("ChannelCode"))||LiveQuality.sameStation(channel.optString("ChannelName"),ch.optString("ChannelName")))&&store.favorite(snapshot.id,ch.optString("ChannelCode")))return true;
+        return false;
+    }
+    private boolean toggleStationFavorite(LiveSourceStore.Source snapshot,JSONObject channel)throws Exception{
+        boolean remove=stationFavorite(snapshot,channel);
+        if(remove){for(JSONObject ch:snapshot.channels)if((channel.optString("ChannelCode").equals(ch.optString("ChannelCode"))||LiveQuality.sameStation(channel.optString("ChannelName"),ch.optString("ChannelName")))&&store.favorite(snapshot.id,ch.optString("ChannelCode")))store.toggleFavorite(snapshot.id,ch.optString("ChannelCode"));}
+        else store.toggleFavorite(snapshot.id,channel.optString("ChannelCode"));
+        return !remove;
     }
     private void applyChannelFilter(String scope,boolean favorites){
         rememberChannelFilter();cancelPreviewSwitch();sourceScope=scope;favoritesOnly=favorites;homeFocusFromInput=false;boolean wasDrawer=drawerVisible;
@@ -518,7 +542,7 @@ public final class LiveActivity extends Activity {
     private void diskTask(DiskTask task,Runnable success){diskWorker.execute(()->{try{task.run();onUi(success);}catch(Exception e){onUi(()->toast("更改没有保存，请检查存储后重试。"));}});}
     private void renderFavorites(){
         ui.header(page,"我的收藏",source.name+" · "+favoriteCount()+" 个收藏频道",()->back());
-        shown=new ArrayList<>();for(JSONObject ch:source.channels)if(store.favorite(source.id,ch.optString("ChannelCode")))shown.add(ch);
+        shown=aggregateChannels(source,true);
         if(shown.isEmpty()){favoriteFocus.remove(source.id);favoriteScroll.remove(source.id);TextView empty=ui.text(page,"暂无收藏频道",20,TvUi.MUTED,50,107,862,343);empty.setGravity(Gravity.CENTER);return;}
         GridView grid=new GridView(this);favoriteGrid=grid;tag(grid,"favorite-grid");grid.setId(View.generateViewId());grid.setNumColumns(ui.largeText()?3:4);grid.setHorizontalSpacing(ui.px(20));grid.setVerticalSpacing(ui.px(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(ui.px(2),ui.px(2),ui.px(2),ui.px(2));GradientDrawable selector=new GradientDrawable();selector.setColor(Color.TRANSPARENT);selector.setCornerRadius(ui.px(8));selector.setStroke(ui.px(2),Color.WHITE);grid.setSelector(selector);grid.setDrawSelectorOnTop(true);grid.setLongClickable(false);
         grid.setAdapter(new BaseAdapter(){public int getCount(){return shown.size();}public Object getItem(int n){return shown.get(n);}public long getItemId(int n){return n;}public View getView(int n,View old,ViewGroup parent){TextView card=ui.text(shown.get(n).optString("ChannelName"),18,TvUi.INK);card.setGravity(Gravity.CENTER);card.setTypeface(null,Typeface.BOLD);card.setMaxLines(2);card.setEllipsize(TextUtils.TruncateAt.END);card.setPadding(ui.px(12),ui.px(6),ui.px(12),ui.px(6));android.graphics.drawable.StateListDrawable bg=new android.graphics.drawable.StateListDrawable();GradientDrawable selected=ui.surface(TvUi.ACCENT,true);selected.setStroke(ui.px(.5f),0xff363e5d);bg.addState(new int[]{android.R.attr.state_selected},selected);bg.addState(new int[]{},ui.surface(0xff1b2038,false));card.setBackground(bg);card.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(73)));return card;}});
@@ -527,7 +551,7 @@ public final class LiveActivity extends Activity {
         grid.setOnKeyListener((v,key,event)->{if(event.getAction()!=KeyEvent.ACTION_DOWN)return false;int n=grid.getSelectedItemPosition(),columns=grid.getNumColumns();if(key==KeyEvent.KEYCODE_DPAD_UP&&n<columns){rememberFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN&&n+columns>=shown.size()){if((n/columns+1)*columns<shown.size())grid.setSelection(shown.size()-1);return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT&&n%columns==0||key==KeyEvent.KEYCODE_DPAD_RIGHT&&(n%columns==columns-1||n==shown.size()-1))return true;return false;});
         ui.footer(page,"方向键移动 · 确认 / 点击打开操作菜单 · 返回主页");
     }
-    private int favoriteCount(){int count=0;for(JSONObject ch:source.channels)if(store.favorite(source.id,ch.optString("ChannelCode")))count++;return count;}
+    private int favoriteCount(){return aggregateChannels(source,true).size();}
     private void restoreFavoritePosition(){
         if(favoriteGrid==null||shown.isEmpty()){View back=page.findViewWithTag("back");if(back!=null)back.requestFocus();return;}
         GridView grid=favoriteGrid;int selected=0;String code=favoriteFocus.get(source.id);for(int i=0;i<shown.size();i++)if(shown.get(i).optString("ChannelCode").equals(code))selected=i;
@@ -535,12 +559,12 @@ public final class LiveActivity extends Activity {
         grid.post(()->{if(grid==favoriteGrid&&route.equals("favorites"))grid.setSelectionFromTop(target,top);});
     }
     private void showFavoriteActions(JSONObject channel){
-        View anchor=getCurrentFocus();final String id=source.id;final int index=favoriteGrid==null?0:favoriteGrid.getSelectedItemPosition();
+        View anchor=getCurrentFocus();final LiveSourceStore.Source favoriteSource=source;final String id=source.id;final int index=favoriteGrid==null?0:favoriteGrid.getSelectedItemPosition();
         FrameLayout panel=new FrameLayout(this);panel.setBackground(ui.surface(0xff1b2038,false));ui.title(panel,channel.optString("ChannelName"),16,12,228,24);
         AlertDialog menu=new AlertDialog.Builder(this).create();menu.setView(panel,0,0,0,0);dialog=menu;
         Button playButton=ui.button(panel,"▷  播放",16,41,228,35,()->{menu.dismiss();startFullChannel(channel,"favorites");});
         ui.button(panel,"节目单",16,82,228,35,()->{menu.dismiss();openGuideFor(channel,"favorites");});
-        ui.button(panel,"移除",16,123,228,35,()->{menu.dismiss();diskTask(()->{if(store.favorite(id,channel.optString("ChannelCode")))store.toggleFavorite(id,channel.optString("ChannelCode"));},()->{
+        ui.button(panel,"移除",16,123,228,35,()->{menu.dismiss();diskTask(()->{if(stationFavorite(favoriteSource,channel))toggleStationFavorite(favoriteSource,channel);},()->{
             if(!source.id.equals(id))return;toast("已移除");if(!route.equals("favorites"))return;
             List<JSONObject> remaining=new ArrayList<>();for(JSONObject c:source.channels)if(store.favorite(id,c.optString("ChannelCode")))remaining.add(c);
             if(!remaining.isEmpty())favoriteFocus.put(id,remaining.get(Math.min(Math.max(0,index),remaining.size()-1)).optString("ChannelCode"));else favoriteFocus.remove(id);
@@ -1037,9 +1061,9 @@ public final class LiveActivity extends Activity {
     private void cancelFavoriteGesture(){handler.removeCallbacks(holdFavorite);favoriteGesture.cancel();if(confirmAnchor!=null)confirmAnchor.setPressed(false);confirmAnchor=null;confirmFromVideo=false;}
     private void savePlayingFavorite(){
         JSONObject channel=actualPlayingChannel();if(channel==null)return;
-        final String id=favoriteGesture.source,code=favoriteGesture.channel,name=channel.optString("ChannelName");
+        final String id=favoriteGesture.source,code=favoriteGesture.channel,name=LiveQuality.displayName(channel.optString("ChannelName"));final LiveSourceStore.Source favoriteSource=owner(channel);
         if(!id.equals(playingSource)||!code.equals(playingCode))return;
-        diskWorker.execute(()->{try{store.toggleFavorite(id,code);boolean saved=store.favorite(id,code);onUi(()->favoriteResult((saved?"已收藏 · ":"已取消收藏 · ")+name));}catch(Exception e){onUi(()->favoriteResult("收藏未保存，请重试"));}});
+        diskWorker.execute(()->{try{boolean saved=toggleStationFavorite(favoriteSource,channel);onUi(()->favoriteResult((saved?"已收藏 · ":"已取消收藏 · ")+name));}catch(Exception e){onUi(()->favoriteResult("收藏未保存，请重试"));}});
     }
     private void favoriteResult(String text){
         handler.removeCallbacks(removeFavoriteFeedback);removeFavoriteFeedback.run();favoriteFeedback=ui.text(text,12,TvUi.INK);favoriteFeedback.setGravity(Gravity.CENTER);favoriteFeedback.setPadding(ui.px(16),ui.px(9),ui.px(16),ui.px(9));favoriteFeedback.setMaxWidth(ui.px(800));favoriteFeedback.setBackground(ui.surface(0xe6171c32,false));favoriteFeedback.setFocusable(false);
@@ -1078,7 +1102,7 @@ public final class LiveActivity extends Activity {
     @Override public boolean dispatchGenericMotionEvent(MotionEvent event){homeFocusFromInput=true;lastInputAt=android.os.SystemClock.uptimeMillis();resetIdleTimers();return super.dispatchGenericMotionEvent(event);}
     @Override public boolean onKeyDown(int key,KeyEvent e){
         if(dialog!=null&&dialog.isShowing())return super.onKeyDown(key,e);
-        if(route.equals("full")&&!drawerVisible&&!controlsVisible&&errorPanel==null){if(key==KeyEvent.KEYCODE_DPAD_RIGHT){showDrawer();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT){openGuide();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_CHANNEL_UP||key==KeyEvent.KEYCODE_DPAD_DOWN||key==KeyEvent.KEYCODE_CHANNEL_DOWN){if(!source.channels.isEmpty()){JSONObject c=requestedChannel();int n=c==null?0:source.channels.indexOf(c);boolean next=key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_CHANNEL_UP;play(source.channels.get((n+(next?1:source.channels.size()-1))%source.channels.size()),true);}return true;}}
+        if(route.equals("full")&&!drawerVisible&&!controlsVisible&&errorPanel==null){if(key==KeyEvent.KEYCODE_DPAD_RIGHT){showDrawer();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT){openGuide();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_CHANNEL_UP||key==KeyEvent.KEYCODE_DPAD_DOWN||key==KeyEvent.KEYCODE_CHANNEL_DOWN){if(!source.channels.isEmpty()){List<JSONObject> channels=aggregateChannels(source,false);JSONObject c=requestedChannel();int n=0;for(int i=0;i<channels.size();i++)if(c!=null&&LiveQuality.sameStation(c.optString("ChannelName"),channels.get(i).optString("ChannelName")))n=i;boolean next=key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_CHANNEL_UP;play(channels.get((n+(next?1:channels.size()-1))%channels.size()),true);}return true;}}
         return super.onKeyDown(key,e);
     }
     @Override public void onBackPressed(){back();}

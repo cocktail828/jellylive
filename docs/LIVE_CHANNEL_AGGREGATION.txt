@@ -1,0 +1,20 @@
+直播频道画质聚合依据与边界
+
+来源核对（2026-11-16）
+- IPTV-org 数据区分 channels 与 feeds：频道身份和画质/地区/时移等播出版本分开。
+  https://github.com/iptv-org/database/blob/master/CONTRIBUTING.md
+  https://github.com/iptv-org/iptv/blob/master/docs/stream-id.md
+- Kodi IPTV Simple 的 M3U 字段区分 tvg-id、显示名称等；tvg-id 用于频道/节目单匹配，不能把不同频道的同名条目当作必然相同。
+  https://kodi.wiki/view/Add-on:PVR_IPTV_Simple_Client
+- HLS RFC8216 的 EXT-X-STREAM-INF、RESOLUTION、BANDWIDTH 描述同一节目的编码版本及其实际分辨率、带宽；它们不是“两个独立频道名称相似所以相同”的证明。
+  https://www.rfc-editor.org/rfc/rfc8216.html#section-4.3.4.2
+
+当前来源与实施规则
+- 复用已有 LiveQuality 的保守同台判断。在单个直播源内部聚合，不跨来源合并。
+- 只移除明确位于末尾的高清/标清/HD/SD/1080p等画质标记；归一空格/全半角和 CCTV1/CCTV-1 写法。
+- 保留 CCTV-5+、地区、语言等内容差异；CCTV4K/CCTV8K 是独立台名，不剥成 CCTV。
+- 当前来源没有统一的逻辑频道ID映射，因此不把不同 ChannelCode 强行当作同一频道ID；名称规则只采用已有画质分组的精确匹配，不做模糊相似度或按前缀匹配。
+- 原始频道记录、地址、真实画质选项保持；聚合的是显示列表，显示名如 CCTV-1。未标注画质的条目仍不伪称标清。
+- 顺序和频道号沿用该组第一项；当前播放的真实版本仍用于焦点/播放标记，画质菜单仍列实际来源版本。
+- 直播原有高清优先/成功手选记忆规则保留；“央视频最高画质默认”仅适用于央视频点播。
+- 收藏按频道组显示一次；任一原版本收藏视为该组收藏，取消时移除组内原收藏，避免合并后遗留不可见收藏。

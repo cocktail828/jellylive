@@ -24,6 +24,11 @@ public final class LiveQualityCheck {
         verify("removed remembered choice falls back",LiveQuality.preferred(names,codes,"plain","removed")==1);
         verify("no synthetic HD entry",LiveQuality.preferred(Arrays.asList("CCTV-1"),Arrays.asList("plain"),"plain",null)==0);
         verify("empty list yields no choice",LiveQuality.preferred(Collections.emptyList(),Collections.emptyList(),"",null)==-1);
+        verify("display name removes actual HD suffix",LiveQuality.displayName("CCTV-1 高清").equals("CCTV-1"));
+        verify("CCTV spelling uses one display name",LiveQuality.displayName("cctv1 HD").equals("CCTV-1"));
+        verify("dedicated UHD channel keeps its name",LiveQuality.displayName("CCTV4K").equals("CCTV4K"));
+        verify("grouped variants keep their source indices",LiveQuality.groups(Arrays.asList("CCTV-1","CCTV-1高清","CCTV-10","CCTV-5+","CCTV-5")).equals(Arrays.asList(Arrays.asList(0,1),Arrays.asList(2),Arrays.asList(3),Arrays.asList(4))));
+        verify("unnamed entries remain separate",LiveQuality.groups(Arrays.asList("","")).size()==2);
         System.out.println(count+" source-backed live quality checks passed");
     }
 }
