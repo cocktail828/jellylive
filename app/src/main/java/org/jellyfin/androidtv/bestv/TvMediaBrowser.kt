@@ -229,11 +229,14 @@ class TvMediaBrowser(private val ui: TvUi,val host: FrameLayout,libraryName: Str
     companion object {
         /** Shared by grid and search cards; reduced motion keeps the centered ellipsis. */
         fun scrollTitleOnFocus(card: View,caption: TextView,ui: TvUi){
+        val available=caption.layoutParams?.width ?: 0
+        if(available>0&&caption.paint.measureText(caption.text.toString())<=available)return
         val handler=Handler(Looper.getMainLooper())
         var animation: android.animation.ValueAnimator?=null
         lateinit var marquee: Runnable
         marquee=Runnable {
             if(card.hasFocus()&&!ui.reduceMotion()){
+                if(caption.width<=0){handler.postDelayed(marquee,50);return@Runnable}
                 val overflow=(caption.paint.measureText(caption.text.toString())-caption.width).toInt()
                 if(overflow>0){
                     caption.ellipsize=null;caption.gravity=Gravity.START or Gravity.CENTER_VERTICAL
