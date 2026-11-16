@@ -1,0 +1,41 @@
+package org.jellyfin.androidtv.bestv
+
+fun main(){
+    val albums=CctvCatalog.albums("""{"data":{"total":2000,"list":[{"id":"VIDAone","title":"同名","count":"20","fc":"电视剧"},{"id":"VIDAtwo","title":"同名","year":"2024"}]}}""","电视剧")
+    check(albums.items.size==2&&albums.items[0].year==null&&albums.items[0].count==20)
+    check(runCatching {CctvCatalog.albums("""{"errcode":1001,"msg":"url error"}""","电视剧")}.isFailure)
+    val ep=CctvCatalog.episodes("""{"data":{"total":2,"last_part":2,"list":[{"guid":"a1234567890123456789012345678901","title":"第一期","part":1},{"guid":"b1234567890123456789012345678901","title":"第二期","part":2}]}}""")
+    check(ep.items.map {it.part}==listOf(1,2)&&ep.cursor==2)
+    val stream=CctvCatalog.stream("""{"ack":"yes","status":"001","hls_url":"https://example.org/main.m3u8","video":{"totalLength":"2724.60"}}""")
+    check(stream.duration==2724600L&&stream.url.endsWith("m3u8"))
+    check(runCatching {CctvCatalog.stream("""{"ack":"yes","is_preview":"1","hls_url":"https://example.org/preview.m3u8"}""")}.isFailure)
+    check(runCatching {CctvCatalog.stream("""{"ack":"yes","status":"001","video":{"chapters":[{"url":"https://a/1.mp4"},{"url":"https://a/2.mp4"}]}}""")}.isFailure)
+    check(runCatching {CctvCatalog.stream("""{"hls_url":"javascript:bad"}""")}.isFailure)
+    listOf("https:///bad.m3u8","javascript:bad","ftp://example.org/a").forEach { url ->
+        check(runCatching { CctvCatalog.stream("""{"ack":"yes","status":"001","hls_url":"$url"}""") }.isFailure)
+    }
+    check(runCatching {CctvCatalog.stream("""{"ack":"yes","status":"001","is_invalid_copyright":"1","hls_url":"https://example.org/main.m3u8"}""")}.isFailure)
+    check(runCatching {CctvCatalog.stream("""{"ack":"yes","status":"001","hls_url":"https://example.org/main.m3u8","video":{"totalLength":"NaN"}}""")}.isFailure)
+    check(runCatching {CctvCatalog.albums("""{"data":{"list":[{"title":"缺少ID"}]}}""","电视剧")}.isFailure)
+    val poster=CctvCatalog.albums("""{"data":{"list":[{"id":"VIDAposter","title":"封面","image":"wide","image2":"poster"}]}}""","电视剧")
+    check(poster.items.single().imageUrl=="poster")
+    val cursor=CctvBrowseCursor(mapOf("sc" to "历史"),4)
+    check(cursor.page(mapOf("sc" to "历史"))==4)
+    check(cursor.page(mapOf("sc" to "战争"))==1)
+    check(cursor.page(mapOf("sc" to "历史"),refresh=true)==1)
+    check(CctvBrowseCursor().page(emptyMap())==1)
+    check(cursor.page(mapOf("sc" to "战争"))==1) // failed refresh cannot reuse the old query page
+    val album=albums.items.first();var state=CctvState()
+    state=state.favorite(album,true,100)
+    check(state.favorites().size==1&&state.history().isEmpty())
+    state=state.watch(album,ep.items.first(),8000,100000,false,200)
+    state=state.favorite(album,false,300)
+    check(state.history().size==1&&state.favorites().isEmpty()&&state.entries[album.id]?.position==8000L)
+    state=state.favorite(albums.items[1],true,400)
+    check(state.entries.size==2)
+    check(CctvState.decode(state.encode())==state)
+    check(runCatching {CctvState.decode("broken")}.isFailure)
+    state=state.watch(album,ep.items.first(),100000,100000,true,500)
+    check(state.entries[album.id]?.resumePosition==0L)
+    println("CCTV catalog, playback validation and isolated state PASS")
+}

@@ -38,6 +38,16 @@ import java.util.UUID
 /** Optional library: backing out always leaves independent live available. */
 class JellyLibraryActivity : FragmentActivity() {
     private val repo = LibraryRepository()
+    private var playerForeground=true
+    private var cctvMode=false
+    private var cctvAlbum: CctvAlbum?=null
+    private var cctvEpisodes=emptyList<CctvEpisode>()
+    private var cctvEpisode: CctvEpisode?=null
+    private var cctvDuration=0L
+    private val cctvRepo by lazy {CctvRepository()}
+    private val cctvStore by lazy {CctvStore(this)}
+    private var cctvWrites: java.util.concurrent.ExecutorService?=null
+    private var cctvSaveErrorShown=false
     private val connections = LibraryConnections()
     private var switchBusy=false
     private var switchTarget=""
@@ -132,7 +142,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private val updatePlayer = object : Runnable {
         override fun run() {
             val p = player ?: return
-            val duration = p.duration.takeIf { it > 0 } ?: ((stream?.runTimeTicks ?: 0) / 10000)
+            val duration = p.duration.takeIf { it > 0 } ?: if(cctvMode)cctvDuration else ((stream?.runTimeTicks ?: 0) / 10000)
             val shownPosition=overlay.target ?: p.currentPosition
             updateSeekAvailability()
             seek?.progress=if(duration>0)(shownPosition*10000/duration).toInt() else 0
@@ -141,7 +151,7 @@ class JellyLibraryActivity : FragmentActivity() {
             pause?.let {TvIcons.text(it,if(p.playWhenReady&&p.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
             playingItem?.let { item ->
                 if(System.currentTimeMillis()-lastPersist>=5000){rememberPosition(item,p.currentPosition);lastPersist=System.currentTimeMillis()}
-                if (reportStarted && playingSessionKey==repo.sessionKey && System.currentTimeMillis() - lastReport > 15000) {
+                if (!cctvMode && reportStarted && playingSessionKey==activeSessionKey() && System.currentTimeMillis() - lastReport > 15000) {
                     stream?.let { reporting.reportProgress(this@JellyLibraryActivity, null, item, it, p.currentPosition * 10000, !p.isPlaying) }
                     lastReport = System.currentTimeMillis()
                 }
@@ -155,14 +165,17 @@ class JellyLibraryActivity : FragmentActivity() {
         super.onCreate(state)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         ui = TvUi(this)
-        connections.prepare(this)
+        cctvMode=intent.hasExtra("cctv_album")
+        if(!cctvMode)connections.prepare(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { back() } })
+        if(cctvMode){openCctvPlayback();return}
         if (intent.getBooleanExtra("add_library", false)) {
             connection(false)
             return
         }
         restoreInitialConnection()
     }
+    private fun activeSessionKey()=if(cctvMode)"cctv" else repo.sessionKey
     private fun entryName()=connections.current()?.name ?: "媒体库"
     private fun centerEntryPage() {
         val display=android.util.DisplayMetrics();windowManager.defaultDisplay.getRealMetrics(display)
@@ -279,7 +292,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun fresh(name: String, push: Boolean=true): FrameLayout {
         task?.cancel(); searchJob?.cancel();gridRenderJob?.cancel(); generation++
         if (push && ::page.isInitialized) history.addLast(SavedPage(page,pageName,currentFocus?.id ?: View.NO_ID,pageSessionKey))
-        pageName = name;pageSessionKey=repo.sessionKey; page = ui.canvas(); setContentView(page)
+        pageName = name;pageSessionKey=activeSessionKey(); page = ui.canvas(); setContentView(page)
         return page
     }
     private fun header(title: String, subtitle: String="") { ui.header(page, title, subtitle) { back() }; ui.footer(page, "方向键移动  OK 确认  返回上一级") }
@@ -449,7 +462,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private val browserStates=mutableMapOf<String,BrowserState>()
     private fun renderGrid(title: String,parent: UUID?,initialQuery: LibraryBrowse.Query,start: Int=0,push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
-        val session=repo.sessionKey
+        val session=activeSessionKey()
         val section=when {initialQuery.favorites->4;initialQuery.recent->3;initialQuery.kind==BaseItemKind.MOVIE->1;initialQuery.kind==BaseItemKind.SERIES->2;else->0}
         val names=listOf("全部媒体","电影","电视剧","观看记录","收藏")
         val key="$session|$parent|$section"
@@ -472,7 +485,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val query=state.query;val text=state.text
             rendering=lifecycleScope.launch {
                 val selected=withContext(Dispatchers.Default){LibraryBrowse.select(catalog,query).filter {text.isBlank()||it.name.orEmpty().contains(text,true)||it.originalTitle.orEmpty().contains(text,true)||it.seriesName.orEmpty().contains(text,true)}}
-                if(page!==host||repo.sessionKey!=session||query!=state.query||text!=state.text)return@launch
+                if(page!==host||activeSessionKey()!=session||query!=state.query||text!=state.text)return@launch
                 val filtered=filterCount(query)>0||text.isNotBlank()
                 browser.title("${names[section]} · ${selected.size}")
                 TvIcons.text(browser.search,if(text.isBlank())"搜索媒体" else "搜索：$text")
@@ -518,14 +531,14 @@ class JellyLibraryActivity : FragmentActivity() {
             task=lifecycleScope.launch {
                 try {
                     val result=withTimeout(25000){repo.catalog(parent,force)}
-                    if(page!==host||repo.sessionKey!=session)return@launch
+                    if(page!==host||activeSessionKey()!=session)return@launch
                     catalog=result
                     if(section in listOf(3,4)&&catalog.isNotEmpty()&&catalog.none {if(section==4)it.userData?.isFavorite!=null else it.userData?.played!=null||LibraryBrowse.seen(it)}){
                         browser.state(if(section==4)"服务器未提供收藏数据" else "服务器未提供观看数据","当前服务或账号暂不支持此功能，可切换媒体库或账号。",TvMediaBrowser.Action("重新读取"){fetchBrowserOrigin(host)},!hasResult)
                     }else render()
                 }catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error
                     if(page===host){if(hasResult)browser.retry("读取超时",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})else browser.state("读取超时","请检查媒体服务器与网络后重试。",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})}
-                }catch(error: Exception){if(page!==host||repo.sessionKey!=session)return@launch
+                }catch(error: Exception){if(page!==host||activeSessionKey()!=session)return@launch
                     if(hasResult){browser.retry("读取失败，已保留当前列表",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})}
                     else browser.state(if(LibraryFailure.from(error)==LibraryFailure.PERMISSION)"当前账号没有访问权限" else "暂时无法读取媒体库","请检查服务器连接或账号授权。",TvMediaBrowser.Action("重试"){fetchBrowserOrigin(host)})
                 }
@@ -617,9 +630,9 @@ class JellyLibraryActivity : FragmentActivity() {
         val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",if(large)212f else 684f,if(large)393f else 311f,if(large)342f else 224f,if(large)50f else 38f){}
         var isPlayed=item.userData?.played==true
         watched.setOnClickListener {
-            watched.isEnabled=false;val session=repo.sessionKey;val host=page
+            watched.isEnabled=false;val session=activeSessionKey();val host=page
             lifecycleScope.launch {
-                try {repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=!isPlayed;TvIcons.text(watched,if(isPlayed)"标为未看" else "标为已看");local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
+                try {repo.setPlayed(item.id,!isPlayed);if(session==activeSessionKey()&&page===host){isPlayed=!isPlayed;TvIcons.text(watched,if(isPlayed)"标为未看" else "标为已看");local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
                 catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"观看状态未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)watched.isEnabled=true}
             }
@@ -657,17 +670,17 @@ class JellyLibraryActivity : FragmentActivity() {
         val button=ui.button(page,if(favorite==true)"取消收藏" else if(favorite==false)"收藏到服务器" else "服务器未提供收藏",x,y,width,height){}
         button.isEnabled=favorite!=null
         button.setOnClickListener {
-            val session=repo.sessionKey;val host=page;val target=favorite!=true
+            val session=activeSessionKey();val host=page;val target=favorite!=true
             button.isEnabled=false;TvIcons.text(button,"正在保存…")
             lifecycleScope.launch {
                 try {val result=repo.setFavorite(item.id,target)
-                    if(page===host&&session==repo.sessionKey){
+                    if(page===host&&session==activeSessionKey()){
                         favorite=result.isFavorite
                         TvIcons.text(button,if(favorite==true)"取消收藏" else "收藏到服务器")
                     }
                 }catch(error: CancellationException){throw error}
-                catch(_: Exception){if(page===host&&session==repo.sessionKey){TvIcons.text(button,if(favorite==true)"取消收藏 · 重试" else "收藏 · 重试");Toast.makeText(this@JellyLibraryActivity,"服务器未保存收藏，请重试",Toast.LENGTH_LONG).show()}}
-                finally {if(page===host&&session==repo.sessionKey)button.isEnabled=true}
+                catch(_: Exception){if(page===host&&session==activeSessionKey()){TvIcons.text(button,if(favorite==true)"取消收藏 · 重试" else "收藏 · 重试");Toast.makeText(this@JellyLibraryActivity,"服务器未保存收藏，请重试",Toast.LENGTH_LONG).show()}}
+                finally {if(page===host&&session==activeSessionKey())button.isEnabled=true}
             }
         }
     }
@@ -706,7 +719,7 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun search(initial: String="",push: Boolean=true,parent: UUID?=null,kind: BaseItemKind?=null,browseQuery: LibraryBrowse.Query?=null,onQueryChanged: ((String)->Unit)?=null) {
         browserSearchChanged=onQueryChanged
-        mediaSearchScope=MediaSearchScope(repo.sessionKey,parent,kind,browseQuery)
+        mediaSearchScope=MediaSearchScope(activeSessionKey(),parent,kind,browseQuery)
         fresh("search",push);header("媒体搜索","${repo.serverName} · ${when(kind){BaseItemKind.MOVIE->"电影";BaseItemKind.SERIES->"剧集";else->"电影和剧集"}}")
         val input=TvFormField(this,ui,"输入片名、剧集名",initial,false);ui.at(page,input,50f,100f,350f,43f);input.setSelection(input.length());searchInput=input
         val body=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL};searchResults=body
@@ -753,14 +766,14 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun runSearch(query: String) {
         browserSearchChanged?.invoke(query)
         searchJob?.cancel();val serial=++mediaSearchSerial;val stamp=generation;val scope=mediaSearchScope ?: return;val resultBody=searchResults ?: return
-        fun isCurrent()=stamp==generation&&serial==mediaSearchSerial&&scope==mediaSearchScope&&scope.session==repo.sessionKey
+        fun isCurrent()=stamp==generation&&serial==mediaSearchSerial&&scope==mediaSearchScope&&scope.session==activeSessionKey()
         resultBody.removeAllViews()
         resultBody.addView(ui.text(if(query.isBlank()) "输入关键词搜索你的媒体" else "正在搜索…",16,TvUi.MUTED))
         if(query.isBlank())return
         searchJob=lifecycleScope.launch {
             delay(300)
             try {
-                if(scope.session!=repo.sessionKey){resultBody.removeAllViews();resultBody.addView(ui.text("媒体库已切换，请重新打开搜索。",14,TvUi.MUTED));return@launch}
+                if(scope.session!=activeSessionKey()){resultBody.removeAllViews();resultBody.addView(ui.text("媒体库已切换，请重新打开搜索。",14,TvUi.MUTED));return@launch}
                 val result=withTimeout(20000) {withContext(Dispatchers.IO){LibraryBrowse.search(scope.query?.let {LibraryBrowse.select(repo.catalog(scope.parent),it)} ?: repo.catalog(scope.parent),query,scope.kind)}}
                 if(!isCurrent())return@launch
                 resultBody.removeAllViews();section(resultBody,"媒体 · ${result.size}")
@@ -775,7 +788,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun play(item: BaseItemDto,position: Long,keepOptions: Boolean=false) {
         if(!keepOptions){mediaSpeed=1f;val display=getSharedPreferences("bestv_live",MODE_PRIVATE);audioLanguage=display.getString("preferred_audio","auto")?.takeUnless {it=="auto"};subtitleLanguage=display.getString("preferred_subtitle","off")?.takeUnless {it=="off"};subtitleOff=subtitleLanguage==null}
         nextCancelled=false;manualEnd=false;handler.removeCallbacks(nextTick)
-        fresh("player");playbackFailure=false;retryPosition=position;overlay=MediaOverlay();consumedPlayerConfirm=false;playingItem=item;playingSessionKey=repo.sessionKey;playingPositionPrefix=currentPositionPrefix();stream=null;reportStarted=false;lastPersist=0
+        fresh("player",!cctvMode);playbackFailure=false;retryPosition=position;overlay=MediaOverlay();consumedPlayerConfirm=false;playingItem=item;playingSessionKey=activeSessionKey();playingPositionPrefix=if(cctvMode)"" else currentPositionPrefix();stream=null;reportStarted=false;lastPersist=0
         val video=PlayerView(this);video.useController=false;video.isFocusable=false;videoSurface=video;ui.at(page,video,0f,0f,960f,540f)
         makeControls(item)
         buffering=FrameLayout(this).also {panel->
@@ -790,6 +803,20 @@ class JellyLibraryActivity : FragmentActivity() {
         page.isFocusableInTouchMode=true;page.requestFocus()
         video.setOnClickListener {if(overlay.visible)hidePlayerControls()else showControls()}
         val stamp=generation
+        if(cctvMode){
+            val album=cctvAlbum ?: return
+            val episode=CctvPlayback.episode(item.id,cctvEpisodes) ?: return
+            cctvEpisode=episode;cctvDuration=0
+            lifecycleScope.launch {
+                try {val info=cctvRepo.stream(episode.guid)
+                    if(stamp!=generation)return@launch
+                    cctvDuration=info.duration
+                    startResolvedPlayer(item,position,info.url,cctvRepo.client,null,emptyList())
+                }catch(error:CancellationException){throw error}
+                catch(_:Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+            }
+            return
+        }
         if(item.type==BaseItemKind.EPISODE&&item.seriesId!=null)lifecycleScope.launch {
             try {val episodes=repo.episodes(item.seriesId!!);if(stamp==generation){seriesEpisodes=episodes;if(player?.playbackState==Player.STATE_ENDED)showAutoNext(item)}}catch(_:CancellationException){}catch(_:Exception){}
         }
@@ -804,37 +831,89 @@ class JellyLibraryActivity : FragmentActivity() {
                         val url=response.mediaUrl
                         if(url.isNullOrBlank()) {overlay.blocked=true;showPlaybackRetry(item);return}
                         stream=response
-                        val render=DefaultRenderersFactory(this@JellyLibraryActivity).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
-                        val exo=ExoPlayer.Builder(this@JellyLibraryActivity,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(LibraryMediaHttp.client(repo.api,mediaHttpFactory)))).build()
-                        player=exo;video.player=exo
-                        val display=getSharedPreferences("bestv_live",MODE_PRIVATE)
-                        applyMediaAspect()
-                        exo.setPlaybackSpeed(mediaSpeed)
-                        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).build()
-                        exo.addListener(object: Player.Listener {
-                            override fun onPlayerError(error: PlaybackException) {cancelAutoNext();overlay.blocked=true;showPlaybackRetry(item)}
-                            override fun onTracksChanged(tracks: Tracks){updateTrackLabels()}
-                            override fun onPlayWhenReadyChanged(playWhenReady: Boolean,reason: Int){overlay.paused=!playWhenReady;armPlayerIdle()}
-                            override fun onTimelineChanged(timeline: Timeline,reason: Int){updateSeekAvailability()}
-                            override fun onPlaybackStateChanged(state: Int) {
-                                if(state==Player.STATE_BUFFERING&&!playbackFailure)waiting(true)
-                                else if(state==Player.STATE_READY||state==Player.STATE_ENDED||state==Player.STATE_IDLE)waiting(false)
-                                if(state==Player.STATE_READY){if(!reportStarted&&playingSessionKey==repo.sessionKey){reportStarted=true;reporting.reportStart(this@JellyLibraryActivity,null,item,response,exo.currentPosition*10000,!exo.playWhenReady);lastReport=System.currentTimeMillis()}}
-                                if(state==Player.STATE_ENDED){overlay.blocked=true;showControls();if(!manualEnd){lifecycleScope.launch {try {repo.setPlayed(item.id,true)}catch(_:Exception){}};showAutoNext(item)}}
-                            }
-                        })
-                        val subtitles=response.mediaSource?.mediaStreams.orEmpty().filter { it.type==MediaStreamType.SUBTITLE && it.isExternal==true && !it.deliveryUrl.isNullOrBlank() }.mapNotNull { media ->
+                        val subtitles=response.mediaSource?.mediaStreams.orEmpty().filter {it.type==MediaStreamType.SUBTITLE && it.isExternal==true && !it.deliveryUrl.isNullOrBlank()}.mapNotNull {media->
                             val mime=when(media.codec?.lowercase()) {"srt","subrip"->MimeTypes.APPLICATION_SUBRIP;"vtt","webvtt"->MimeTypes.TEXT_VTT;"ass","ssa"->MimeTypes.TEXT_SSA;"ttml"->MimeTypes.APPLICATION_TTML;else->null} ?: return@mapNotNull null
-                            val subtitleUrl=repo.api.createUrl(media.deliveryUrl!!,ignorePathParameters=true)
-                            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(subtitleUrl)).setMimeType(mime).setLanguage(media.language).setLabel(media.displayTitle ?: media.language ?: "字幕").build()
+                            val url=repo.api.createUrl(media.deliveryUrl!!,ignorePathParameters=true)
+                            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(url)).setMimeType(mime).setLanguage(media.language).setLabel(media.displayTitle ?: media.language ?: "字幕").build()
                         }
-                        exo.setMediaItem(MediaItem.Builder().setUri(url).setSubtitleConfigurations(subtitles).build());exo.seekTo(position);exo.prepare();exo.playWhenReady=true
-                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        handler.post(updatePlayer)
+                        startResolvedPlayer(item,position,url,LibraryMediaHttp.client(repo.api,mediaHttpFactory),response,subtitles)
                     }
-                    override fun onError(exception: Exception) {if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+                    override fun onError(exception: Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
                 })
-            } catch(e: CancellationException){throw e} catch(_: Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+            }catch(error:CancellationException){throw error}
+            catch(_:Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+        }
+    }
+    /** Both sources use this ExoPlayer, its controls and the same remote state machine. */
+    private fun startResolvedPlayer(item: BaseItemDto,position: Long,url: String,http: okhttp3.OkHttpClient,
+        response: StreamInfo?,subtitles: List<MediaItem.SubtitleConfiguration>){
+        val render=DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+        val exo=ExoPlayer.Builder(this,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(http))).build()
+        player=exo;videoSurface?.player=exo
+        applyMediaAspect();exo.setPlaybackSpeed(mediaSpeed)
+        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).build()
+        exo.addListener(object:Player.Listener {
+            override fun onPlayerError(error:PlaybackException){cancelAutoNext();overlay.blocked=true;showPlaybackRetry(item)}
+            override fun onTracksChanged(tracks:Tracks){updateTrackLabels()}
+            override fun onPlayWhenReadyChanged(playWhenReady:Boolean,reason:Int){overlay.paused=!playWhenReady;armPlayerIdle()}
+            override fun onTimelineChanged(timeline:Timeline,reason:Int){updateSeekAvailability()}
+            override fun onPlaybackStateChanged(state:Int){
+                if(state==Player.STATE_BUFFERING&&!playbackFailure)waiting(true)
+                else if(state==Player.STATE_READY||state==Player.STATE_ENDED||state==Player.STATE_IDLE)waiting(false)
+                if(state==Player.STATE_READY&&!reportStarted&&playingSessionKey==activeSessionKey()){
+                    reportStarted=true
+                    if(cctvMode)rememberPosition(item,exo.currentPosition)
+                    else if(response!=null)reporting.reportStart(this@JellyLibraryActivity,null,item,response,exo.currentPosition*10000,!exo.playWhenReady)
+                    lastReport=System.currentTimeMillis()
+                }
+                if(state==Player.STATE_ENDED){overlay.blocked=true;showControls();if(!manualEnd){
+                    if(cctvMode)rememberPosition(item,exo.currentPosition)
+                    else lifecycleScope.launch {try {repo.setPlayed(item.id,true)}catch(_:Exception){}}
+                    showAutoNext(item)
+                }}
+            }
+        })
+        exo.setMediaItem(MediaItem.Builder().setUri(url).setSubtitleConfigurations(subtitles).build())
+        exo.seekTo(position);exo.prepare();exo.playWhenReady=playerForeground&&!overlay.paused
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        handler.post(updatePlayer)
+    }
+    private fun openCctvPlayback(){
+        fresh("cctv-preparing",false)
+        ui.heading(page,"正在读取节目…",24,48f,170f,864f,60f).gravity=Gravity.CENTER
+        ui.button(page,"返回选集",350f,300f,260f,44f){finish()}.requestFocus()
+        task=lifecycleScope.launch {
+            try {
+                val raw=requireNotNull(intent.getStringExtra("cctv_album"));require(raw.length<=65536)
+                val album=CctvAlbum.decode(raw);cctvAlbum=album
+                val episodes=cctvRepo.episodes(album.id)
+                val episode=episodes.firstOrNull {it.guid==intent.getStringExtra("cctv_guid")} ?: error("节目已不在当前分集列表")
+                cctvEpisodes=episodes;cctvEpisode=episode
+                play(CctvPlayback.item(album,episode),intent.getLongExtra("cctv_position",0).coerceAtLeast(0))
+            }catch(error:CancellationException){throw error}
+            catch(_:Exception){
+                fresh("cctv-error",false)
+                ui.heading(page,"暂时无法读取节目",24,48f,180f,864f,50f).gravity=Gravity.CENTER
+                ui.text(page,"请检查网络，或返回选集重试。",15,TvUi.MUTED,48f,240f,864f,40f).gravity=Gravity.CENTER
+                ui.button(page,"重试",300f,310f,170f,44f){openCctvPlayback()}.requestFocus()
+                ui.button(page,"返回选集",490f,310f,170f,44f){finish()}
+            }
+        }
+    }
+    private fun cctvOptions(){
+        if(cctvEpisodes.isEmpty())return
+        optionPopup("选集",cctvEpisodes.map {it.title},emptyList(),cctvEpisodes.indexOfFirst {it.guid==cctvEpisode?.guid}){index->
+            cctvAlbum?.let {replacePlayback(CctvPlayback.item(it,cctvEpisodes[index]),0)}
+        }
+    }
+    private fun qualities(){
+        val p=player ?: return;val choices=MediaTracks.choices(p,C.TRACK_TYPE_VIDEO)
+        if(choices.isEmpty()){Toast.makeText(this,"片源没有可切换画质",Toast.LENGTH_SHORT).show();return}
+        val automatic=p.trackSelectionParameters.overrides.values.none {it.type==C.TRACK_TYPE_VIDEO}
+        optionPopup("画质",listOf("自动")+choices.map {it.name},listOf("按网络情况选择")+choices.map {it.detail},if(automatic)0 else choices.indexOfFirst {it.selected()}+1){index->
+            if(index==0)p.trackSelectionParameters=p.trackSelectionParameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_VIDEO).build()
+            else if(!MediaTracks.select(p,C.TRACK_TYPE_VIDEO,choices[index-1]))Toast.makeText(this,"画质已变化，请重试",Toast.LENGTH_SHORT).show()
+            updateTrackLabels()
         }
     }
     private fun showPlaybackRetry(item: BaseItemDto){
@@ -845,10 +924,10 @@ class JellyLibraryActivity : FragmentActivity() {
         val panel=FrameLayout(this);panel.setBackgroundColor(0xf0101629.toInt());ui.at(page,panel,0f,0f,960f,540f)
         ui.text(panel,"△",48,0xffb7a2ff.toInt(),456f,175f,48f,48f).gravity=Gravity.CENTER
         ui.heading(panel,"暂时无法播放",23,48f,246f,864f,40f).gravity=Gravity.CENTER
-        ui.text(panel,"请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,285f,864f,28f).gravity=Gravity.CENTER
+        ui.text(panel,if(cctvMode)"片源暂不可用或当前无法访问，请稍后重试。" else "请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,285f,864f,28f).gravity=Gravity.CENTER
         val retry=ui.button(panel,"重试播放",313f,319f,160f,42f){replacePlayback(item,retryPosition)}
         val origin=history.lastOrNull()?.name
-        val leave=ui.button(panel,if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,319f,160f,42f){stopPlayer();backToSaved()}
+        val leave=ui.button(panel,if(cctvMode)"返回选集" else if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,319f,160f,42f){stopPlayer();backToSaved()}
         listOf(retry,leave).forEach {it.nextFocusUpId=it.id;it.nextFocusDownId=it.id}
         retry.nextFocusLeftId=retry.id;retry.nextFocusRightId=leave.id;leave.nextFocusLeftId=retry.id;leave.nextFocusRightId=leave.id
         retry.requestFocus()
@@ -861,7 +940,8 @@ class JellyLibraryActivity : FragmentActivity() {
             top.visibility=View.GONE;top.background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xf0101326.toInt(),0xeb101326.toInt(),0x00101326));ui.at(page,top,0f,0f,960f,135f)
             ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,if(ui.largeText())48f else 33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
             playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,if(ui.largeText())792f else 848f,28f,if(ui.largeText())120f else 64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
-            if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            if(cctvMode)ui.text(top,item.name.orEmpty(),13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            else if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,if(ui.largeText())80f else 63f,800f,if(ui.largeText())30f else 25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         }
         ui.at(panel,View(this).apply {setBackgroundColor(0xff4b5268.toInt())},16f,15f,864f,3f)
         val progress=SeekBar(this);seek=progress;progress.id=View.generateViewId();progress.max=10000;progress.visibility=View.GONE;progress.setPadding(0,0,0,0)
@@ -879,8 +959,8 @@ class JellyLibraryActivity : FragmentActivity() {
         clock=ui.text(panel,"00:00:00 / --:--:--",13,TvUi.MUTED,124f,32f,310f,30f)
         aspectAction=ui.quietButton(mediaAspectLabel(),"画面比例，${mediaAspectLabel()}"){aspects()};ui.at(panel,aspectAction!!,PlaybackLayout.mediaActionX(0),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         speedAction=ui.quietButton(speedLabel(),"倍速，${speedLabel()}"){speeds()};ui.at(panel,speedAction!!,PlaybackLayout.mediaActionX(1),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
-        audioAction=ui.quietButton("音轨","音轨"){tracks(C.TRACK_TYPE_AUDIO)};ui.at(panel,audioAction!!,PlaybackLayout.mediaActionX(2),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
-        subtitleAction=ui.quietButton("字幕","字幕"){tracks(C.TRACK_TYPE_TEXT)};ui.at(panel,subtitleAction!!,PlaybackLayout.mediaActionX(3),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
+        audioAction=ui.quietButton(if(cctvMode)"画质" else "音轨",if(cctvMode)"画质" else "音轨"){if(cctvMode)qualities()else tracks(C.TRACK_TYPE_AUDIO)};ui.at(panel,audioAction!!,PlaybackLayout.mediaActionX(2),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
+        subtitleAction=ui.quietButton(if(cctvMode)"选集" else "字幕",if(cctvMode)"选集" else "字幕"){if(cctvMode)cctvOptions()else tracks(C.TRACK_TYPE_TEXT)};ui.at(panel,subtitleAction!!,PlaybackLayout.mediaActionX(3),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         listOf(pause!!,rewind,forward).forEach {it.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,16f*ui.scale*ui.fontScale)}
         val actions=listOf(pause!!,rewind,forward,aspectAction!!,speedAction!!,audioAction!!,subtitleAction!!)
         actions.forEachIndexed {index,button->button.nextFocusLeftId=actions.getOrNull(index-1)?.id ?: button.id;button.nextFocusRightId=actions.getOrNull(index+1)?.id ?: button.id;button.nextFocusUpId=progress.id;button.nextFocusDownId=button.id;button.setOnFocusChangeListener {_,focused->if(focused){lastPlayerAction=button;armPlayerIdle()}}}
@@ -888,13 +968,17 @@ class JellyLibraryActivity : FragmentActivity() {
         lastPlayerAction=pause;progress.nextFocusDownId=pause!!.id;progress.nextFocusUpId=progress.id
         seekPreview=ui.text(page,"",13,TvUi.INK,425f,411f,110f,22f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL);visibility=View.GONE}
     }
-    private fun nextEpisodeItem(item: BaseItemDto)=EpisodeSequence.next(item,seriesEpisodes)
+    private fun nextEpisodeItem(item: BaseItemDto): BaseItemDto? {
+        if(!cctvMode)return EpisodeSequence.next(item,seriesEpisodes)
+        val album=cctvAlbum ?: return null
+        return CctvPlayback.episode(item.id,cctvEpisodes)?.let {CctvPlayback.next(it,cctvEpisodes)}?.let {CctvPlayback.item(album,it)}
+    }
     private fun showAutoNext(item: BaseItemDto){
         if(nextCancelled||nextCard!=null||manualEnd||!getSharedPreferences("bestv_live",MODE_PRIVATE).getBoolean("auto_next_episode",true))return
         val next=nextEpisodeItem(item) ?: return
         val card=FrameLayout(this);card.background=ui.glass(TvUi.PANEL);nextCard=card;ui.at(page,card,592f,312f,320f,114f)
         ui.at(card,View(this).apply {setBackgroundColor(OverlayContrast.OPTION_GUARD)},8f,33f,304f,77f)
-        ui.heading(card,"下一集 · 第 ${next.parentIndexNumber ?: "?"} 季 第 ${next.indexNumber ?: "?"} 集",15,16f,8f,288f,25f)
+        ui.heading(card,if(cctvMode)"即将播放下一集/期" else "下一集 · 第 ${next.parentIndexNumber ?: "?"} 季 第 ${next.indexNumber ?: "?"} 集",15,16f,8f,288f,25f)
         ui.text(card,next.name.orEmpty(),13,TvUi.MUTED,16f,34f,160f,26f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         nextClock=ui.text(card,"00:00:05 后播放",12,TvUi.MUTED,185f,34f,119f,26f)
         val now=ui.quietButton("立即播放","立即播放下一集"){replacePlayback(next,0)};ui.at(card,now,16f,65f,136f,30f)
@@ -903,7 +987,7 @@ class JellyLibraryActivity : FragmentActivity() {
         if(dialog?.isShowing!=true)now.requestFocus()
     }
     private fun cancelAutoNext(){nextCancelled=true;handler.removeCallbacks(nextTick);nextCard?.let {val focused=it.hasFocus();TvUi.detach(it);if(focused)pause?.requestFocus()};nextCard=null;nextClock=null}
-    private fun replacePlayback(item: BaseItemDto,position: Long){stopPlayer();backToSaved();play(item,position,true)}
+    private fun replacePlayback(item: BaseItemDto,position: Long){stopPlayer();if(!cctvMode)backToSaved();play(item,position,true)}
     private fun updateSeekAvailability(){
         val available=canSeek();seek?.apply {visibility=if(available)View.VISIBLE else View.GONE;isEnabled=available;isFocusable=available}
         val actions=listOfNotNull(pause,rewindAction,forwardAction,aspectAction,speedAction,audioAction,subtitleAction)
@@ -956,7 +1040,10 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun aspects(){optionPopup("画面比例",listOf("原始","填充","拉伸"),emptyList(),listOf("fit","zoom","stretch").indexOf(mediaAspect())){index->getSharedPreferences("bestv_live",MODE_PRIVATE).edit().putString("media_video_aspect",listOf("fit","zoom","stretch")[index]).apply();applyMediaAspect();aspectAction?.let {ui.value(it,"画面比例",mediaAspectLabel());it.announceForAccessibility(it.contentDescription)}}}
     private fun speedLabel()=java.math.BigDecimal(mediaSpeed.toString()).stripTrailingZeros().toPlainString()+"x"
     private fun speeds(){val speeds=listOf(.5f,.75f,1f,1.25f,1.5f,1.75f,2f);optionPopup("倍速",speeds.map {java.math.BigDecimal(it.toString()).stripTrailingZeros().toPlainString()+"x"},emptyList(),speeds.indexOf(mediaSpeed)){index->player?.let {p->p.setPlaybackSpeed(speeds[index]);mediaSpeed=p.playbackParameters.speed;ui.value(speedAction!!,"倍速",speedLabel());speedAction?.announceForAccessibility(speedAction?.contentDescription)}}}
-    private fun updateTrackLabels(){player?.let {p->audioAction?.let {ui.value(it,"音轨",MediaTracks.value(p,C.TRACK_TYPE_AUDIO))};subtitleAction?.let {ui.value(it,"字幕",MediaTracks.value(p,C.TRACK_TYPE_TEXT))}}}
+    private fun updateTrackLabels(){player?.let {p->
+        audioAction?.let {ui.value(it,if(cctvMode)"画质" else "音轨",MediaTracks.value(p,if(cctvMode)C.TRACK_TYPE_VIDEO else C.TRACK_TYPE_AUDIO))}
+        subtitleAction?.let {ui.value(it,if(cctvMode)"选集" else "字幕",if(cctvMode)"选集" else MediaTracks.value(p,C.TRACK_TYPE_TEXT))}
+    }}
     private fun tracks(type: Int) {
         val p=player ?: return;val choices=MediaTracks.choices(p,type);val text=type==C.TRACK_TYPE_TEXT
         if(choices.isEmpty()){Toast.makeText(this,"没有可切换的${if(text)"字幕" else "音轨"}",Toast.LENGTH_SHORT).show();return}
@@ -975,7 +1062,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun stopPlayer() {
         waiting(false);handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);buffering=null;handler.removeCallbacks(nextTick);nextCard?.let {TvUi.detach(it)};nextCard=null;nextClock=null
         val p=player
-        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted&&playingSessionKey==repo.sessionKey)stream?.let {reporting.reportProgress(this,null,item,it,p.currentPosition*10000,true);reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
+        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(!cctvMode&&reportStarted&&playingSessionKey==activeSessionKey())stream?.let {reporting.reportProgress(this,null,item,it,p.currentPosition*10000,true);reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
         player=null;stream=null;playingItem=null;controls=null;rewindAction=null;forwardAction=null;playbackFailure=false;seek=null;clock=null;pause=null;playerHeading=null;playerWallClock=null;aspectAction=null;speedAction=null;audioAction=null;subtitleAction=null;seekPreview=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
@@ -990,7 +1077,7 @@ class JellyLibraryActivity : FragmentActivity() {
         task?.cancel();searchJob?.cancel();gridRenderJob?.cancel();generation++
         val saved=history.removeLastOrNull()
         if(saved==null){finish();return}
-        if(saved.session!=repo.sessionKey){history.clear();home(false);return}
+        if(saved.session!=activeSessionKey()){history.clear();home(false);return}
         if(saved.name=="library-switch"){intent.removeExtra("add_library");renderLibrarySwitch(switchTarget);return}
         pageSessionKey=saved.session;page=saved.view;pageName=saved.name;setContentView(page);page.findViewById<View>(saved.focus)?.requestFocus();val restored=page;restored.post {if(page===restored)(restored.tag as? Runnable)?.run()}
     }
@@ -1038,20 +1125,32 @@ class JellyLibraryActivity : FragmentActivity() {
         return super.dispatchKeyEvent(event)
     }
     override fun onStart(){
-        super.onStart()
-        if(player!=null&&playingSessionKey!=repo.sessionKey)stopPlayer()
-        if(pageName !in listOf("loading","connection")&&pageSessionKey!=repo.sessionKey){history.clear();home(false)}
+        super.onStart();playerForeground=true
+        if(cctvMode){if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)};return}
+        if(player!=null&&playingSessionKey!=activeSessionKey())stopPlayer()
+        if(pageName !in listOf("loading","connection")&&pageSessionKey!=activeSessionKey()){history.clear();home(false)}
         if(pageName=="home")(page.tag as? Runnable)?.run()
         if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)}
     }
     override fun onStop(){
+        playerForeground=false
         overlay.cancel();overlay.paused=true;player?.pause();handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);cancelAutoNext()
         val p=player;val item=playingItem;val info=stream
-        if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(info!=null && reportStarted && playingSessionKey==repo.sessionKey)reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
+        if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(!cctvMode && info!=null && reportStarted && playingSessionKey==activeSessionKey())reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
         super.onStop()
     }
-    override fun onDestroy(){connections.close();repo.close();stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
-    private fun rememberPosition(item: BaseItemDto,position: Long){if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
+    override fun onDestroy(){connections.close();repo.close();stopPlayer();cctvWrites?.shutdown();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
+    private fun rememberPosition(item: BaseItemDto,position: Long){
+        if(cctvMode){
+            if(!reportStarted)return
+            val album=cctvAlbum ?: return;val episode=CctvPlayback.episode(item.id,cctvEpisodes) ?: return
+            val duration=player?.duration?.takeIf {it>0} ?: cctvDuration
+            val completed=player?.playbackState==Player.STATE_ENDED&&!manualEnd
+            val executor=cctvWrites ?: java.util.concurrent.Executors.newSingleThreadExecutor().also {cctvWrites=it}
+            executor.execute {try {cctvStore.watch(album,episode,position.coerceAtLeast(0),duration.coerceAtLeast(0),completed)}catch(_:Exception){handler.post {if(!isDestroyed&&!cctvSaveErrorShown){cctvSaveErrorShown=true;Toast.makeText(this,"央视频观看记录未保存，请检查本机存储",Toast.LENGTH_LONG).show()}}}}
+            return
+        }
+        if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
     private fun currentPositionPrefix()="pos_${repo.sessions.currentSession.value?.serverId}_${repo.sessions.currentSession.value?.userId}_"
     private fun positionKey(item: BaseItemDto)=(if(playingItem?.id==item.id&&playingPositionPrefix.isNotEmpty())playingPositionPrefix else currentPositionPrefix())+item.id
     private fun resumeMs(item: BaseItemDto): Long {
