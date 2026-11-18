@@ -129,8 +129,12 @@ def install(g):
         s+=icon('star',424,367,28,'#f2cf83')+text(466,392,'8.6',28,'#f2cf83',600)+text(550,392,'2025 · 中国大陆 · 01:48:00',28,MUTED)
         s+=g['pill'](424,419,'4K',w=86)+g['pill'](526,419,'HDR',w=102)+text(660,449,'剧情 / 旅行',26,MUTED)
         s+='<g data-role="overview" data-max-lines="2">'+text(424,522,'一封迟到的来信，开启了一段穿越山河的旅程。',30)+text(424,566,'沿途的相遇，让归乡有了新的意义...',30)+'</g>'
-        for x,label in [(424,'继续播放'),(984,'从头播放')]:s+=center_button(x,622,536,label,cast_focus is None and x==424,h=88)
-        for x,name,label in [(1544,'eye','标为已看'),(1696,'heart','收藏')]:
+        action_x=424
+        for label in ['继续播放','从头播放']:
+            width=max(160,math.ceil(text_width(label,28)+64))
+            s+=center_button(action_x,622,width,label,cast_focus is None and action_x==424,h=88)
+            action_x+=width+24
+        for x,name,label in [(action_x,'eye','标为已看'),(action_x+152,'heart','收藏')]:
             s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,622,128,88,'#242a46',14,'#363e5d')+icon(name,x+44,646,40)+'</g>'
         s+=text(96,756,'演职人员',32,weight=600)+centered(1772,756,f'{cast_page+1} / 2',24,MUTED)
         cast=[('林川','导演'),('陈远','饰 林野'),('许宁','饰 沈禾'),('沈平','饰 方远'),('李然','饰 江城'),('周安','饰 老周'),('方青','饰 林母'),('吴山','饰 船夫'),('王禾','饰 店主')]

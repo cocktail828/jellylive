@@ -735,10 +735,17 @@ class JellyLibraryActivity : FragmentActivity() {
         label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,209f,700f,25f,13,true)
         detailOverview(item,212f,246f,700f,50f,15)
         val position=resumeMs(item)
-        val first=ui.button(page,"继续播放",212f,311f,268f,44f){play(item,position)}
-        val restart=ui.button(page,"从头播放",492f,311f,268f,44f){play(item,0)}
-        val watched=ui.button(page,"◉",772f,311f,64f,44f){}.apply {tag="detail-watched"}
-        val favorite=ui.button(page,"♡",848f,311f,64f,44f){}.apply {tag="detail-favorite"}
+        var actionX=212f
+        fun textAction(title: String,action: ()->Unit): Button {
+            val button=ui.button(title,action)
+            val width=maxOf(80f,button.paint.measureText(title)/ui.scale+32f)
+            ui.at(page,button,actionX,311f,width,44f);actionX+=width+12f
+            return button
+        }
+        val first=textAction("继续播放"){play(item,position)}
+        val restart=textAction("从头播放"){play(item,0)}
+        val watched=ui.button(page,"◉",actionX,311f,64f,44f){}.apply {tag="detail-watched"}
+        val favorite=ui.button(page,"♡",actionX+76f,311f,64f,44f){}.apply {tag="detail-favorite"}
         var isPlayed=item.userData?.played==true;var isFavorite=item.userData?.isFavorite==true
         fun updateStates(){
             watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);TvIcons.text(watched,"◉")
