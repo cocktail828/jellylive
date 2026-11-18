@@ -20,5 +20,9 @@ fun main() {
     verify("last partial page remains reachable",LibraryDetails.pageOffset(18,6)==2592f&&LibraryDetails.pageCount(19,6)==4)
     verify("empty cast has no pages",LibraryDetails.pageCount(0,6)==0)
     verify("cast fits 4K safe area",LibraryDetails.person(0).height*4+390*4<=2160*.95)
+    verify("four episode cards fit one page",(0..3).all {LibraryDetails.episode(it).x>=0f&&LibraryDetails.episode(it).right<=864f})
+    verify("episode five starts the second page",LibraryDetails.episode(4).x==866f&&LibraryDetails.pageOffset(4,4)==864f)
+    verify("large season remains fully pageable",LibraryDetails.pageCount(101,4)==26&&LibraryDetails.episode(100).right<=26*864f)
+    verify("episode images retain dimensions",LibraryDetails.episode(0).width==200f&&LibraryDetails.episode(0).height==113f)
     println("$checks library detail checks passed")
 }

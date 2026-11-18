@@ -142,6 +142,20 @@ def install(g):
             s+=centered(cx,976,name,28,weight=600)+centered(cx,1014,role,24,MUTED)
         return s+'</g>'
 
+    def series_details(episode_page=0,episode_focus=None):
+        s=header('剧集详情')+scene(1218,182,606,320,1)+text(96,260,'海岸日记',58,weight=650)+text(96,323,'2025 · 旅行纪实 · 共 9 集',28,MUTED)
+        s+='<g data-role="overview" data-max-lines="2">'+text(96,390,'沿着海岸线，记录城市的生活与风景。',28)+text(96,432,'一次次相遇，让平凡日常成为值得珍藏的记忆...',28)+'</g>'
+        s+=button(100,450,330,'继续播放 第 3 集',episode_focus is None,'play')+button(96,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
+        s+=centered(1772,640,f'{episode_page+1} / 3',24,MUTED)
+        titles=['初见海岸','潮起潮落','远方灯塔','海边来信','城市清晨','灯火人家','岸边故事','向海而行','归途']
+        s+=f'<g data-role="episode-page" data-page="{episode_page+1}" data-pages="3">'
+        for i,name in enumerate(titles[episode_page*4:episode_page*4+4]):
+            x=100+i*440;number=episode_page*4+i+1
+            s+=scene(x,700,400,226,i)+rect(x,826,400,100,'#10182b',0)
+            s+=text(x+20,872,f'第 {number} 集',30,weight=650)+text(x+20,912,name,24,MUTED)
+            if i==episode_focus:s+=rect(x,700,400,226,'none',14,'#fff',4)
+        return s+'</g>'
+
     def media_player(controls=True,paused=False,active='transport',ended=False,seeking=False,speed='1.25x',audio='普通话',subtitles='关闭',bright=False,seekable=True,aspect='原始'):
         s=scene(0,0,1920,1080,1)
         if bright:s=rect(0,0,1920,1080,'#f8f7f3',0)+scene(0,0,1920,1080,0).replace('#152c49','#f8f7f3').replace('#25394b','#e9e8e4').replace('#121f32','#f1f0ed').replace('#091624','#ffffff')
@@ -273,7 +287,7 @@ def install(g):
         for old,new in [('#152c49','#f8f7f3'),('#b18684','#dbd8d3'),('#25394b','#e9e8e4'),('#121f32','#f1f0ed'),('#091624','#ffffff')]:s=s.replace(old,new)
         return s
 
-    overrides=dict(header=header,player_bar=player_bar,quiet_action=quiet,homepage=homepage,favorites_grid=favorites_grid,drawer_scene=drawer_scene,library_home=library_home,portrait_media_card=portrait,poster=poster,library_grid=library_grid,movie_details=movie_details,media_player=media_player,track_popover=track_popover,settings_page=settings_page,library_browse_panel=library_browse_panel,next_episode=next_episode)
+    overrides=dict(header=header,player_bar=player_bar,quiet_action=quiet,homepage=homepage,favorites_grid=favorites_grid,drawer_scene=drawer_scene,library_home=library_home,portrait_media_card=portrait,poster=poster,library_grid=library_grid,movie_details=movie_details,series_details=series_details,media_player=media_player,track_popover=track_popover,settings_page=settings_page,library_browse_panel=library_browse_panel,next_episode=next_episode)
     g['_original_sources']=g['sources_page'];overrides['sources_page']=sources_page;g.update(overrides)
 
     def additional():

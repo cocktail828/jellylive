@@ -589,11 +589,7 @@ def make():
     emit('11-library','媒体库首页',library_home())
     emit('12-library-grid','媒体分类与海报列表',library_grid())
     emit('13-movie','电影详情',movie_details())
-    s=header('剧集详情')+scene(1218,182,606,320,1)+text(96,260,'海岸日记',60,weight=650)+text(96,323,'2025 · 旅行纪实 · 共 8 集',28,MUTED)+text(96,390,'沿着海岸线，记录八座城市的生活与风景。',28)
-    s+=button(100,450,330,'继续播放 第 3 集',True,'play')+button(100,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
-    for i in range(4):s+=poster(100+i*440,700,400,226,f'第 {i+1} 集',['初见海岸','潮起潮落','远方灯塔','海边来信'][i],i)
-    s+=footer()
-    emit('14-series','剧集详情',s)
+    emit('14-series','剧集详情',series_details())
     emit('15-media-player','媒体播放器',media_player())
     s=header('媒体搜索','仅搜索当前媒体库的电影和剧集')+rect(96,200,700,86,'#20263e',14,'#585078',2)+text(124,254,'海',36)+icon('search',730,222)
     keys=['A B C D E F','G H I J K L','M N O P Q R','S T U V W X','Y Z 0 1 2 3','4 5 6 7 8 9']
@@ -702,6 +698,8 @@ if __name__=='__main__':
     emit('25-home-unconfigured','主页：未配置直播源',home_unconfigured())
     favorite_flow()
     emit('13-movie-cast-next','电影详情：演职人员焦点翻页',movie_details(cast_page=1,cast_focus=0))
+    SCREENS[-1]['kind']='state'
+    emit('14-series-episodes-next','剧集详情：分集焦点翻页',series_details(episode_page=1,episode_focus=0))
     SCREENS[-1]['kind']='state'
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:

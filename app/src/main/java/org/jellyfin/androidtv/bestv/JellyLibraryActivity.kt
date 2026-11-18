@@ -852,26 +852,32 @@ class JellyLibraryActivity : FragmentActivity() {
             seriesEpisodes=episodes;fresh("series",false);header("剧集详情")
             label(item.name ?: "未命名剧集",48f,102f,560f,44f,29).setTypeface(null,Typeface.BOLD)
             label("${meta(item)} · ${episodes.size} 集",48f,148f,560f,26f,14,true)
-            label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",48f,179f,540f,48f,14).maxLines=2
+            detailOverview(item,48f,179f,540f,42f,14)
             art(page,item,609f,91f,303f,160f,true)
             val toPlay=next ?: episodes.firstOrNull {it.userData?.played!=true} ?: episodes.firstOrNull()
             val first=ui.button(page,if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集",48f,225f,165f,38f) {toPlay?.let {play(it,resumeMs(it))}}
             first.isEnabled=toPlay!=null
             val chosen=seasons.firstOrNull {it.id==selected} ?: seasons.firstOrNull()
-            ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",48f,294f,130f,38f) {
+            val seasonChoice=ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",48f,294f,130f,38f) {
                 if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(item,false,seasons[it].id)}
             }
-            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,50f,350f,862f,113f)
-            episodes.forEach { episode ->
+            val pages=LibraryDetails.pageCount(episodes.size,4)
+            val indicator=label(if(pages>1)"1 / $pages" else "",816f,294f,96f,38f,12,true).apply {gravity=Gravity.END or Gravity.CENTER_VERTICAL}
+            val scroll=HorizontalScrollView(this).apply {isHorizontalScrollBarEnabled=false;tag="episode-rail"}
+            val row=FrameLayout(this);scroll.addView(row,ViewGroup.LayoutParams(ui.px(maxOf(1f,pages*LibraryDetails.RAIL_WIDTH)),ui.px(113f)));ui.at(page,scroll,48f,350f,864f,113f)
+            val cards=episodes.mapIndexed {index,episode ->
                 val status=if(episode.userData?.played==true) "已观看" else if(resumeMs(episode)>0) "继续 ${time(resumeMs(episode))}" else episode.name.orEmpty()
                 val card=focusCard(FrameLayout(this)){play(episode,resumeMs(episode))};art(card,episode,0f,0f,200f,113f,true)
                 ui.at(card,View(this).apply {setBackgroundColor(0xff10182b.toInt())},0f,63f,200f,50f)
                 ui.text(card,"第 ${episode.indexNumber ?: "?"} 集",15,TvUi.INK,10f,70f,180f,24f).setTypeface(null,Typeface.BOLD)
                 ui.text(card,status,12,TvUi.MUTED,10f,94f,180f,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-                row.addView(card,LinearLayout.LayoutParams(ui.px(200f),ui.px(113f)).apply {marginEnd=ui.px(14f)})
+                place(row,card,LibraryDetails.episode(index));card.tag="episode-${episode.id}";card
             }
+            first.nextFocusDownId=seasonChoice.id;first.nextFocusUpId=first.id;first.nextFocusLeftId=first.id;first.nextFocusRightId=first.id
+            seasonChoice.nextFocusUpId=first.takeIf {it.isEnabled}?.id ?: seasonChoice.id;seasonChoice.nextFocusDownId=seasonChoice.id;seasonChoice.nextFocusLeftId=seasonChoice.id;seasonChoice.nextFocusRightId=seasonChoice.id
+            wireDetailRail(scroll,cards,4,listOf(seasonChoice)){index->indicator.text=if(pages>1)"${index+1} / $pages" else ""}
             if(episodes.isEmpty())label("本季暂无可播放剧集",270f,297f,500f,30f,14,true)
-            if(first.isEnabled)focus(first)
+            focus(if(first.isEnabled)first else seasonChoice)
         }
     }
     private fun search(initial: String="",push: Boolean=true,parent: UUID?=null,kind: BaseItemKind?=null) {

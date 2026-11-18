@@ -11,6 +11,8 @@ object LibraryDetails {
     fun pageOffset(index: Int,size: Int): Float {require(index>=0&&size>0);return index/size*RAIL_WIDTH}
     fun person(index: Int) = LibraryPageLayout.Box(pageOffset(index,6)+index%6*146f,0f,132f,122f)
 
+    fun episode(index: Int) = LibraryPageLayout.Box(pageOffset(index,4)+2f+index%4*220f,0f,200f,113f)
+
     /** Fit the complete suffix too, without cutting a UTF-16 surrogate pair. */
     fun ellipsize(text: String,fits: (String)->Boolean): String {
         if(fits(text))return text
