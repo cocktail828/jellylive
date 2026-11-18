@@ -9,7 +9,7 @@ object LibraryBrowse {
     enum class Sort(val label: String) { ADDED("最近添加"), WATCHED("最近观看"), YEAR("发布时间"), RATING("评分"), NAME("名称"), DURATION("时长") }
     enum class State(val label: String) { ALL("全部状态"), UNSEEN("未看"), WATCHING("观看中"), FINISHED("已看") }
     data class Query(val kind: BaseItemKind?=null, val recent: Boolean=false, val state: State=State.ALL,
-        val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.NAME, val ascending: Boolean=sort==Sort.NAME)
+        val genre: String?=null, val year: Int?=null, val resolution: Int?=null, val region: String?=null, val sort: Sort=Sort.NAME, val ascending: Boolean=sort==Sort.NAME, val favorites: Boolean=false)
     data class Page(val items: List<BaseItemDto>,val start: Int,val total: Int,val size: Int){
         val previous get()=start>0
         val next get()=start+items.size<total
@@ -40,9 +40,9 @@ object LibraryBrowse {
     fun select(all: List<BaseItemDto>, q: Query): List<BaseItemDto> {
         val candidates=if(q.recent) all.filter { seen(it) && it.type in listOf(BaseItemKind.MOVIE,BaseItemKind.EPISODE,BaseItemKind.VIDEO) }
             .sortedByDescending { it.userData?.lastPlayedDate }.distinctBy { it.seriesId ?: it.id }
-            else all.filter { top(it) }
+            else all.filter { top(it) || (q.favorites && it.type==BaseItemKind.EPISODE) }
         val filtered=candidates.filter { item ->
-            (q.kind==null || item.type==q.kind) && (q.genre==null || q.genre in item.genres.orEmpty()) &&
+            (!q.favorites || item.userData?.isFavorite==true) && (q.kind==null || item.type==q.kind) && (q.genre==null || q.genre in item.genres.orEmpty()) &&
                 (q.year==null || LibraryMetadata.year(item)==q.year) && (q.resolution==null || resolution(item)==q.resolution) &&
                 (q.region==null || q.region in regions(item)) && when(q.state) {
                     State.ALL -> true; State.UNSEEN -> !seen(item); State.WATCHING -> watching(item); State.FINISHED -> item.userData?.played==true

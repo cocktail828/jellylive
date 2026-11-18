@@ -386,7 +386,7 @@ def library_home(empty=False):
             s+=poster(x,264,574,260,t,'继续播放 · 已观看 00:36:00',i,i==0)
             s+=rect(x+16,508,542,5,'#414760',2)+rect(x+16,508,205,5,'#ac9aff',2)
     s+=text(64,608,'探索媒体库',34,weight=600)
-    for i,(t,count) in enumerate([('电影','86 部电影'),('剧集','12 部剧集'),('最近添加','98 项内容')]):
+    for i,(t,count) in enumerate([('电影','86 部电影'),('剧集','12 部剧集'),('收藏','8 项收藏')]):
         s+=poster(64+i*602,642,574,260,t,count,i+1)
     return s
 

@@ -14,9 +14,9 @@ object LibraryPageLayout {
     enum class Entry(val title: String, val kind: BaseItemKind?, val artwork: String) {
         MOVIES("电影", BaseItemKind.MOVIE, "library_entry_movies"),
         SERIES("剧集", BaseItemKind.SERIES, "library_entry_series"),
-        RECENT("最近添加", null, "library_entry_recent");
+        FAVORITES("收藏", null, "library_entry_favorites");
 
-        fun query() = LibraryBrowse.Query(kind=kind, sort=if(this==RECENT) LibraryBrowse.Sort.ADDED else LibraryBrowse.Sort.NAME, ascending=this!=RECENT)
+        fun query() = LibraryBrowse.Query(kind=kind, favorites=this==FAVORITES)
     }
 
     val HOME_SEARCH = Box(754f, 69f, 158f, 38f)

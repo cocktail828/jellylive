@@ -458,7 +458,7 @@ class JellyLibraryActivity : FragmentActivity() {
         val resumeArea=place(host,FrameLayout(this),LibraryPageLayout.HOME_RESUME_ROW)
         resumeStatus(resumeArea,"正在加载继续观看…")
         pageText(host,"探索媒体库",17,TvUi.INK,LibraryPageLayout.HOME_EXPLORE_LABEL).apply {setTypeface(null,Typeface.BOLD)}
-        val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_recent)
+        val illustrations=listOf(org.jellyfin.androidtv.R.drawable.library_entry_movies,org.jellyfin.androidtv.R.drawable.library_entry_series,org.jellyfin.androidtv.R.drawable.library_entry_favorites)
         val entries=LibraryPageLayout.Entry.entries.mapIndexed {index,entry->
             val card=homeCard(entry.title,"",illustrations[index]){renderGrid(entry.title,null,entry.query())}
             card.tag="library-entry-${entry.name.lowercase()}";place(host,card,LibraryPageLayout.homeEntry(index))

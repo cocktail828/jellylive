@@ -16,10 +16,10 @@ fun main(args: Array<String>) {
         a.x<b.right&&a.right>b.x&&a.y<b.bottom&&a.bottom>b.y
     val safe=LibraryPageLayout.Box(48f,27f,864f,486f)
     val entries=LibraryPageLayout.Entry.entries
-    verify("home exposes exactly original three category entries",entries.map {it.title}==listOf("电影","剧集","最近添加"))
+    verify("home exposes exactly original three category entries",entries.map {it.title}==listOf("电影","剧集","收藏"))
     verify("movie entry uses movie scope",entries[0].query().kind==BaseItemKind.MOVIE)
     verify("series entry uses series scope",entries[1].query().kind==BaseItemKind.SERIES)
-    verify("recent entry retains the complete media scope and real added-date descending ordering",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.ADDED&&!it.ascending})
+    verify("favorites entry defaults to name ordering",entries[2].query().let {it.kind==null&&!it.recent&&it.sort==LibraryBrowse.Sort.NAME&&it.ascending})
     verify("home search retains original design location",LibraryPageLayout.HOME_SEARCH==LibraryPageLayout.Box(754f,69f,158f,38f))
     for(hasResume in listOf(false,true)){
         val cards=entries.indices.map {LibraryPageLayout.homeEntry(it,hasResume)}

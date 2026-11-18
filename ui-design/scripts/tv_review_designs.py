@@ -71,7 +71,7 @@ def install(g):
                 s+=rect(x+16,512,520,6,'#414760',2)+rect(x+16,512,520*ratio,6,'#ac9aff',2)
                 s+=centered(x+276,580,title,32,INK,600)+'</g>'
         s+=text(96,694,'探索媒体库',34,weight=600)
-        for i,(title,count) in enumerate([('电影','86'),('剧集','12'),('最近添加','98')]):
+        for i,(title,count) in enumerate([('电影','86'),('剧集','12'),('收藏','8')]):
             x=100+i*584
             s+=f'<defs><clipPath id="entry-art-{i}"><rect x="{x}" y="722" width="552" height="260" rx="16"/></clipPath></defs><g clip-path="url(#entry-art-{i})">'+scene(x,722,552,260,i+1)+rect(x,722,552,260,'#10182b',16,fill_opacity=.28)+'</g>'
             s+=centered(x+276,840,title,32,INK,600)+centered(x+276,896,count,24,MUTED)
@@ -103,10 +103,10 @@ def install(g):
         if focus:s+=rect(x,y,w,h,'none',14,'#fff',4)
         return s
 
-    def library_grid(filtered=False,focused=True,recent=False,empty=False):
-        title='最近添加' if recent else '电影'
-        s=header(title,'按添加时间 · 98 项内容' if recent else '电影 · 0 部' if empty else '电影 · 18 部' if filtered else '全部电影 · 86 部')
-        s+='<g data-role="library-toolbar">'+button(888,136,296,'搜索媒体',False,'search')+button(1208,136,296,'类型：剧情' if filtered else '类型：全部')+button(1528,136,296,'排序：最新添加' if recent else '排序：名称')+'</g>'
+    def library_grid(filtered=False,focused=True,favorites=False,empty=False):
+        title='收藏' if favorites else '电影'
+        s=header(title,'收藏 · 8 项内容' if favorites else '电影 · 0 部' if empty else '电影 · 18 部' if filtered else '全部电影 · 86 部')
+        s+='<g data-role="library-toolbar">'+button(888,136,296,'搜索媒体',False,'search')+button(1208,136,296,'类型：剧情' if filtered else '类型：全部')+button(1528,136,296,'排序：名称')+'</g>'
         if empty:
             s+=icon('search',912,350,96,'#b4a0ff')+centered(960,536,'没有符合条件的媒体',44,INK,650)+centered(960,596,'调整筛选条件，或清除筛选查看全部电影。',28,MUTED)
             s+=center_button(700,660,520,'清除筛选',True,h=84)
@@ -116,6 +116,7 @@ def install(g):
         s+='<defs><clipPath id="library-scroll-viewport"><rect x="96" y="'+str(y-8)+'" width="1728" height="'+str(1026-y+8)+'"/></clipPath></defs><g data-role="focus-following-grid" clip-path="url(#library-scroll-viewport)">'
         for row in range(2):
             for i in range(cols):
+                if favorites and row*cols+i>=8:continue
                 t=titles[(row*cols+i)%len(titles)]
                 s+=portrait(100+i*step,y+row*(476),t,'2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],row*cols+i,i==0 and row==0 and focused,w)
         s+='</g>'
@@ -282,7 +283,7 @@ def install(g):
           ('05-live-bright','亮色视频：信息栏可读性',bright_live()),
           ('15-media-unknown-duration','媒体播放：时长未知与不可拖动',media_player(seekable=False)),
           ('13-movie-large-text','图位已停用',None),
-          ('12-library-recent','媒体库：最近添加',library_grid(recent=True)),
+          ('12-library-favorites','媒体库：收藏',library_grid(favorites=True)),
           ('15-media-long-tracks','媒体音轨：长名称',media_player(active='音轨')+track_popover('音轨',[('普通话 · 视听辅助解说','AAC · 5.1'),('English','AAC · 2.0')],0,1624,media_player(active='音轨'))),
         ]
         for slug,title,body in cases:g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state'
