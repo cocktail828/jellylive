@@ -122,18 +122,25 @@ def install(g):
         s+='</g>'
         return s
 
-    def movie_details():
+    def movie_details(cast_page=0,cast_focus=None):
         s=scene(0,0,1920,1080)+rect(0,0,1920,1080,'#101326',0,fill_opacity=.92)+header('电影详情')
         px,pw=96,280;s+=scene(px,214,pw,pw*1.5)+rect(px,214,pw,pw*1.5,'none',14,'#424862')
         s+=text(424,280,'山河之间',64,weight=700)+text(424,332,'一段穿越山河的归途',28,'#c4b7e8')
         s+=icon('star',424,367,28,'#f2cf83')+text(466,392,'8.6',28,'#f2cf83',600)+text(550,392,'2025 · 中国大陆 · 01:48:00',28,MUTED)
         s+=g['pill'](424,419,'4K',w=86)+g['pill'](526,419,'HDR',w=102)+text(660,449,'剧情 / 旅行',26,MUTED)
-        s+=text(424,522,'一封迟到的来信，开启了一段穿越山河的旅程。',30)+text(424,566,'沿途的相遇，让归乡有了新的意义。',30)
-        for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看']):s+=center_button(424+i*472,622,448,label,i==0,h=76)
-        s+=text(96,718,'电影 · 4K',26,MUTED)+text(96,762,'剧情 / 旅行',26,MUTED)+text(424,756,'导演  林川',28,MUTED)+text(744,756,'主演  陈远 / 许宁',28,MUTED)+text(96,838,'演职人员',32,weight=600)
-        for i,(name,role) in enumerate([('陈远','饰 林野'),('许宁','饰 沈禾'),('林川','导演')]):
-            x=96+i*354;s+=rect(x,864,330,152,'#171c32',18,'#363e5d')+f'<circle cx="{x+66}" cy="911" r="23" fill="#696186"/><path d="M{x+30} 978 Q{x+30} 938 {x+66} 938 Q{x+102} 938 {x+102} 978" fill="#696186"/>'+text(x+122,926,name,30,weight=600)+text(x+122,974,role,24,MUTED)
-        return s
+        s+='<g data-role="overview" data-max-lines="2">'+text(424,522,'一封迟到的来信，开启了一段穿越山河的旅程。',30)+text(424,566,'沿途的相遇，让归乡有了新的意义...',30)+'</g>'
+        for x,label in [(424,'继续播放'),(984,'从头播放')]:s+=center_button(x,622,536,label,cast_focus is None and x==424,h=88)
+        for x,name,label in [(1544,'eye','标为已看'),(1696,'heart','收藏')]:
+            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,622,128,88,'#242a46',14,'#363e5d')+icon(name,x+44,646,40)+'</g>'
+        s+=text(96,756,'演职人员',32,weight=600)+centered(1772,756,f'{cast_page+1} / 2',24,MUTED)
+        cast=[('林川','导演'),('陈远','饰 林野'),('许宁','饰 沈禾'),('沈平','饰 方远'),('李然','饰 江城'),('周安','饰 老周'),('方青','饰 林母'),('吴山','饰 船夫'),('王禾','饰 店主')]
+        s+=f'<g data-role="cast-page" data-page="{cast_page+1}" data-pages="2">'
+        for i,(name,role) in enumerate(cast[cast_page*6:cast_page*6+6]):
+            x=96+i*292;cx=x+132
+            s+=f'<circle cx="{cx}" cy="856" r="72" fill="#242a46" stroke="{"#fff" if i==cast_focus else "#424862"}" stroke-width="{4 if i==cast_focus else 1}"/>'
+            s+=f'<circle cx="{cx}" cy="835" r="20" fill="#79718f"/><path d="M{cx-42} 897 Q{cx-42} 858 {cx} 858 Q{cx+42} 858 {cx+42} 897" fill="#79718f"/>'
+            s+=centered(cx,976,name,28,weight=600)+centered(cx,1014,role,24,MUTED)
+        return s+'</g>'
 
     def media_player(controls=True,paused=False,active='transport',ended=False,seeking=False,speed='1.25x',audio='普通话',subtitles='关闭',bright=False,seekable=True,aspect='原始'):
         s=scene(0,0,1920,1080,1)

@@ -1,239 +1,11 @@
 {
-  "scope": "Affected SVG/Pango geometry only; 4K design exports, not Android runtime screenshots or focus execution",
-  "slots": 105,
-  "active": 89,
-  "textCount": 122,
+  "scope": "Movie detail SVG/Pango geometry; 4K design, not Android runtime verification",
+  "slots": 106,
+  "active": 90,
+  "textCount": 48,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
-    {
-      "figure": 6,
-      "text": "我的收藏",
-      "size": 42.0,
-      "bounds": [
-        97.0,
-        70.0,
-        264.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "JellyLive",
-      "size": 32.0,
-      "bounds": [
-        1628.0,
-        79.0,
-        1767.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "内置直播源 · 16 个收藏频道",
-      "size": 24.0,
-      "bounds": [
-        98.0,
-        134.0,
-        401.0,
-        158.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "山野纪实",
-      "size": 36.0,
-      "bounds": [
-        231.0,
-        268.0,
-        370.0,
-        304.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "城市新闻",
-      "size": 36.0,
-      "bounds": [
-        669.0,
-        268.0,
-        810.0,
-        304.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "体育现场",
-      "size": 36.0,
-      "bounds": [
-        1108.0,
-        268.0,
-        1251.0,
-        304.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "光影剧场",
-      "size": 36.0,
-      "bounds": [
-        1548.0,
-        268.0,
-        1691.0,
-        304.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "旅行生活",
-      "size": 36.0,
-      "bounds": [
-        228.0,
-        446.0,
-        371.0,
-        482.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "音乐现场",
-      "size": 36.0,
-      "bounds": [
-        669.0,
-        446.0,
-        811.0,
-        482.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "少儿天地",
-      "size": 36.0,
-      "bounds": [
-        1108.0,
-        446.0,
-        1252.0,
-        482.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "人文历史",
-      "size": 36.0,
-      "bounds": [
-        1549.0,
-        446.0,
-        1692.0,
-        482.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "科学探索",
-      "size": 36.0,
-      "bounds": [
-        228.0,
-        624.0,
-        371.0,
-        660.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "都市生活",
-      "size": 36.0,
-      "bounds": [
-        668.0,
-        624.0,
-        811.0,
-        660.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "自然世界",
-      "size": 36.0,
-      "bounds": [
-        1113.0,
-        624.0,
-        1252.0,
-        660.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "经典影视",
-      "size": 36.0,
-      "bounds": [
-        1548.0,
-        624.0,
-        1692.0,
-        660.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "地方新闻",
-      "size": 36.0,
-      "bounds": [
-        228.0,
-        802.0,
-        370.0,
-        838.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "生活服务",
-      "size": 36.0,
-      "bounds": [
-        669.0,
-        802.0,
-        811.0,
-        838.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "戏曲欣赏",
-      "size": 36.0,
-      "bounds": [
-        1108.0,
-        802.0,
-        1250.0,
-        838.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 6,
-      "text": "文化视界",
-      "size": 36.0,
-      "bounds": [
-        1548.0,
-        802.0,
-        1692.0,
-        838.0
-      ],
-      "clippedIntentionally": false
-    },
     {
       "figure": 17,
       "text": "电影详情",
@@ -356,25 +128,25 @@
     },
     {
       "figure": 17,
-      "text": "沿途的相遇，让归乡有了新的意义。",
+      "text": "沿途的相遇，让归乡有了新的意义...",
       "size": 30.0,
       "bounds": [
         425.0,
         540.0,
-        885.0,
+        897.0,
         571.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 17,
-      "text": "继续播放 00:36:20",
+      "text": "继续播放",
       "size": 28.0,
       "bounds": [
-        529.0,
-        645.0,
-        766.0,
-        673.0
+        636.0,
+        651.0,
+        748.0,
+        679.0
       ],
       "clippedIntentionally": false
     },
@@ -383,70 +155,10 @@
       "text": "从头播放",
       "size": 28.0,
       "bounds": [
-        1064.0,
-        645.0,
-        1176.0,
-        673.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "标为已看",
-      "size": 28.0,
-      "bounds": [
-        1536.0,
-        645.0,
-        1647.0,
-        673.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "电影 · 4K",
-      "size": 26.0,
-      "bounds": [
-        99.0,
-        695.0,
-        217.0,
-        721.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "剧情 / 旅行",
-      "size": 26.0,
-      "bounds": [
-        96.0,
-        739.0,
-        221.0,
-        767.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "导演  林川",
-      "size": 28.0,
-      "bounds": [
-        425.0,
-        731.0,
-        545.0,
-        759.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "主演  陈远 / 许宁",
-      "size": 28.0,
-      "bounds": [
-        745.0,
-        731.0,
-        946.0,
-        761.0
+        1196.0,
+        651.0,
+        1308.0,
+        679.0
       ],
       "clippedIntentionally": false
     },
@@ -456,69 +168,33 @@
       "size": 32.0,
       "bounds": [
         96.0,
-        810.0,
+        728.0,
         223.0,
-        842.0
+        760.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 17,
-      "text": "陈远",
-      "size": 30.0,
-      "bounds": [
-        220.0,
-        900.0,
-        278.0,
-        930.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "饰 林野",
+      "text": "1 / 2",
       "size": 24.0,
       "bounds": [
-        218.0,
-        953.0,
-        295.0,
-        977.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "许宁",
-      "size": 30.0,
-      "bounds": [
-        573.0,
-        900.0,
-        631.0,
-        930.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 17,
-      "text": "饰 沈禾",
-      "size": 24.0,
-      "bounds": [
-        572.0,
-        953.0,
-        649.0,
-        977.0
+        1751.5,
+        737.0,
+        1794.5,
+        761.0
       ],
       "clippedIntentionally": false
     },
     {
       "figure": 17,
       "text": "林川",
-      "size": 30.0,
+      "size": 28.0,
       "bounds": [
-        926.0,
-        900.0,
-        983.0,
-        930.0
+        200.0,
+        951.0,
+        253.0,
+        979.0
       ],
       "clippedIntentionally": false
     },
@@ -527,971 +203,389 @@
       "text": "导演",
       "size": 24.0,
       "bounds": [
-        927.0,
-        953.0,
-        973.0,
-        977.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "设置",
-      "size": 46.0,
-      "bounds": [
-        97.0,
-        101.0,
-        186.0,
-        146.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "JellyLive",
-      "size": 30.0,
-      "bounds": [
-        1701.0,
-        107.0,
-        1823.0,
-        139.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "播放设置",
-      "size": 30.0,
-      "bounds": [
-        124.0,
-        254.0,
-        243.0,
-        284.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "显示与操作",
-      "size": 30.0,
-      "bounds": [
-        124.0,
-        366.0,
-        274.0,
-        396.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "媒体库连接",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        478.0,
-        273.0,
-        508.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "机顶盒配置",
-      "size": 30.0,
-      "bounds": [
-        124.0,
-        590.0,
-        273.0,
-        620.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "直播源",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        702.0,
-        213.0,
-        732.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "关于",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        814.0,
-        183.0,
-        844.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "显示与操作",
-      "size": 36.0,
-      "bounds": [
-        545.0,
-        240.0,
-        723.0,
-        276.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "频道侧栏透明度",
-      "size": 32.0,
-      "bounds": [
-        574.0,
-        352.0,
-        798.0,
-        384.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "35%",
-      "size": 28.0,
-      "bounds": [
-        1664.0,
-        359.0,
-        1721.0,
-        380.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "显示预览",
-      "size": 28.0,
-      "bounds": [
-        548.0,
-        465.0,
-        659.0,
-        493.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 22,
-      "text": "频道列表",
-      "size": 28.0,
-      "bounds": [
-        1310.0,
-        570.0,
-        1422.0,
-        598.0
-      ],
-      "clippedIntentionally": true
-    },
-    {
-      "figure": 22,
-      "text": "01  新闻频道",
-      "size": 32.0,
-      "bounds": [
-        1311.0,
-        639.0,
-        1490.0,
-        671.0
-      ],
-      "clippedIntentionally": true
-    },
-    {
-      "figure": 22,
-      "text": "02  纪实频道",
-      "size": 32.0,
-      "bounds": [
-        1311.0,
-        707.0,
-        1487.0,
-        739.0
-      ],
-      "clippedIntentionally": true
-    },
-    {
-      "figure": 22,
-      "text": "节目名称与频道信息",
-      "size": 26.0,
-      "bounds": [
-        1311.0,
-        771.0,
-        1543.0,
-        797.0
-      ],
-      "clippedIntentionally": true
-    },
-    {
-      "figure": 52,
-      "text": "电影",
-      "size": 42.0,
-      "bounds": [
-        100.0,
-        71.0,
-        179.0,
-        111.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "JellyLive",
-      "size": 32.0,
-      "bounds": [
-        1628.0,
-        79.0,
-        1767.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "电影 · 0 部",
-      "size": 24.0,
-      "bounds": [
-        99.0,
-        134.0,
-        219.0,
-        158.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "搜索媒体",
-      "size": 28.0,
-      "bounds": [
-        958.0,
-        159.0,
-        1070.0,
-        187.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "类型：剧情",
-      "size": 28.0,
-      "bounds": [
-        1234.0,
-        159.0,
-        1374.0,
-        187.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "排序：名称",
-      "size": 28.0,
-      "bounds": [
-        1554.0,
-        159.0,
-        1694.0,
-        188.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "没有符合条件的媒体",
-      "size": 44.0,
-      "bounds": [
-        763.0,
-        497.0,
-        1158.0,
-        541.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "调整筛选条件，或清除筛选查看全部电影。",
-      "size": 28.0,
-      "bounds": [
-        695.0,
-        571.0,
-        1208.0,
-        600.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 52,
-      "text": "清除筛选",
-      "size": 28.0,
-      "bounds": [
-        904.0,
-        687.0,
-        1016.0,
-        715.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "电影",
-      "size": 42.0,
-      "bounds": [
-        100.0,
-        71.0,
-        179.0,
-        111.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "JellyLive",
-      "size": 32.0,
-      "bounds": [
-        1628.0,
-        79.0,
-        1767.0,
-        112.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "正在准备媒体库",
-      "size": 24.0,
-      "bounds": [
-        97.0,
-        134.0,
-        263.0,
-        158.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "正在读取媒体目录…",
-      "size": 34.0,
-      "bounds": [
-        97.0,
-        208.0,
-        400.0,
-        242.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "首次打开大型媒体库可能需要一点时间。",
-      "size": 28.0,
-      "bounds": [
-        97.0,
-        267.0,
-        582.0,
-        295.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 56,
-      "text": "返回媒体库",
-      "size": 28.0,
-      "bounds": [
-        890.0,
-        865.0,
-        1029.0,
-        893.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "海岸日记",
-      "size": 40.0,
-      "bounds": [
-        97.0,
-        70.0,
-        255.0,
-        110.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "第 1 季 · 第 3 集  远方灯塔",
-      "size": 26.0,
-      "bounds": [
-        97.0,
-        129.0,
-        406.0,
-        155.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "20:30:00",
-      "size": 28.0,
-      "bounds": [
-        1697.0,
-        84.0,
-        1807.0,
-        105.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "00:16:20 / 00:48:00",
-      "size": 26.0,
-      "bounds": [
-        313.0,
-        955.0,
-        530.0,
-        981.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "原始",
-      "size": 26.0,
-      "bounds": [
-        1106.0,
-        953.0,
-        1158.0,
-        979.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "1.25x",
-      "size": 26.0,
-      "bounds": [
-        1303.0,
-        957.0,
-        1363.0,
-        976.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "普通话",
-      "size": 26.0,
-      "bounds": [
-        1494.0,
-        953.0,
-        1571.0,
-        979.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "字幕",
-      "size": 26.0,
-      "bounds": [
-        1707.0,
-        953.0,
-        1758.0,
-        979.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "音轨",
-      "size": 30.0,
-      "bounds": [
-        1139.0,
-        674.0,
-        1198.0,
-        704.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "普通话 · 视听辅助解说",
-      "size": 26.0,
-      "bounds": [
-        1171.0,
-        729.0,
-        1442.0,
-        756.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "AAC · 5.1",
-      "size": 24.0,
-      "bounds": [
-        1486.0,
-        735.0,
-        1595.0,
-        753.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "English",
-      "size": 26.0,
-      "bounds": [
-        1172.0,
-        789.0,
-        1256.0,
-        817.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 64,
-      "text": "AAC · 2.0",
-      "size": 24.0,
-      "bounds": [
-        1486.0,
-        793.0,
-        1596.0,
-        811.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "设置",
-      "size": 46.0,
-      "bounds": [
-        97.0,
-        101.0,
-        186.0,
-        146.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "JellyLive",
-      "size": 30.0,
-      "bounds": [
-        1701.0,
-        107.0,
-        1823.0,
-        139.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "播放设置",
-      "size": 30.0,
-      "bounds": [
-        124.0,
-        254.0,
-        243.0,
-        284.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "显示与操作",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        366.0,
-        273.0,
-        396.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "媒体库连接",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        478.0,
-        273.0,
-        508.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "机顶盒配置",
-      "size": 30.0,
-      "bounds": [
-        124.0,
-        590.0,
-        273.0,
-        620.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "直播源",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        702.0,
-        214.0,
-        732.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "关于",
-      "size": 30.0,
-      "bounds": [
-        125.0,
-        814.0,
-        183.0,
-        844.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "直播源",
-      "size": 36.0,
-      "bounds": [
-        545.0,
-        240.0,
-        652.0,
-        276.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "3 个直播源",
-      "size": 26.0,
-      "bounds": [
-        760.0,
-        249.0,
-        884.0,
-        275.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "添加直播源",
-      "size": 30.0,
-      "bounds": [
-        1565.0,
-        250.0,
-        1715.0,
-        280.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "电视直播源",
-      "size": 32.0,
-      "bounds": [
-        583.0,
-        354.0,
-        740.0,
-        386.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "145 个频道 · 今天 20:50 更新",
-      "size": 24.0,
-      "bounds": [
-        582.0,
-        415.0,
-        894.0,
-        439.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "刷新频道",
-      "size": 30.0,
-      "bounds": [
-        1266.0,
-        394.0,
-        1386.0,
-        424.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "机顶盒配置",
-      "size": 30.0,
-      "bounds": [
-        1547.0,
-        394.0,
-        1696.0,
-        424.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "家庭 IPTV",
-      "size": 32.0,
-      "bounds": [
-        581.0,
-        534.0,
-        723.0,
-        566.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "M3U · 32 个频道 · 已启用",
-      "size": 24.0,
-      "bounds": [
-        582.0,
-        595.0,
-        870.0,
-        619.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "刷新",
-      "size": 30.0,
-      "bounds": [
-        1200.0,
-        574.0,
-        1260.0,
-        604.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "编辑",
-      "size": 30.0,
-      "bounds": [
-        1356.0,
-        574.0,
-        1415.0,
-        604.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "停用",
-      "size": 30.0,
-      "bounds": [
-        1512.0,
-        574.0,
-        1570.0,
-        604.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "删除",
-      "size": 30.0,
-      "bounds": [
-        1668.0,
-        574.0,
-        1728.0,
-        604.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "客厅 Jellyfin",
-      "size": 32.0,
-      "bounds": [
-        580.0,
-        714.0,
-        767.0,
-        749.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "Jellyfin · 18 个频道 · 已启用",
-      "size": 24.0,
-      "bounds": [
-        580.0,
-        775.0,
-        903.0,
-        802.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "刷新",
-      "size": 30.0,
-      "bounds": [
-        1200.0,
-        754.0,
-        1260.0,
-        784.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "编辑",
-      "size": 30.0,
-      "bounds": [
-        1356.0,
-        754.0,
-        1415.0,
-        784.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "停用",
-      "size": 30.0,
-      "bounds": [
-        1512.0,
-        754.0,
-        1570.0,
-        784.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "删除",
-      "size": 30.0,
-      "bounds": [
-        1668.0,
-        754.0,
-        1728.0,
-        784.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "机顶盒配置",
-      "size": 40.0,
-      "bounds": [
-        448.0,
-        181.0,
-        647.0,
-        221.0
-      ],
-      "clippedIntentionally": false
-    },
-    {
-      "figure": 87,
-      "text": "已保存配置，无需重复填写。",
-      "size": 28.0,
-      "bounds": [
-        450.0,
+        205.0,
+        993.0,
         251.0,
-        794.0,
-        280.0
+        1017.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 87,
-      "text": "从机顶盒导入",
+      "figure": 17,
+      "text": "陈远",
+      "size": 28.0,
+      "bounds": [
+        493.0,
+        951.0,
+        548.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "饰 林野",
+      "size": 24.0,
+      "bounds": [
+        481.5,
+        993.0,
+        558.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "许宁",
+      "size": 28.0,
+      "bounds": [
+        785.0,
+        951.0,
+        839.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "饰 沈禾",
+      "size": 24.0,
+      "bounds": [
+        773.5,
+        993.0,
+        850.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "沈平",
+      "size": 28.0,
+      "bounds": [
+        1076.0,
+        951.0,
+        1131.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "饰 方远",
+      "size": 24.0,
+      "bounds": [
+        1065.5,
+        993.0,
+        1142.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "李然",
+      "size": 28.0,
+      "bounds": [
+        1368.0,
+        951.0,
+        1424.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "饰 江城",
+      "size": 24.0,
+      "bounds": [
+        1357.5,
+        993.0,
+        1434.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "周安",
+      "size": 28.0,
+      "bounds": [
+        1660.0,
+        951.0,
+        1715.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 17,
+      "text": "饰 老周",
+      "size": 24.0,
+      "bounds": [
+        1649.5,
+        993.0,
+        1724.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "电影详情",
+      "size": 42.0,
+      "bounds": [
+        100.0,
+        70.0,
+        263.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "JellyLive",
       "size": 32.0,
       "bounds": [
-        480.0,
-        358.0,
-        672.0,
-        390.0
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 87,
-      "text": "导入配置文件",
-      "size": 32.0,
+      "figure": 106,
+      "text": "山河之间",
+      "size": 64.0,
       "bounds": [
-        481.0,
-        478.0,
-        671.0,
-        510.0
+        429.0,
+        224.0,
+        677.0,
+        287.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 87,
-      "text": "手动修改",
-      "size": 32.0,
+      "figure": 106,
+      "text": "一段穿越山河的归途",
+      "size": 28.0,
       "bounds": [
-        481.0,
-        598.0,
-        608.0,
-        630.0
+        425.0,
+        307.0,
+        676.0,
+        335.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 87,
-      "text": "导出配置文件",
-      "size": 32.0,
+      "figure": 106,
+      "text": "8.6",
+      "size": 28.0,
       "bounds": [
-        481.0,
-        718.0,
-        671.0,
-        750.0
+        467.0,
+        371.0,
+        508.0,
+        392.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 87,
-      "text": "导出文件包含账号资料，请妥善保存。",
+      "figure": 106,
+      "text": "2025 · 中国大陆 · 01:48:00",
+      "size": 28.0,
+      "bounds": [
+        551.0,
+        367.0,
+        917.0,
+        395.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "4K",
+      "size": 24.0,
+      "bounds": [
+        442.0,
+        429.0,
+        471.0,
+        447.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "HDR",
+      "size": 24.0,
+      "bounds": [
+        546.0,
+        429.0,
+        593.0,
+        447.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "剧情 / 旅行",
       "size": 26.0,
       "bounds": [
-        449.0,
-        849.0,
-        874.0,
-        876.0
+        660.0,
+        426.0,
+        785.0,
+        454.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "一封迟到的来信，开启了一段穿越山河的旅程。",
+      "size": 30.0,
+      "bounds": [
+        425.0,
+        496.0,
+        1035.0,
+        527.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "沿途的相遇，让归乡有了新的意义...",
+      "size": 30.0,
+      "bounds": [
+        425.0,
+        540.0,
+        897.0,
+        571.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "继续播放",
+      "size": 28.0,
+      "bounds": [
+        636.0,
+        651.0,
+        748.0,
+        679.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "从头播放",
+      "size": 28.0,
+      "bounds": [
+        1196.0,
+        651.0,
+        1308.0,
+        679.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "演职人员",
+      "size": 32.0,
+      "bounds": [
+        96.0,
+        728.0,
+        223.0,
+        760.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "2 / 2",
+      "size": 24.0,
+      "bounds": [
+        1749.5,
+        737.0,
+        1794.5,
+        761.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "方青",
+      "size": 28.0,
+      "bounds": [
+        200.0,
+        951.0,
+        255.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "饰 林母",
+      "size": 24.0,
+      "bounds": [
+        189.5,
+        993.0,
+        265.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "吴山",
+      "size": 28.0,
+      "bounds": [
+        493.0,
+        951.0,
+        546.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "饰 船夫",
+      "size": 24.0,
+      "bounds": [
+        481.5,
+        993.0,
+        558.5,
+        1017.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "王禾",
+      "size": 28.0,
+      "bounds": [
+        785.0,
+        951.0,
+        840.0,
+        979.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 106,
+      "text": "饰 店主",
+      "size": 24.0,
+      "bounds": [
+        773.5,
+        993.0,
+        849.5,
+        1017.0
       ],
       "clippedIntentionally": false
     }
   ],
   "checkedFigures": [
-    6,
     17,
-    22,
-    52,
-    56,
-    58,
-    62,
-    64,
-    68,
-    80,
-    81,
-    87,
-    88,
-    93,
-    100
-  ],
-  "checkedActive": 7,
-  "canvas": [
-    1920,
-    1080
+    106
   ],
   "renderResolution": [
     3840,

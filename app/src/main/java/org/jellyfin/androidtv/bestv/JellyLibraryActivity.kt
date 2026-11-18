@@ -465,8 +465,8 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         entries.forEachIndexed {index,card->card.nextFocusLeftId=entries.getOrNull(index-1)?.id ?: card.id;card.nextFocusRightId=entries.getOrNull(index+1)?.id ?: card.id;card.nextFocusUpId=search.id;card.nextFocusDownId=card.id}
         search.nextFocusDownId=entries.first().id;focus(entries.first(),initialInteraction)
-        lifecycleScope.launch {
-            val catalog=try {withTimeout(25000){repo.catalog(refresh=refresh)}}catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;return@launch}catch(error: Exception){if(page===host)libraryError(error){home(false,true)};return@launch}
+        fun refreshCounts(force: Boolean=false){lifecycleScope.launch {
+            val catalog=try {withTimeout(25000){repo.catalog(refresh=force)}}catch(error: CancellationException){if(error !is TimeoutCancellationException)throw error;return@launch}catch(error: Exception){if(page===host)libraryError(error){home(false,true)};return@launch}
             if(page!==host||session!=repo.sessionKey)return@launch
             val counts=withContext(Dispatchers.Default){LibraryPageLayout.Entry.entries.map {LibraryBrowse.select(catalog,it.query()).size}}
             if(page!==host||session!=repo.sessionKey)return@launch
@@ -475,8 +475,9 @@ class JellyLibraryActivity : FragmentActivity() {
                 val count=counts[index]
                 entries[index].findViewWithTag<TextView>("entry-subtitle")?.text=count.toString()
             }
-        }
-        host.tag=Runnable {refreshHomeResume(host,resumeArea,search,entries,null)}
+        }}
+        refreshCounts(refresh)
+        host.tag=Runnable {refreshCounts();refreshHomeResume(host,resumeArea,search,entries,null)}
         refreshHomeResume(host,resumeArea,search,entries,initialInteraction)
     }
     private fun resumeStatus(area: FrameLayout,message: String){
@@ -732,38 +733,107 @@ class JellyLibraryActivity : FragmentActivity() {
         item.taglines?.firstOrNull()?.let {label(it,212f,153f,700f,24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
         label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,180f,700f,25f,14,true)
         label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,209f,700f,25f,13,true)
-        label(item.overview?.replace(Regex("<[^>]+>"),"") ?: "暂无简介",212f,246f,700f,50f,15).apply {maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);ellipsize=android.text.TextUtils.TruncateAt.END}
+        detailOverview(item,212f,246f,700f,50f,15)
         val position=resumeMs(item)
-        val first=ui.button(page,if(position>0)"继续播放 ${time(position)}" else "播放",212f,311f,224f,38f){play(item,position)}
-        ui.button(page,"从头播放",448f,311f,224f,38f){play(item,0)}
-        val watched=ui.button(page,if(item.userData?.played==true)"标为未看" else "标为已看",684f,311f,224f,38f){}
-        var isPlayed=item.userData?.played==true
+        val first=ui.button(page,"继续播放",212f,311f,268f,44f){play(item,position)}
+        val restart=ui.button(page,"从头播放",492f,311f,268f,44f){play(item,0)}
+        val watched=ui.button(page,"◉",772f,311f,64f,44f){}.apply {tag="detail-watched"}
+        val favorite=ui.button(page,"♡",848f,311f,64f,44f){}.apply {tag="detail-favorite"}
+        var isPlayed=item.userData?.played==true;var isFavorite=item.userData?.isFavorite==true
+        fun updateStates(){
+            watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);TvIcons.text(watched,"◉")
+            watched.contentDescription=if(isPlayed)"标为未看，当前已观看" else "标为已看，当前未观看"
+            favorite.isActivated=isFavorite;TvIcons.text(favorite,if(isFavorite)"♥" else "♡")
+            favorite.contentDescription=if(isFavorite)"取消收藏，当前已收藏" else "收藏，当前未收藏"
+        }
+        updateStates()
         watched.setOnClickListener {
             watched.isEnabled=false;val session=repo.sessionKey;val host=page
             lifecycleScope.launch {
-                try {repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=!isPlayed;TvIcons.text(watched,if(isPlayed)"标为未看" else "标为已看");local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
+                try {repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=!isPlayed;updateStates();local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
                 catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"观看状态未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)watched.isEnabled=true}
             }
         }
-        val directors=item.people.orEmpty().filter {it.type==PersonKind.DIRECTOR}.mapNotNull {it.name}
-        val actors=item.people.orEmpty().filter {it.type==PersonKind.ACTOR}.mapNotNull {it.name}
-        label(listOfNotNull(directors.takeIf {it.isNotEmpty()}?.take(2)?.joinToString(" / ")?.let {"导演  $it"},actors.takeIf {it.isNotEmpty()}?.take(3)?.joinToString(" / ")?.let {"主演  $it"}).joinToString("    "),212f,362f,700f,28f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        label(listOfNotNull(if(item.type==BaseItemKind.EPISODE)"剧集" else "电影",LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"}).joinToString(" · "),48f,345f,140f,24f,13,true)
-        label(item.genres.orEmpty().take(2).joinToString(" / "),48f,370f,140f,24f,13,true)
-        val people=item.people.orEmpty().take(8)
-        if(people.isNotEmpty()){
-            label("演职人员",48f,397f,600f,30f,16)
-            val scroll=HorizontalScrollView(this);scroll.isHorizontalScrollBarEnabled=false;scroll.isFocusable=true;val row=LinearLayout(this);scroll.addView(row);ui.at(page,scroll,48f,432f,864f,76f)
-            people.forEach {person->
-                val card=FrameLayout(this);card.background=ui.surface(TvUi.PANEL,false);row.addView(card,LinearLayout.LayoutParams(ui.px(165f),ui.px(76f)).apply {marginEnd=ui.px(12f)})
-                val image=AsyncImageView(this);image.allowHardwareBitmaps=false;image.scaleType=ImageView.ScaleType.CENTER_CROP
-                ui.at(card,image,8f,8f,48f,60f);image.load(url=repo.personImage(person),placeholder=androidx.core.content.ContextCompat.getDrawable(this,org.jellyfin.androidtv.R.drawable.ic_user))
-                ui.text(card,person.name.orEmpty(),15,TvUi.INK,61f,13f,99f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-                ui.text(card,person.role ?: if(person.type==PersonKind.DIRECTOR)"导演" else "演员",12,TvUi.MUTED,61f,44f,99f,20f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        favorite.setOnClickListener {
+            favorite.isEnabled=false;val session=repo.sessionKey;val host=page;val desired=!isFavorite
+            lifecycleScope.launch {
+                try {
+                    val result=repo.setFavorite(item.id,desired,session)
+                    if(session==repo.sessionKey&&page===host){
+                        isFavorite=result.isFavorite;updateStates()
+                        if(isFavorite!=desired)Toast.makeText(this@JellyLibraryActivity,"服务器未更新收藏状态，请重试",Toast.LENGTH_SHORT).show()
+                    }
+                }catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"收藏未保存，请重试",Toast.LENGTH_SHORT).show()}
+                finally {if(page===host)favorite.isEnabled=true}
             }
         }
+        val actions=listOf(first,restart,watched,favorite)
+        actions.forEachIndexed {i,button->button.nextFocusLeftId=actions[maxOf(0,i-1)].id;button.nextFocusRightId=actions[minOf(actions.lastIndex,i+1)].id;button.nextFocusUpId=button.id;button.nextFocusDownId=button.id}
+        castRail(item,actions)
         focus(first)
+    }
+    private fun detailOverview(item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,size: Int): TextView {
+        val full=item.overview?.replace(Regex("<[^>]+>"),"")?.trim()?.takeIf {it.isNotEmpty()} ?: "暂无简介"
+        return label(full,x,y,w,h,size).apply {
+            maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);contentDescription=full
+            post {
+                val available=width-paddingLeft-paddingRight
+                if(available>0&&height>0)text=LibraryDetails.ellipsize(full){candidate->
+                    android.text.StaticLayout.Builder.obtain(candidate,0,candidate.length,paint,available)
+                        .setIncludePad(false).setLineSpacing(lineSpacingExtra,lineSpacingMultiplier).build().let {it.lineCount<=2&&it.height<=height-paddingTop-paddingBottom}
+                }
+            }
+        }
+    }
+    private fun wireDetailRail(scroll: HorizontalScrollView,cards: List<View>,perPage: Int,above: List<View>,onPage: (Int)->Unit={}) {
+        scroll.isFocusable=false;scroll.isSmoothScrollingEnabled=false;scroll.descendantFocusability=ViewGroup.FOCUS_AFTER_DESCENDANTS
+        fun follow(index: Int){
+            val offset=ui.px(LibraryDetails.pageOffset(index,perPage))
+            scroll.scrollTo(offset,0);scroll.post {if(cards[index].hasFocus())scroll.scrollTo(offset,0)};onPage(index/perPage)
+            val start=index/perPage*perPage
+            above.forEachIndexed {i,button->button.nextFocusDownId=cards[minOf(start+i*perPage/above.size,cards.lastIndex)].id}
+        }
+        cards.forEachIndexed {i,card->
+            card.nextFocusLeftId=cards[maxOf(0,i-1)].id;card.nextFocusRightId=cards[minOf(cards.lastIndex,i+1)].id
+            card.nextFocusUpId=above[minOf(i%perPage*above.size/perPage,above.lastIndex)].id;card.nextFocusDownId=card.id
+            val previous=card.onFocusChangeListener
+            card.setOnFocusChangeListener {view,focused->previous?.onFocusChange(view,focused);if(focused)follow(i)}
+            card.setOnKeyListener {_,key,event->
+                if(event.action!=KeyEvent.ACTION_DOWN)false else when(key){
+                    KeyEvent.KEYCODE_DPAD_LEFT->{cards[maxOf(0,i-1)].requestFocus();true}
+                    KeyEvent.KEYCODE_DPAD_RIGHT->{cards[minOf(cards.lastIndex,i+1)].requestFocus();true}
+                    KeyEvent.KEYCODE_DPAD_UP->{page.findViewById<View>(card.nextFocusUpId)?.requestFocus();true}
+                    KeyEvent.KEYCODE_DPAD_DOWN->true
+                    else->false
+                }
+            }
+        }
+        if(cards.isNotEmpty())follow(0)
+    }
+    private fun castRail(item: BaseItemDto,actions: List<View>) {
+        val people=LibraryDetails.people(item.people.orEmpty());if(people.isEmpty())return
+        label("演职人员",48f,362f,700f,24f,16)
+        val pages=LibraryDetails.pageCount(people.size,6)
+        val indicator=label(if(pages>1)"1 / $pages" else "",816f,362f,96f,24f,12,true).apply {gravity=Gravity.END or Gravity.CENTER_VERTICAL}
+        val scroll=HorizontalScrollView(this).apply {isHorizontalScrollBarEnabled=false;tag="cast-rail"}
+        val row=FrameLayout(this);scroll.addView(row,ViewGroup.LayoutParams(ui.px(pages*LibraryDetails.RAIL_WIDTH),ui.px(122f)));ui.at(page,scroll,48f,390f,864f,122f)
+        val cards=people.mapIndexed {index,person->
+            val role=if(person.type==PersonKind.DIRECTOR)"导演" else person.role?.takeIf {it.isNotBlank()} ?: if(person.type==PersonKind.ACTOR)"演员" else person.type?.serialName.orEmpty()
+            val card=FrameLayout(this).apply {id=View.generateViewId();isFocusable=true;isFocusableInTouchMode=true;setDefaultFocusHighlightEnabled(false);contentDescription="${person.name.orEmpty()}，$role";tag="cast-$index"}
+            place(row,card,LibraryDetails.person(index))
+            val image=AsyncImageView(this).apply {
+                allowHardwareBitmaps=false;scaleType=ImageView.ScaleType.CENTER_CROP
+                background=android.graphics.drawable.GradientDrawable().apply {shape=android.graphics.drawable.GradientDrawable.OVAL;setColor(TvUi.PANEL)}
+                outlineProvider=object: ViewOutlineProvider(){override fun getOutline(view: View,outline: android.graphics.Outline){outline.setOval(0,0,view.width,view.height)}};clipToOutline=true
+            }
+            ui.at(card,image,30f,2f,72f,72f);image.load(url=repo.personImage(person),placeholder=androidx.core.content.ContextCompat.getDrawable(this,org.jellyfin.androidtv.R.drawable.ic_user))
+            ui.text(card,person.name.orEmpty(),14,TvUi.INK,0f,80f,132f,22f).apply {gravity=Gravity.CENTER;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            ui.text(card,role,12,TvUi.MUTED,0f,104f,132f,18f).apply {gravity=Gravity.CENTER;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            card.setOnFocusChangeListener {_,focused->image.foreground=if(focused)android.graphics.drawable.GradientDrawable().apply {shape=android.graphics.drawable.GradientDrawable.OVAL;setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)}else null}
+            card
+        }
+        wireDetailRail(scroll,cards,6,actions){index->indicator.text=if(pages>1)"${index+1} / $pages" else ""}
     }
     /** A scrollable logical canvas keeps system IME content reachable. */
     private fun scrollContent(height: Float): ScrollView {

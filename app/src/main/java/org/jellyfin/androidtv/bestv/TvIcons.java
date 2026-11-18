@@ -15,8 +15,8 @@ import android.widget.TextView;
 public final class TvIcons extends Drawable {
     private final char icon;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private static final String SYMBOLS="⌄‹›Ⅱ⌕▣▱△▷◇☆⚙✓≪≫★";
-    private static final String[] LABELS={"展开","返回","下一项","暂停","搜索","媒体库","媒体图片","提示","播放","直播源","收藏","设置","已完成","快退","快进","评分"};
+    private static final String SYMBOLS="⌄‹›Ⅱ⌕▣▱△▷◇☆⚙✓≪≫★♡♥◉";
+    private static final String[] LABELS={"展开","返回","下一项","暂停","搜索","媒体库","媒体图片","提示","播放","直播源","收藏","设置","已完成","快退","快进","评分","收藏","取消收藏","观看状态"};
 
     private TvIcons(char icon,int color,int size){this.icon=icon;paint.setColor(color);paint.setStrokeWidth(1.8f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);setBounds(0,0,size,size);}
     public static void text(TextView view,CharSequence value){
@@ -48,6 +48,9 @@ public final class TvIcons extends Drawable {
             case '★':paint.setStyle(Paint.Style.FILL);
             case '☆':{Path p=new Path();for(int i=0;i<10;i++){double a=-Math.PI/2+i*Math.PI/5;float r=i%2==0?10:4.6f,x=12+r*(float)Math.cos(a),y=12+r*(float)Math.sin(a);if(i==0)p.moveTo(x,y);else p.lineTo(x,y);}p.close();c.drawPath(p,paint);break;}
             case '⚙':c.drawCircle(12,12,6.5f,paint);c.drawCircle(12,12,2.5f,paint);for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);line(c,12,2,12,5);c.restore();}break;
+            case '♥':paint.setStyle(Paint.Style.FILL);
+            case '♡':{Path p=new Path();p.moveTo(12,21);p.cubicTo(8,17,2,13,2,8);p.cubicTo(2,2,9,1,12,6);p.cubicTo(15,1,22,2,22,8);p.cubicTo(22,13,16,17,12,21);p.close();c.drawPath(p,paint);break;}
+            case '◉':{Path p=new Path();p.moveTo(2,12);p.cubicTo(7,3,17,3,22,12);p.cubicTo(17,21,7,21,2,12);p.close();c.drawPath(p,paint);c.drawCircle(12,12,3,paint);break;}
             case '✓':line(c,4,12,9,17,20,6);break;
         }
         c.restore();

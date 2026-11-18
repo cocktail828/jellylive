@@ -45,6 +45,8 @@ def icon(name,x,y,size=36,color=INK):
       'rewind':'M17 7 L4 18 L17 29 Z M32 7 L19 18 L32 29 Z',
       'fast-forward':'M4 7 L17 18 L4 29 Z M19 7 L32 18 L19 29 Z',
       'more':'M7 17 V19 M18 17 V19 M29 17 V19',
+      'eye':'M2 18 Q18 -2 34 18 Q18 38 2 18 Z M23 18 A5 5 0 1 1 13 18 A5 5 0 1 1 23 18',
+      'heart':'M18 32 C12 26 3 20 3 12 C3 3 14 2 18 10 C22 2 33 3 33 12 C33 20 24 26 18 32 Z',
       'link':'M15 10 L19 6 A8 8 0 0 1 30 17 L25 22 M11 14 L6 19 A8 8 0 0 0 17 30 L22 25 M12 24 L24 12',
       'alert':'M18 3 L34 31 H2 Z M18 12 V21 M18 25 V27',
       'tv':'M4 7 H32 V27 H4 Z M12 32 H24 M18 27 V32',
@@ -699,6 +701,8 @@ if __name__=='__main__':
     library_connection_states(globals())
     emit('25-home-unconfigured','主页：未配置直播源',home_unconfigured())
     favorite_flow()
+    emit('13-movie-cast-next','电影详情：演职人员焦点翻页',movie_details(cast_page=1,cast_focus=0))
+    SCREENS[-1]['kind']='state'
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:
         if screen.get('retired'):

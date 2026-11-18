@@ -154,6 +154,12 @@ class LibraryRepository : KoinComponent {
         if(played) api.playStateApi.markPlayedItem(itemId=id) else api.playStateApi.markUnplayedItem(itemId=id)
         catalogCache.invalidate()
     }
+    suspend fun setFavorite(id: UUID, favorite: Boolean, session: String=sessionKey) = withContext(Dispatchers.IO) {
+        check(session==sessionKey){"媒体库已切换，请重新打开"}
+        val result=if(favorite)api.userLibraryApi.markFavoriteItem(itemId=id).content else api.userLibraryApi.unmarkFavoriteItem(itemId=id).content
+        catalogCache.invalidate()
+        result
+    }
     fun personImage(person: BaseItemPerson): String? = person.primaryImage?.getUrl(api,maxWidth=160)
     suspend fun seasons(series: UUID) = withContext(Dispatchers.IO) { api.tvShowsApi.getSeasons(seriesId=series).content.items }
     suspend fun episodes(series: UUID, season: UUID?=null) = withContext(Dispatchers.IO) {
