@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
-<title id="title">电影详情</title><desc id="desc">Jellyfin信息层级与JellyLive既有风格保持；三个操作各448px、间距24px并等宽，全部位于5%电视安全区。大字号时改为两行等宽排列，见图62。影片、演员、数量为示意。</desc>
+<title id="title">电影详情</title><desc id="desc">Jellyfin信息层级与JellyLive既有风格保持；三个操作各448px、间距24px并等宽，全部位于5%电视安全区。影片、演员、数量为示意。</desc>
 <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
 <linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
 <g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">

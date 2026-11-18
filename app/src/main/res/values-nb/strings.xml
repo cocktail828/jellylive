@@ -454,7 +454,6 @@
     <string name="license_website">Nettside</string>
     <string name="lbl_starting_early_ending_after">Starter %1$s tidligere og slutter %2$s etter planen</string>
     <string name="lbl_starting_on_schedule_ending_after">Starter etter planen og slutter %1$s etter planen</string>
-    <string name="pref_subtitles_size">Tekststørrelse</string>
     <string name="lbl_subtitle_delay">Undertekstforsinkelse</string>
     <string name="home_section_livetv">Direkte-TV</string>
     <string name="home_section_none">Ingen</string>

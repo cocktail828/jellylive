@@ -15,7 +15,7 @@ public final class TvFormField extends EditText {
     private boolean editing, keyboardSeen;
     public TvFormField(Activity activity,TvUi ui,String hint,String value,boolean secret){
         super(activity);setId(View.generateViewId());setSingleLine(true);setTextColor(TvUi.INK);setHintTextColor(TvUi.MUTED);
-        setTextSize(TypedValue.COMPLEX_UNIT_PX,17*ui.scale*ui.fontScale);setPadding(ui.px(14),0,ui.px(14),0);
+        setTextSize(TypedValue.COMPLEX_UNIT_PX,17*ui.scale);setPadding(ui.px(14),0,ui.px(14),0);
         setBackground(ui.focusBackground(0xff20263e));setInputType(InputType.TYPE_CLASS_TEXT|(secret?InputType.TYPE_TEXT_VARIATION_PASSWORD:InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
         setHint(hint);setText(value);setShowSoftInputOnFocus(false);setCursorVisible(false);
         setOnClickListener(v->beginEditing());

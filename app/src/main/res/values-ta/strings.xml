@@ -398,7 +398,6 @@
     <string name="server_issue_missing_version">சர்வர் பதிப்பை தீர்மானிக்க முடியவில்லை</string>
     <string name="server_issue_invalid_product">சர்வர் மென்பொருள் இணக்கமற்றது</string>
     <string name="server_issue_unable_to_connect">இணைக்க முடியவில்லை</string>
-    <string name="pref_subtitles_size">எழுத்து அளவு</string>
     <string name="pref_subtitles_background_summary">வசனங்களுக்குப் பின்னால் கருப்பு பின்னணியைக் காட்டு</string>
     <string name="pref_subtitles_background_title">பின்னணியை இயக்கு</string>
     <string name="server_connection_failed_candidates">சேவையகத்துடன் இணைக்க முடியவில்லை, பின்வரும் முகவரிகளை முயற்சித்தேன்: %1$s</string>

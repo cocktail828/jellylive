@@ -409,7 +409,6 @@
     <string name="pref_theme_muted_purple">हल्का बैंगनी थीम</string>
     <string name="pref_subtitles_background_title">बैकग्राउंड चालू करें</string>
     <string name="color_green">हरा</string>
-    <string name="pref_subtitles_size">टेक्स्ट का साइज़</string>
     <string name="server_issue_unsupported_version">सर्वर %1$s संस्करण का उपयोग करता है जो समर्थित नहीं है</string>
     <string name="enable_smart_view_description">स्मार्ट स्क्रीन ग्रिड के बजाय प्रासंगिक आइटम दिखाती है</string>
     <string name="image_size_xlarge">बहुत बड़ा</string>

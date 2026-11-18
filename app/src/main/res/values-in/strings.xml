@@ -478,7 +478,6 @@
     <string name="clear_image_cache">Hapus cache gambar</string>
     <string name="clear_image_cache_content">Terpakai: %1$s</string>
     <string name="color_cyan">Biru Muda</string>
-    <string name="pref_subtitles_size">Ukuran teks</string>
     <string name="color_yellow">Kuning</string>
     <string name="pref_accounts">Akun</string>
     <string name="pref_behavior">Perilaku</string>

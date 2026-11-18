@@ -353,7 +353,6 @@
     <string name="home_section_i">Seção de início %1$d</string>
     <string name="license_artifact">Artefato</string>
     <string name="pref_next_up_timeout_disabled">∞</string>
-    <string name="pref_subtitles_size">Tamanho do texto</string>
     <string name="pref_subtitles_background_summary">Mostrar fundo preto atrás da legenda</string>
     <string name="pref_subtitles_background_title">Habilitar fundo</string>
     <string name="searchable_settings_description">Mídia</string>

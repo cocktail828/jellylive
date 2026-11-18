@@ -317,7 +317,6 @@
     <string name="server_issue_missing_version">Није могуће утврдити верзију сервера</string>
     <string name="server_issue_invalid_product">Серверски софтвер је некомпатибилан</string>
     <string name="server_issue_unable_to_connect">Повезивање није успело</string>
-    <string name="pref_subtitles_size">Величина текста</string>
     <string name="pref_subtitles_background_summary">Прикажи црну позадину иза титлова</string>
     <string name="pref_subtitles_background_title">Омогућите позадину</string>
     <string name="searchable_settings_description">Медији</string>

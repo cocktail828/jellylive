@@ -211,24 +211,6 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 			}
 
 			@Suppress("MagicNumber")
-			// Stored in floats (1f = 100%) but seekbar preference works with integers only
-			seekbar {
-				setTitle(R.string.pref_subtitles_size)
-				min = 25 // 0.25f
-				max = 250 // 2.5f
-				increment = 5 // 0.05f
-				valueFormatter = object : DurationSeekBarPreference.ValueFormatter() {
-					override fun display(value: Int): String = "$value%"
-				}
-
-				bind {
-					get { (userPreferences[UserPreferences.subtitlesTextSize] * 100f).roundToInt() }
-					set { value -> userPreferences[UserPreferences.subtitlesTextSize] = value / 100f }
-					default { (UserPreferences.subtitlesTextSize.defaultValue * 100f).roundToInt() }
-				}
-			}
-
-			@Suppress("MagicNumber")
 			seekbar {
 				setTitle(R.string.pref_subtitles_position)
 				min = 0 // 0.0f

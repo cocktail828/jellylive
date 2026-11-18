@@ -254,7 +254,6 @@
     <string name="license_website">Svetainė</string>
     <string name="license_repository">Saugykla</string>
     <string name="home_section_none">Tuščia</string>
-    <string name="pref_subtitles_size">Teksto dydis</string>
     <string name="server_issue_unable_to_connect">Nepavyko prisijungti</string>
     <string name="server_issue_invalid_product">Serverio programinė įranga yra nesuderinama</string>
     <string name="pref_customization">Pritaikymas</string>

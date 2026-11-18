@@ -193,11 +193,6 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		var subtitleTextStrokeColor = longPreference("subtitles_text_stroke_color", 0xFF000000)
 
 		/**
-		 * Subtitles font size
-		 */
-		var subtitlesTextSize = floatPreference("subtitles_text_size", 1f)
-
-		/**
 		 * Subtitles offset
 		 */
 		var subtitlesOffsetPosition = floatPreference("subtitles_offset_position", 0.08f)

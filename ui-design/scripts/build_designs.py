@@ -492,7 +492,7 @@ def settings_page(selected=0,focus_menu=True):
         s+=button(x,y,420,name,i==selected and focus_menu)
         if i==selected and not focus_menu:s+=rect(x,y,420,76,'#36305c',14)+text(x+26,y+48,name,28,'#c5b8ff',600)
     s+=rect(530,218,1326,682)+text(574,283,names[selected],36,weight=650)
-    rows=[('启动行为','主页自动续播'),('画面比例','保持原始比例'),('默认音轨','跟随媒体'),('默认字幕','关闭'),('解码方式','自动'),('侧栏透明度','35%'),('剧集自动播放下一集','开启')] if selected==0 else [('字号','普通（大字号为 3 列收藏）'),('焦点样式','白色描边 · 紫色背景'),('首页频道','上下移动即切换预览'),('收藏操作','点击打开操作菜单')]
+    rows=[('启动行为','主页自动续播'),('画面比例','保持原始比例'),('默认音轨','跟随媒体'),('默认字幕','关闭'),('解码方式','自动'),('侧栏透明度','35%'),('剧集自动播放下一集','开启')] if selected==0 else [('焦点样式','白色描边 · 紫色背景'),('首页频道','上下移动即切换预览'),('收藏操作','点击打开操作菜单')]
     for i,(a,b) in enumerate(rows):
         y=344+i*80 if selected==0 else 354+i*100
         if i==0 and not focus_menu:s+=rect(552,y-42,1280,80,'url(#purple)',14,'#fff',4)
@@ -500,6 +500,9 @@ def settings_page(selected=0,focus_menu=True):
     return s+footer('上下  切换页签并刷新内容    右键  设置项    左键  当前页签')
 
 def emit(slug,title,body):
+    if body is None:
+        SCREENS.append(dict(id=slug,title='图位已停用',note='原字号调整功能已移除，保留图号。',flow='已移除',kind='state',retired=True))
+        return
     note,flow=SCREEN_COPY[slug]['note'],SCREEN_COPY[slug]['flow']
     svg=f'''<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
 <title id="title">{escape(title)}</title><desc id="desc">{escape(note)}</desc>

@@ -396,7 +396,6 @@
     <string name="server_issue_missing_version">Kunne ikke fastslå server versionen</string>
     <string name="server_issue_invalid_product">Server softwaren er ikke kompentiabel</string>
     <string name="server_issue_unable_to_connect">Kan ikke oprette forbindelse</string>
-    <string name="pref_subtitles_size">Tekst størrelse</string>
     <string name="pref_subtitles_background_summary">Vis en sort baggrund under undertekster</string>
     <string name="pref_subtitles_background_title">Aktiver baggrund</string>
     <string name="searchable_settings_description">Medie</string>

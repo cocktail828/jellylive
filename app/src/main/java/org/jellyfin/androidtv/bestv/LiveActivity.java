@@ -262,7 +262,7 @@ public final class LiveActivity extends Activity {
         filteredChannels(false);list=makeChannelList(596,81.5f,308,303,false);tag(list,"channel-list");
         tiles=new Button[4];String[] names={"☆  收藏","◇  纪录片","▣  媒体库","⚙  设置"};
         Runnable[] clicks={()->navigate("favorites"),()->{},()->openLibrary(false),()->navigate("settings")};
-        for(int i=0;i<4;i++){final int index=i;tiles[i]=ui.button(page,names[i],50+i*219,413,203,88,clicks[i]);tiles[i].setTextSize(TypedValue.COMPLEX_UNIT_PX,18*ui.scale*ui.fontScale);tag(tiles[i],"tile-"+i);tiles[i].setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_UP){if("channel-list".equals(lastHomeFocus))focusList(false);else if("group".equals(lastHomeFocus))groupButton.requestFocus();else focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT&&index==0||key==KeyEvent.KEYCODE_DPAD_RIGHT&&index==3||key==KeyEvent.KEYCODE_DPAD_DOWN)return true;return false;});}
+        for(int i=0;i<4;i++){final int index=i;tiles[i]=ui.button(page,names[i],50+i*219,413,203,88,clicks[i]);tiles[i].setTextSize(TypedValue.COMPLEX_UNIT_PX,18*ui.scale);tag(tiles[i],"tile-"+i);tiles[i].setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_UP){if("channel-list".equals(lastHomeFocus))focusList(false);else if("group".equals(lastHomeFocus))groupButton.requestFocus();else focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT&&index==0||key==KeyEvent.KEYCODE_DPAD_RIGHT&&index==3||key==KeyEvent.KEYCODE_DPAD_DOWN)return true;return false;});}
         previewButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_RIGHT){lastHomeFocus="channel-list";focusList(true);return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN){lastHomeFocus="preview";tiles[0].requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_LEFT)return true;return false;});
         groupButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_DOWN){focusList(false);return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT){focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT)return true;if(key==KeyEvent.KEYCODE_DPAD_UP)return true;return false;});
         String emptyDetail=source.builtin()&&!canRefreshBuiltin()?"配置直播源后显示频道":"请在直播源中获取或添加来源";
@@ -298,12 +298,12 @@ public final class LiveActivity extends Activity {
             public View getView(int n,View old,ViewGroup parent){
                 JSONObject ch=shown.get(n);FrameLayout row=new FrameLayout(LiveActivity.this);
                 android.graphics.drawable.StateListDrawable bg=new android.graphics.drawable.StateListDrawable();bg.addState(new int[]{android.R.attr.state_selected},ui.surface(TvUi.ACCENT,true));bg.addState(new int[]{},full?new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT):ui.surface(0xff1b2038,false));row.setBackground(bg);
-                row.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(ui.largeText()?58:full?45:47)));
+                row.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(full?45:47)));
                 TextView number=full?ui.overlayText(ch.optString("ChannelNo",String.valueOf(n+1)),12,TvUi.INK):ui.text(ch.optString("ChannelNo",String.valueOf(n+1)),12,TvUi.INK);number.setGravity(Gravity.CENTER);number.setSingleLine();number.setTextScaleX(Math.min(1f,ui.px(26)/Math.max(1f,number.getPaint().measureText(number.getText().toString()))));
                 if(!full){GradientDrawable badge=new GradientDrawable();badge.setColor(new int[]{0xff50578d,0xff346d70,0xff3b668b}[n%3]);badge.setCornerRadius(ui.px(20));number.setBackground(badge);}
                 ui.at(row,number,full?10:9,9,28,28);
-                float left=full?46:47;TextView title=full?ui.overlayText(ch.optString("ChannelName"),15,TvUi.INK):ui.text(ch.optString("ChannelName"),14,TvUi.INK);title.setTypeface(null,Typeface.BOLD);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,title,left,full?1.5f:3,w-left-22,ui.largeText()?31:22);
-                TextView sub=full?ui.overlayText(programmeText(ch),12,TvUi.MUTED):ui.text(programmeText(ch),12,TvUi.MUTED);sub.setSingleLine();sub.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,sub,left,ui.largeText()?35:full?24.5f:26,w-left-22,ui.largeText()?21:17);
+                float left=full?46:47;TextView title=full?ui.overlayText(ch.optString("ChannelName"),15,TvUi.INK):ui.text(ch.optString("ChannelName"),14,TvUi.INK);title.setTypeface(null,Typeface.BOLD);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,title,left,full?1.5f:3,w-left-22,22);
+                TextView sub=full?ui.overlayText(programmeText(ch),12,TvUi.MUTED):ui.text(programmeText(ch),12,TvUi.MUTED);sub.setSingleLine();sub.setEllipsize(TextUtils.TruncateAt.END);ui.at(row,sub,left,full?24.5f:26,w-left-22,17);
                 ui.at(row,ui.text(isPlayingChannel(ch)?"▷":"",14,0xffb5a6ff),w-20,8,16,26);return row;
             }
         });
@@ -520,7 +520,7 @@ public final class LiveActivity extends Activity {
         ui.header(page,"我的收藏",source.name+" · "+favoriteCount()+" 个收藏频道",()->back());
         shown=new ArrayList<>();for(JSONObject ch:source.channels)if(store.favorite(source.id,ch.optString("ChannelCode")))shown.add(ch);
         if(shown.isEmpty()){favoriteFocus.remove(source.id);favoriteScroll.remove(source.id);TextView empty=ui.text(page,"暂无收藏频道",20,TvUi.MUTED,50,107,862,343);empty.setGravity(Gravity.CENTER);return;}
-        GridView grid=new GridView(this);favoriteGrid=grid;tag(grid,"favorite-grid");grid.setId(View.generateViewId());grid.setNumColumns(ui.largeText()?3:4);grid.setHorizontalSpacing(ui.px(20));grid.setVerticalSpacing(ui.px(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(ui.px(2),ui.px(2),ui.px(2),ui.px(2));GradientDrawable selector=new GradientDrawable();selector.setColor(Color.TRANSPARENT);selector.setCornerRadius(ui.px(8));selector.setStroke(ui.px(2),Color.WHITE);grid.setSelector(selector);grid.setDrawSelectorOnTop(true);grid.setLongClickable(false);
+        GridView grid=new GridView(this);favoriteGrid=grid;tag(grid,"favorite-grid");grid.setId(View.generateViewId());grid.setNumColumns(4);grid.setHorizontalSpacing(ui.px(20));grid.setVerticalSpacing(ui.px(16));grid.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);grid.setClipToPadding(false);grid.setPadding(ui.px(2),ui.px(2),ui.px(2),ui.px(2));GradientDrawable selector=new GradientDrawable();selector.setColor(Color.TRANSPARENT);selector.setCornerRadius(ui.px(8));selector.setStroke(ui.px(2),Color.WHITE);grid.setSelector(selector);grid.setDrawSelectorOnTop(true);grid.setLongClickable(false);
         grid.setAdapter(new BaseAdapter(){public int getCount(){return shown.size();}public Object getItem(int n){return shown.get(n);}public long getItemId(int n){return n;}public View getView(int n,View old,ViewGroup parent){TextView card=ui.text(shown.get(n).optString("ChannelName"),18,TvUi.INK);card.setGravity(Gravity.CENTER);card.setTypeface(null,Typeface.BOLD);card.setMaxLines(2);card.setEllipsize(TextUtils.TruncateAt.END);card.setPadding(ui.px(12),ui.px(6),ui.px(12),ui.px(6));android.graphics.drawable.StateListDrawable bg=new android.graphics.drawable.StateListDrawable();GradientDrawable selected=ui.surface(TvUi.ACCENT,true);selected.setStroke(ui.px(.5f),0xff363e5d);bg.addState(new int[]{android.R.attr.state_selected},selected);bg.addState(new int[]{},ui.surface(0xff1b2038,false));card.setBackground(bg);card.setLayoutParams(new AbsListView.LayoutParams(-1,ui.px(73)));return card;}});
         ui.at(page,grid,50,107,862,343);
         grid.setOnItemClickListener((p,v,n,id)->{rememberFocus();showFavoriteActions(shown.get(n));});
@@ -636,7 +636,7 @@ public final class LiveActivity extends Activity {
         updateSourceRows();
     }
     private Button sourceAction(FrameLayout card,String key,String label,float x,float y,float width,float height,Runnable action){
-        Button button=ui.button(card,label,x,y,width,height,action);tag(button,key);button.setSingleLine();button.setPadding(ui.px(4),0,ui.px(4),0);button.setTextSize(TypedValue.COMPLEX_UNIT_PX,15*ui.scale*ui.fontScale);settingsActions.add(button);
+        Button button=ui.button(card,label,x,y,width,height,action);tag(button,key);button.setSingleLine();button.setPadding(ui.px(4),0,ui.px(4),0);button.setTextSize(TypedValue.COMPLEX_UNIT_PX,15*ui.scale);settingsActions.add(button);
         button.setOnFocusChangeListener((v,focused)->{if(focused&&inSourceSettings()){settingsFocus.put(settingsCategory,key);v.post(()->v.requestRectangleOnScreen(new android.graphics.Rect(0,0,v.getWidth(),v.getHeight()),false));}});return button;
     }
     private Button closestSourceButton(List<Button> buttons,Button from){
@@ -659,11 +659,11 @@ public final class LiveActivity extends Activity {
         sourceRowsHost.removeAllViews();sourceActionRows.clear();settingsActions.clear();settingsActions.add(sourceAddButton);
         List<LiveSourceStore.Source> entries=store.allMetadata();entries.sort((a,b)->a.builtin()==b.builtin()?0:a.builtin()?-1:1);int count=0;
         for(LiveSourceStore.Source entry:entries)if(!entry.jellyfin()||store.channelCount(entry.id)>0){
-            count++;String key="source-"+entry.id;float height=ui.largeText()?96:80;float actionHeight=ui.largeText()?66:44;float y=(height-actionHeight)/2;
-            FrameLayout card=new FrameLayout(this);tag(card,key);card.setBackground(ui.surface(TvUi.PANEL,false));LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ui.px(620),ui.px(height));params.bottomMargin=ui.px(ui.largeText()?8:10);sourceRowsHost.addView(card,params);
-            TextView name=ui.heading(card,entry.builtin()?"电视直播源":entry.name,16,16,8,entry.builtin()?280:250,ui.largeText()?38:28);name.setSingleLine();name.setEllipsize(TextUtils.TruncateAt.END);
+            count++;String key="source-"+entry.id;float height=80;float actionHeight=44;float y=(height-actionHeight)/2;
+            FrameLayout card=new FrameLayout(this);tag(card,key);card.setBackground(ui.surface(TvUi.PANEL,false));LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(ui.px(620),ui.px(height));params.bottomMargin=ui.px(10);sourceRowsHost.addView(card,params);
+            TextView name=ui.heading(card,entry.builtin()?"电视直播源":entry.name,16,16,8,entry.builtin()?280:250,28);name.setSingleLine();name.setEllipsize(TextUtils.TruncateAt.END);
             String detail=entry.builtin()?(canRefreshBuiltin()?sourceSummary(entry.id):"尚未配置"):(entry.jellyfin()?"Jellyfin":"M3U")+" · "+store.channelCount(entry.id)+" 个频道 · "+(entry.enabled?"已启用":"已停用");
-            TextView summary=ui.text(card,detail,12,TvUi.MUTED,16,ui.largeText()?50:36,entry.builtin()?280:250,ui.largeText()?29:24);summary.setSingleLine();summary.setEllipsize(TextUtils.TruncateAt.END);
+            TextView summary=ui.text(card,detail,12,TvUi.MUTED,16,36,entry.builtin()?280:250,24);summary.setSingleLine();summary.setEllipsize(TextUtils.TruncateAt.END);
             List<Button> actions=new ArrayList<>();sourceActionRows.add(actions);
             if(entry.builtin()){
                 sourceStatus=summary;Button refresh=sourceAction(card,"source-refresh","刷新频道",328,y,122,actionHeight,()->refreshSource(LiveSourceStore.BUILTIN,true));boolean configured=canRefreshBuiltin();refresh.setEnabled(configured);refresh.setFocusable(configured);refresh.setAlpha(configured?1f:.4f);actions.add(refresh);
@@ -754,8 +754,8 @@ public final class LiveActivity extends Activity {
     private void cancelLibraryRequest(){libraryGeneration++;if(libraryRequest!=null)libraryRequest.cancel();libraryRequest=null;libraryBusy=false;if(libraryRetry!=null)libraryRetry.setBusy(false);}
     private void renderLibrarySummary(LinearLayout rows){
         LibraryConnections.Entry entry=libraryConnections.current();libraryHasStoredEntry=entry!=null;
-        FrameLayout summary=new FrameLayout(this);rows.addView(summary,new LinearLayout.LayoutParams(-1,ui.px(Math.max(75,60*ui.fontScale))));
-        LinearLayout line=new LinearLayout(this);line.setOrientation(LinearLayout.HORIZONTAL);line.setGravity(Gravity.CENTER_VERTICAL);ui.at(summary,line,0,10,620,Math.max(48,32*ui.fontScale));
+        FrameLayout summary=new FrameLayout(this);rows.addView(summary,new LinearLayout.LayoutParams(-1,ui.px(75)));
+        LinearLayout line=new LinearLayout(this);line.setOrientation(LinearLayout.HORIZONTAL);line.setGravity(Gravity.CENTER_VERTICAL);ui.at(summary,line,0,10,620,48);
         libraryNameView=ui.text("",18,TvUi.INK);libraryNameView.setTypeface(null,Typeface.BOLD);libraryNameView.setSingleLine();libraryNameView.setEllipsize(TextUtils.TruncateAt.END);line.addView(libraryNameView,new LinearLayout.LayoutParams(-2,-1));
         libraryStatusView=ui.text("",18,TvUi.MUTED);libraryStatusView.setSingleLine();line.addView(libraryStatusView,new LinearLayout.LayoutParams(-2,-1));
         libraryRetry=null;
@@ -838,7 +838,7 @@ public final class LiveActivity extends Activity {
         ui.heading(page,"设置",23,48,46,650,40);ui.text(page,"JellyLive",15,0xffb9b0ef,810,46,102,40);
         for(int i=0;i<SETTINGS_CATEGORIES.length;i++){
             String category=SETTINGS_CATEGORIES[i];Button tab=ui.button(page,category,50,113+i*56,174,42,()->{selectSettingsCategory(category);focusSettingsPanel();});tag(tab,"settings-"+i);settingsTabs.add(tab);tab.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);tab.setPadding(ui.px(12),0,ui.px(12),0);
-            tab.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,15*ui.scale*ui.fontScale);
+            tab.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,15*ui.scale);
             tab.setFocusable(interactive);tab.setClickable(interactive);tab.setBackground(ui.focusBackground(category.equals(settingsCategory)?0xff36305c:TvUi.PANEL));tab.setOnFocusChangeListener((v,focused)->{if(interactive&&focused&&!rebuildingSettingsPanel)selectSettingsCategory(category);});
         }
         for(int i=0;i<settingsTabs.size();i++){Button tab=settingsTabs.get(i);tab.setNextFocusUpId(settingsTabs.get(Math.max(0,i-1)).getId());tab.setNextFocusDownId(settingsTabs.get(Math.min(settingsTabs.size()-1,i+1)).getId());tab.setNextFocusLeftId(tab.getId());tab.setNextFocusRightId(tab.getId());}
@@ -846,7 +846,7 @@ public final class LiveActivity extends Activity {
     }
     private void renderSettings(){renderSettingsNavigation(true);renderSettingsPanel(false);}
     private Button settingsRow(LinearLayout rows,String key,String name,String value,String description,Boolean toggle,boolean checked,Runnable click){
-        float height=Math.max(48,44*ui.fontScale);FrameLayout row=new FrameLayout(this);rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(height+8)));
+        float height=48;FrameLayout row=new FrameLayout(this);rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(height+8)));
         Button action=ui.button(row,"",0,0,620,height,click);action.setBackground(ui.focusBackground(0xff1b2038));tag(action,key);action.setContentDescription(name+"，"+(toggle==null?value:toggle?"开启":"关闭"));settingsActions.add(action);
         boolean hasValue=toggle==null&&!checked&&!value.isEmpty()&&!value.equals("›");
         TextView title=ui.heading(row,name,16,13,0,hasValue?410:toggle!=null?430:550,height);title.setSingleLine();title.setEllipsize(TextUtils.TruncateAt.END);
@@ -860,23 +860,19 @@ public final class LiveActivity extends Activity {
         final String restoreKey=settingsFocus.get(settingsCategory);
         rebuildingSettingsPanel=true;sourceRowsHost=null;sourceAddButton=null;sourceStatus=null;sourceActionRows.clear();
         if(settingsPanel!=null)TvUi.detach(settingsPanel);settingsActions.clear();FrameLayout panel=new FrameLayout(this);settingsPanel=panel;tag(panel,settingsCategory);ui.at(page,panel,272,113,640,389);
-        String heading=settingsSubmenu.isEmpty()?settingsCategory:settingsSubmenu.equals("media-switch")?"切换媒体库":settingsSubmenu.equals("large_text")?"字号":"频道侧栏透明度";
-        ui.heading(panel,heading,18,0,4,620,Math.max(30,25*ui.fontScale));
+        String heading=settingsSubmenu.isEmpty()?settingsCategory:settingsSubmenu.equals("media-switch")?"切换媒体库":"频道侧栏透明度";
+        ui.heading(panel,heading,18,0,4,620,30);
         ScrollView sc=new ScrollView(this);sc.setFocusable(false);sc.setFillViewport(false);LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);sc.addView(rows);ui.at(panel,sc,2,47,626,340);
         if(settingsSubmenu.equals("media-switch")){renderLibrarySwitch(rows);
-        }else if(settingsSubmenu.equals("large_text")){
-            String[] names={"跟随系统","加大字号"};int selected=prefs.getBoolean("large_text",false)?1:0;
-            for(int i=0;i<names.length;i++){final int n=i;settingsRow(rows,"choice-"+i,names[i],"","",null,i==selected,()->{prefs.edit().putBoolean("large_text",n==1).apply();settingsSubmenu="";ui=new TvUi(this);render(true);focusSettingsPanel();});}
         }else if(settingsSubmenu.equals("drawer_transparency")){
             sc.setVisibility(View.GONE);renderTransparency(panel);
         }else if(settingsCategory.equals("播放设置")){
             settingsRow(rows,"auto_play","启动时自动播放直播","","进入主页后，续播上次观看的频道。",prefs.getBoolean("auto_play",true),false,()->{prefs.edit().putBoolean("auto_play",!prefs.getBoolean("auto_play",true)).apply();renderSettingsPanel(true);});
             settingsRow(rows,"auto_next","剧集自动播放下集","","自然播完后倒计时5秒，可取消自动播放。",prefs.getBoolean("auto_next_episode",true),false,()->{prefs.edit().putBoolean("auto_next_episode",!prefs.getBoolean("auto_next_episode",true)).apply();renderSettingsPanel(true);});
         }else if(settingsCategory.equals("显示与操作")){
-            settingsRow(rows,"font","字号",prefs.getBoolean("large_text",false)?"加大字号":"跟随系统","跟随电视系统字号，也可额外加大文字。",null,false,()->openSettingsChoice("large_text"));
             settingsRow(rows,"transparency","频道侧栏透明度",prefs.getInt("drawer_transparency",35)+"%","只调整背景透明度，文字和焦点保持清晰。",null,false,()->openSettingsChoice("drawer_transparency"));
             TextView previewTitle=ui.text("显示预览",14,TvUi.MUTED);LinearLayout.LayoutParams titleParams=new LinearLayout.LayoutParams(-1,ui.px(34));titleParams.topMargin=ui.px(20);rows.addView(previewTitle,titleParams);
-            DrawerPreview preview=new DrawerPreview(ui,620,Math.max(150,132*ui.fontScale));tag(preview,"display-preview");rows.addView(preview,new LinearLayout.LayoutParams(-1,ui.px(Math.max(150,132*ui.fontScale))));preview.setTransparency(prefs.getInt("drawer_transparency",35));
+            DrawerPreview preview=new DrawerPreview(ui,620,150);tag(preview,"display-preview");rows.addView(preview,new LinearLayout.LayoutParams(-1,ui.px(150)));preview.setTransparency(prefs.getInt("drawer_transparency",35));
         }else if(settingsCategory.equals("媒体库连接")){
             renderLibrarySummary(rows);
         }else if(settingsCategory.equals("直播源")){
@@ -893,8 +889,8 @@ public final class LiveActivity extends Activity {
             LinearLayout brand=new LinearLayout(this);brand.setGravity(Gravity.CENTER_VERTICAL);brand.setOrientation(LinearLayout.HORIZONTAL);tag(brand,"about-brand");rows.addView(brand,new LinearLayout.LayoutParams(-2,ui.px(64)));
             ImageView mark=new ImageView(this);mark.setImageResource(org.jellyfin.androidtv.R.drawable.jellylive_mark);mark.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             LinearLayout.LayoutParams markParams=new LinearLayout.LayoutParams(ui.px(64),ui.px(64));markParams.rightMargin=ui.px(12);brand.addView(mark,markParams);
-            TextView appName=ui.text("JellyLive",26,TvUi.INK);appName.setGravity(Gravity.CENTER);appName.setTypeface(null,android.graphics.Typeface.BOLD);brand.addView(appName,new LinearLayout.LayoutParams(-2,ui.px(42*ui.fontScale)));
-            TextView version=ui.text(org.jellyfin.androidtv.BuildConfig.VERSION_NAME,16,0xffc5b8ff);version.setGravity(Gravity.CENTER);rows.addView(version,new LinearLayout.LayoutParams(-1,ui.px(30*ui.fontScale)));
+            TextView appName=ui.text("JellyLive",26,TvUi.INK);appName.setGravity(Gravity.CENTER);appName.setTypeface(null,android.graphics.Typeface.BOLD);brand.addView(appName,new LinearLayout.LayoutParams(-2,ui.px(42)));
+            TextView version=ui.text(org.jellyfin.androidtv.BuildConfig.VERSION_NAME,16,0xffc5b8ff);version.setGravity(Gravity.CENTER);rows.addView(version,new LinearLayout.LayoutParams(-1,ui.px(30)));
             TextView license=ui.text("基于 Jellyfin Android TV / Media3。\n使用 GPL-2.0 许可证。",15,TvUi.INK);license.setGravity(Gravity.CENTER);LinearLayout.LayoutParams licenseParams=new LinearLayout.LayoutParams(ui.px(512),-2);licenseParams.topMargin=ui.px(12);rows.addView(license,licenseParams);
             android.graphics.drawable.GradientDrawable outline=new android.graphics.drawable.GradientDrawable();outline.setColor(Color.TRANSPARENT);outline.setCornerRadius(ui.px(8));outline.setStroke(ui.px(1),0xff8790b0);
             android.graphics.drawable.StateListDrawable aboutFocus=new android.graphics.drawable.StateListDrawable();aboutFocus.addState(new int[]{android.R.attr.state_focused},outline);aboutFocus.addState(new int[]{},new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
@@ -917,7 +913,7 @@ public final class LiveActivity extends Activity {
         // Touch controls remain accessible; the slider is the sole D-pad focus stop.
         minus.setFocusable(false);plus.setFocusable(false);
         ui.text(panel,"0%",13,TvUi.MUTED,80,151,60,26);ui.text(panel,"80%",13,TvUi.MUTED,490,151,60,26);
-        DrawerPreview preview=new DrawerPreview(ui,620,Math.max(150,132*ui.fontScale));tag(preview,"transparency-preview");ui.at(panel,preview,2,222,620,Math.min(162,Math.max(150,132*ui.fontScale)));
+        DrawerPreview preview=new DrawerPreview(ui,620,150);tag(preview,"transparency-preview");ui.at(panel,preview,2,222,620,Math.min(162,150));
         Runnable update=()->{int n=bar.getProgress()*5;prefs.edit().putInt("drawer_transparency",n).apply();value.setText(n+"%");preview.setTransparency(n);bar.setContentDescription("频道侧栏背景透明度，"+n+"%");};
         bar.setProgress(Math.max(0,Math.min(80,prefs.getInt("drawer_transparency",35)))/5);bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar b,int n,boolean user){update.run();}public void onStartTrackingTouch(SeekBar b){}public void onStopTrackingTouch(SeekBar b){}});update.run();
         bar.setOnKeyListener((v,key,e)->{if(confirm(key)){if(e.getAction()==KeyEvent.ACTION_UP){settingsSubmenu="";renderSettingsPanel(true);}return true;}if(e.getAction()==KeyEvent.ACTION_DOWN&&(key==KeyEvent.KEYCODE_DPAD_LEFT||key==KeyEvent.KEYCODE_DPAD_RIGHT)){bar.setProgress(Math.max(0,Math.min(16,bar.getProgress()+(key==KeyEvent.KEYCODE_DPAD_RIGHT?1:-1))));return true;}return false;});
@@ -977,7 +973,7 @@ public final class LiveActivity extends Activity {
         long now=System.currentTimeMillis();Calendar clock=Calendar.getInstance();clock.setTimeInMillis(now);clock.set(Calendar.MINUTE,0);clock.set(Calendar.SECOND,0);clock.set(Calendar.MILLISECOND,0);long start=clock.getTimeInMillis(),end=start+3*3600000L;
         for(int i=0;i<3;i++)ui.text(page,time(start+i*3600000L),14,TvUi.MUTED,191+i*240,96,210,26);
         boolean any=false,pending=false;int count=Math.min(6,shown.size()-guidePage*6);for(int i=0;i<count;i++){JSONObject ch=shown.get(guidePage*6+i);float y=126+i*54;int row=i;Button channel=ui.button(page,ch.optString("ChannelName"),48,y,134,48,()->startFullChannel(ch,"guide"));tag(channel,"guide-channel-"+row);
-            List<LiveSourceStore.Program> programs=channelPrograms(ch);for(LiveSourceStore.Program p:programs){if(p.end<=start||p.start>=end)continue;any=true;float x=191+Math.max(0,(p.start-start)/(float)(end-start))*721,w=(Math.min(p.end,end)-Math.max(p.start,start))/(float)(end-start)*721;Button cell=ui.button(page,p.title+"\n"+time(p.start)+"—"+time(p.end),x,y,Math.max(12,w-4),48,()->programDetail(ch,p));cell.setTextSize(TypedValue.COMPLEX_UNIT_PX,12*ui.scale*ui.fontScale);cell.setEllipsize(TextUtils.TruncateAt.END);tag(cell,"guide-program-"+row+"-"+p.start);}
+            List<LiveSourceStore.Program> programs=channelPrograms(ch);for(LiveSourceStore.Program p:programs){if(p.end<=start||p.start>=end)continue;any=true;float x=191+Math.max(0,(p.start-start)/(float)(end-start))*721,w=(Math.min(p.end,end)-Math.max(p.start,start))/(float)(end-start)*721;Button cell=ui.button(page,p.title+"\n"+time(p.start)+"—"+time(p.end),x,y,Math.max(12,w-4),48,()->programDetail(ch,p));cell.setTextSize(TypedValue.COMPLEX_UNIT_PX,12*ui.scale);cell.setEllipsize(TextUtils.TruncateAt.END);tag(cell,"guide-program-"+row+"-"+p.start);}
             String key=owner(ch).id+"/"+ch.optString("ChannelCode");if(!schedules.containsKey(key)){ensureEpg(ch);pending|=(epgPending.contains(key)||epgPending.contains(owner(ch).id+"/xmltv"));}if(programs.isEmpty())ui.text(page,(epgPending.contains(key)||epgPending.contains(owner(ch).id+"/xmltv"))?"节目单加载中…":"暂无节目信息，确认左侧频道仍可观看",12,TvUi.MUTED,200,y,712,48);
         }
         if(any){View marker=new View(this);marker.setBackgroundColor(0xffb5a1ff);ui.at(page,marker,191+(now-start)/(float)(end-start)*721,122,1.5f,Math.max(1,count)*54);marker.setFocusable(false);}

@@ -151,7 +151,6 @@
     <string name="home_section_latest_media">Неодамна додадена содржина</string>
     <string name="home_section_resume">Продолжи со гледање</string>
     <string name="home_section_none">Ниедно</string>
-    <string name="pref_subtitles_size">Големина на текст</string>
     <string name="server_issue_missing_version">Неможе да се утврди верзијата на серверот</string>
     <string name="server_issue_unsupported_version">Серверот користи верзија %1$s која не е поддржана</string>
     <string name="server_issue_timeout">Истече времето на врската</string>

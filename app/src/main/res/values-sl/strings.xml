@@ -422,7 +422,6 @@
     <string name="server_issue_outdated_version">Strežnik uporablja nepodprto različico %1$s. Posodobite na %2$s ali novejšo različico</string>
     <string name="server_issue_unsupported_version">Strežnik uporablja različico %1$s, ki ni podprta</string>
     <string name="server_issue_missing_version">Ne morem določi različice strežnika</string>
-    <string name="pref_subtitles_size">Velikost pisave</string>
     <string name="pref_subtitles_background_summary">Prikazuj črno ozadje za podnapisi</string>
     <string name="pref_subtitles_background_title">Omogoči ozadje</string>
     <string name="searchable_settings_description">Vsebina</string>

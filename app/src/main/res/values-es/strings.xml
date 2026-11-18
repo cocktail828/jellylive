@@ -380,7 +380,6 @@
     <string name="server_issue_missing_version">No se puede determinar la versión del servidor</string>
     <string name="server_issue_invalid_product">El software del servidor es incompatible</string>
     <string name="server_issue_unable_to_connect">Imposible conectar</string>
-    <string name="pref_subtitles_size">Tamaño del texto</string>
     <string name="pref_subtitles_background_summary">Muestra un fondo negro detrás de los subtítulos</string>
     <string name="pref_subtitles_background_title">Activar fondo</string>
     <string name="server_connection_failed_candidates">Imposible conectar con el servidor. Dirección usada: %1$s</string>

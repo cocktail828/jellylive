@@ -411,7 +411,6 @@
     <string name="server_issue_missing_version">No se pudo determinar la versión del servidor</string>
     <string name="server_issue_invalid_product">El software del servidor es incompatible</string>
     <string name="server_issue_unable_to_connect">No se pudo conectar</string>
-    <string name="pref_subtitles_size">Tamaño del texto</string>
     <string name="pref_subtitles_background_summary">Mostrar un fondo negro detrás de los subtítulos</string>
     <string name="pref_subtitles_background_title">Habilitar fondo</string>
     <string name="server_connection_failed_candidates">No fue posible conectar el servidor, se intentó la siguiente dirección: %1$s</string>

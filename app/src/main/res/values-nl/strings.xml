@@ -372,7 +372,6 @@
     <string name="license_repository">Repository</string>
     <string name="license_artifact">Artifact</string>
     <string name="pref_next_up_timeout_disabled">∞</string>
-    <string name="pref_subtitles_size">Lettergrootte</string>
     <string name="pref_subtitles_background_summary">Toon de ondertiteling met een zwarte achtergrond</string>
     <string name="home_section_next_up">Als volgende</string>
     <string name="home_section_library_small">Mijn media (klein)</string>

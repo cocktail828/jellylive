@@ -23,37 +23,35 @@ def install(g):
             else:part+=c
         if part:lines.append(part)
         return ''.join(tx(x,y+i*(lh or size*1.55),v,size,color) for i,v in enumerate(lines))
-    def top(title='设置',large=False):
-        fs=1.5 if large else 1
-        return tx(96,140,title,46*fs,weight=650)+tx(1824,132,'JellyLive',30*fs,VALUE,500,'end')
-    def nav(category,focus=False,large=False):
-        s='';fs=1.5 if large else 1
+    def top(title='设置'):
+        return tx(96,140,title,46,weight=650)+tx(1824,132,'JellyLive',30,VALUE,500,'end')
+    def nav(category,focus=False):
+        s=''
         for i,label in enumerate(CATEGORIES):
             active=i==category;white=active and focus;y=226+i*112
             s+=rect(100,y,348,84,FOCUS if white else '#36305c' if active else '#171c32',14,'#fff' if white else '#363e5d',4 if white else 1)
-            s+=tx(124,y+54, label,30*fs,INK if white else VALUE if active else INK,650 if active else 500)
+            s+=tx(124,y+54, label,30,INK if white else VALUE if active else INK,650 if active else 500)
         return s
-    def frame(category,heading=None,nav_focus=False,large=False):
-        fs=1.5 if large else 1
-        return top(large=large)+nav(category,nav_focus,large)+tx(544,272,heading or CATEGORIES[category],36*fs,weight=650)
+    def frame(category,heading=None,nav_focus=False):
+        return top()+nav(category,nav_focus)+tx(544,272,heading or CATEGORIES[category],36,weight=650)
     def action(x,y,w,label,focus=False,h=88,disabled=False):
         color=MUTED if disabled else INK
         return rect(x,y,w,h,'#151a2b' if disabled else FOCUS if focus else '#242a46',14,'#fff' if focus else '#363e5d',4 if focus else 1)+tx(x+w/2,y+h/2+12,label,30,color,weight=600,anchor='middle')
     def switch(x,y,on):
         return rect(x,y,80,42,'#7561ed' if on else '#444b64',21)+f'<circle cx="{x+(58 if on else 22)}" cy="{y+21}" r="15" fill="{INK}"/>'
-    def row(y,title,value='',focus=False,kind='choice',checked=False,large=False,disabled=False):
+    def row(y,title,value='',focus=False,kind='choice',checked=False,disabled=False):
         # One line per action; preserve generous TV focus targets and actual font sizes.
-        fs=1.5 if large else 1;h=132 if large else 96
+        h=96
         s=f'<g data-role="settings-row" data-title="{escape(title)}" data-kind="{kind}" data-disabled="{str(disabled).lower()}">'
         s+=rect(548,y,1240,h,'#151a2b' if disabled else FOCUS if focus else SURFACE,14,'#fff' if focus else 'none',4 if focus else 0)
-        baseline=y+h/2+12*fs
-        s+=tx(574,baseline,fit(title,32*fs,870 if kind=='radio' else 820),32*fs,MUTED if disabled else INK,600)
+        baseline=y+h/2+12
+        s+=tx(574,baseline,fit(title,32,870 if kind=='radio' else 820),32,MUTED if disabled else INK,600)
         if kind=='toggle':
-            s+=tx(1650,baseline,'开启' if checked else '关闭',28*fs,INK if focus else VALUE,anchor='end')+switch(1684,y+h/2-21,checked)
+            s+=tx(1650,baseline,'开启' if checked else '关闭',28,INK if focus else VALUE,anchor='end')+switch(1684,y+h/2-21,checked)
         elif kind=='radio':
             if checked:s+=icon('check',1722,y+h/2-18,36,INK)
         elif kind!='read':
-            s+=tx(1722,baseline,fit(value,28*fs,320),28*fs,MUTED if disabled else INK if focus else VALUE,anchor='end')
+            s+=tx(1722,baseline,fit(value,28,320),28,MUTED if disabled else INK if focus else VALUE,anchor='end')
             if not disabled:s+=icon('forward',1742,y+h/2-15,30,INK if focus else MUTED)
         return s+'</g>'
     playback=['启动时自动播放直播','剧集自动播放下集']
@@ -64,18 +62,13 @@ def install(g):
         s+=tx(1310,y+67,'频道列表',28,MUTED,600)+rect(1294,y+91,470,72,'#36305c',10)
         s+=tx(1310,y+139,'01  新闻频道',32,weight=600)+tx(1310,y+207,'02  纪实频道',32)+tx(1310,y+266,'节目名称与频道信息',26,MUTED)
         return (s+'</g>').replace('<text ','<text stroke="#080c18" stroke-width="2.6" stroke-linejoin="round" paint-order="stroke" ')
-    def main(selected=0,focus_menu=True,large=False):
-        s=frame(selected,nav_focus=focus_menu,large=large)
+    def main(selected=0,focus_menu=True):
+        s=frame(selected,nav_focus=focus_menu)
         if selected==0:
-            for i,title in enumerate(playback):s+=row(320+i*(156 if large else 112),title,focus=not focus_menu and i==0,kind='toggle',checked=True,large=large)
+            for i,title in enumerate(playback):s+=row(320+i*(112),title,focus=not focus_menu and i==0,kind='toggle',checked=True)
         elif selected==1:
-            s+=row(320,'字号','跟随系统',focus=not focus_menu)
-            s+=row(432,'频道侧栏透明度','35%')
-            s+=tx(548,602,'显示预览',28,MUTED,600)+preview()
-        return s
-    def choice(title,options,current=0,focus=None,large=False):
-        focus=current if focus is None else focus;s=frame(1 if title=='字号' else 0,title,large=large)
-        for i,name in enumerate(options):s+=row(332+i*(156 if large else 112),name,focus=i==focus,kind='radio',checked=i==current,large=large)
+            s+=row(320,'频道侧栏透明度','35%',focus=not focus_menu)
+            s+=tx(548,490,'显示预览',28,MUTED,600)+preview(528,300)
         return s
     def transparency():
         s=frame(1,'频道侧栏透明度')+tx(548,337,'背景透明度',28,MUTED)
@@ -106,12 +99,11 @@ def install(g):
         s+=row(470,'新增媒体库',focus=not retry_focus)+row(582,'切换媒体库',disabled=state=='empty')
         if state=='offline':s+=tx(548,746,'暂时无法连接，请重试或切换媒体库。',28,MUTED)
         return s
-    def media_switch(state='ready',large=False):
-        s=frame(2,'切换媒体库',large=large);fs=1.5 if large else 1
+    def media_switch(state='ready'):
+        s=frame(2,'切换媒体库')
         for i,name in enumerate(['客厅媒体库 · 示例账号','家庭影音 · 访客账号','书房媒体库 · 示例账号']):
-            if large and i==1:name='家庭影音服务器的较长名称 · 访客账号'
-            s+=row(332+i*(156 if large else 112),name,focus=i==1,kind='radio',checked=i==0,large=large)
-        y=900 if large else 758
+            s+=row(332+i*(112),name,focus=i==1,kind='radio',checked=i==0)
+        y=758
         if state=='switching':s+=tx(548,y,'正在连接家庭影音…',28,MUTED)
         elif state=='error':s+=para(548,y,'无法连接家庭影音，请检查网络后重试。\n当前仍使用客厅媒体库。',1200,28,'#f2b4bb')
         return s
@@ -133,19 +125,18 @@ def install(g):
             for j,letter in enumerate(letters):s+=action(x+j*116,584+i*100,100,letter,i==0 and j==0,h=76)
         for x,w,label in [(330,260,'中文 / 英文'),(622,430,'空格'),(1084,240,'删除'),(1356,234,'完成')]:s+=action(x,914,w,label,h=82)
         return s
-    def sources(populated=False,add_menu=False,configured=True,large=False):
-        fs=1.5 if large else 1
-        s=frame(4,nav_focus=False,large=large)
+    def sources(populated=False,add_menu=False,configured=True):
+        s=frame(4,nav_focus=False)
         s+=tx(760,272,'3 个直播源' if populated else '1 个直播源',26,MUTED)
         s+=action(1492,226,296,'添加直播源',h=76)
         entries=[('电视直播源','145 个频道 · 今天 20:50 更新' if configured else '尚未配置',True,True)]
         if populated:entries += [('家庭 IPTV','M3U · 32 个频道 · 已启用',False,True),('客厅 Jellyfin','Jellyfin · 18 个频道 · 已启用',False,True)]
         for i,(name,info,tv,enabled) in enumerate(entries):
-            y=328+i*(208 if large else 180);height=192 if large else 160
+            y=328+i*(180);height=160
             s+=rect(548,y,1240,height,'#171d32',14,'#343d56')
-            s+=tx(580,y+(62 if large else 54),fit(name,32*fs,560 if tv else 500),32*fs,weight=600)
-            s+=tx(580,y+(122 if large else 108),fit(info,24*fs,560 if tv else 500),24*fs,MUTED)
-            ay=y+(height-(132 if large else 88))/2;ah=132 if large else 88
+            s+=tx(580,y+(54),fit(name,32,560 if tv else 500),32,weight=600)
+            s+=tx(580,y+(108),fit(info,24,560 if tv else 500),24,MUTED)
+            ay=y+(height-(88))/2;ah=88
             if tv:
                 s+=action(1204,ay,244,'刷新频道',focus=configured and not add_menu,h=ah,disabled=not configured)
                 s+=action(1472,ay,300,'机顶盒配置',focus=not configured and not add_menu,h=ah)
@@ -217,8 +208,6 @@ def install(g):
         s+=tx(1174,630,'基于 Jellyfin Android TV / Media3。',30,anchor='middle')+tx(1174,676,'使用 GPL-2.0 许可证。',30,anchor='middle')
         s+='</g>'
         return s
-    def selector_scene(large=False):
-        return choice('字号',['跟随系统','加大字号'],large=large)
     def replace(slug,title,body):
         index=next(i for i,s in enumerate(g['SCREENS']) if s['id']==slug)
         g['SCREENS'].pop(index);g['emit'](slug,title,body);entry=g['SCREENS'].pop();g['SCREENS'].insert(index,entry)
@@ -231,7 +220,7 @@ def install(g):
             ('17-settings-audio','音轨默认设置（已取消）',None),
             ('17-settings-subtitle','字幕默认设置（已取消）',None),
             ('17-settings-aspect','画面比例默认设置（已取消）',None),
-            ('17-settings-font','设置子菜单：字号',selector_scene()),
+            ('17-settings-font','图位已停用',None),
             ('17-settings-transparency','设置子菜单：侧栏透明度',transparency()),
             ('17-settings-media','设置：媒体库连接状态',media_summary()),
             ('17-settings-box','设置：机顶盒配置入口',box_summary()),
@@ -243,15 +232,15 @@ def install(g):
             ('17-settings-box-discard','配置：放弃草稿确认',discard()),
             ('17-settings-connection-error','媒体库连接：错误保留输入',connection(error=True)),
             ('17-settings-about','设置：关于',about()),
-            ('17-settings-large','设置：150%字号',main(focus_menu=False,large=True)),
-            ('17-settings-choice-large','设置子菜单：150%字号',selector_scene(True)),
+            ('17-settings-large','图位已停用',None),
+            ('17-settings-choice-large','图位已停用',None),
             ('17-settings-box-ready','机顶盒配置：读取成功待保存',box_edit(True)),
             ('17-settings-discovery','媒体库连接：发现服务器',discovery()),
             ('17-settings-connection-loading','媒体库连接：验证中',connection(loading=True)),
         ]
         for slug,title,body in cases:
             if body is None:
-                g['SCREENS'].append(dict(id=slug,title=title,note='已取消设置入口，请在各自播放器调整。',flow='播放器底部信息栏',kind='state',retired=True))
+                g['SCREENS'].append(dict(id=slug,title=title,note='该设置入口已取消；保留原图号。',flow='已移除',kind='state',retired=True))
             else:
                 g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state' if any(k in slug for k in ['error','discard','loading','large','ready']) else 'main'
     def connection_states():
@@ -262,7 +251,7 @@ def install(g):
             ('17-settings-media-switch','切换媒体库：已保存的账号',media_switch()),
             ('17-settings-media-switching','切换媒体库：连接中',media_switch('switching')),
             ('17-settings-media-switch-error','切换媒体库：失败保留原会话',media_switch('error')),
-            ('17-settings-media-switch-large','切换媒体库：150%字号与长名称',media_switch(large=True)),
+            ('17-settings-media-switch-large','图位已停用',None),
         ]:
             g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state'
     g['SETTINGS_CONNECTION_STATES']=connection_states

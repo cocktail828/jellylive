@@ -45,7 +45,6 @@ fun main(){
  val last=LibraryBrowse.page(all,84,6);verify("last page range and disabled next",last.range=="85-86"&&last.previous&&!last.next)
  verify("outdated page clamps after filtering",LibraryBrowse.page(all.take(2),84,6).range=="1-2")
  verify("empty range never claims item one",LibraryBrowse.page(emptyList(),60,6).range=="0-0")
- verify("large text page contains five posters",LibraryBrowse.page(all,0,5).items.size==5)
  val namedMovie=item(401,",\"OriginalTitle\":\"Film Alias\"")
  val namedSeries=item(402,type="Series")
  val namedLive=item(403,type="TvChannel")

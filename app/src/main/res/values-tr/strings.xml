@@ -380,7 +380,6 @@
     <string name="color_black">Siyah</string>
     <string name="color_red">Kırmızı</string>
     <string name="server_issue_invalid_product">Sunucu yazılımı uyumlu değil</string>
-    <string name="pref_subtitles_size">Metin boyutu</string>
     <string name="server_issue_unable_to_connect">Bağlanılamıyor</string>
     <string name="color_white">Beyaz</string>
     <string name="color_yellow">Sarı</string>

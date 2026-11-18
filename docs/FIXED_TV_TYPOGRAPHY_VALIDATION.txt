@@ -1,0 +1,34 @@
+固定电视文字布局 · 2026-11-18
+
+范围
+基于用户当前检出的dev/fa705eb，移除字号调整，不恢复其他分支的媒体库/央视功能。
+用户最新要求：本轮修改完成后不打包、不安装。没有执行assembleDebug、APK打包、adb install或安装新测试工具。
+
+实现
+- 移除设置→显示与操作→字号及其子菜单、large_text偏好读写。
+- TvUi不再读取系统fontScale或叠加应用缩放；保留屏幕尺寸到960×540逻辑画布的等比映射。
+- 移除列表、收藏、详情、轨道菜单、输入与机顶盒表单的大字号布局分支。
+- 海报固定六列、收藏固定四列，电影详情三个224逻辑像素等宽同行操作，设置行固定48逻辑像素。
+- 移除原生字幕字号滑条、偏好字段与各语言资源；旧播放器使用原默认0.0533f字幕比例。
+- 不清空配置或用户数据；旧字号偏好即使仍存储，也没有代码读取。
+- 设计生成器移除字号参数和替代布局，停用图58/62/68/80/81/88/93/100并保留编号。
+- 图64保留为固定文字的长音轨名称边界示例；显示预览随删除字号行上移。
+- 105个编号槽、89张有效稿；适配脚本只生成3840×2160，删除旧720p导出，不再运行720p/字号矩阵。1080p用于画册缩略图。
+
+验证与证据
+证据目录：.local-build/font-removal/（忽略、不提交）。
+1. compile-final.log核对最终源码编译；compile-unit-final.log：离线compileDebugJavaWithJavac和testDebugUnitTest成功；13 tests、0 failures、0 errors。
+   首轮编译发现旧Java播放器的getSubtitlesTextSize调用，已改为固定默认比例后重新验证成功。
+2. library-checks.log：现有check-library-container.sh通过，9组共202个PASS。
+   包括生产布局41项：六列、2:3图片、等宽工具栏、3840×2160的5%安全区、焦点滚动/追加与末尾停止。
+3. live-interaction.log：既有LiveInteractionCheck.groovy共56项通过；Java生产方法在Groovy假平台/时钟执行。
+4. design-geometry.json：复用SVG/Pango检查，受影响图号6/17/22/52/56/58/62/64/68/80/81/87/88/93/100，
+   有效图122处文字，文字安全区/字号下限问题0、可见焦点边框越界0；停用图无SVG/缩略图。
+5. design-exports.log：23张3840×2160设计导出；显示设置、电影、长音轨导出尺寸核对通过，显示设置/长音轨已看图。
+6. app、scripts、ui-design/scripts大小写不敏感检索：字号偏好、fontScale、largeText和字幕字号资源引用均为0；git diff --check通过。
+7. 既有private/jellylive+v0.1.3.apk哈希仍为8c6fb650cdfb2c4d1b0bb93754392c11c60c02b5be445c0bbeb329d4e3059510。
+
+边界
+这些结果是源码编译、JVM逻辑和4K设计/几何检查，不是修改后APK的原生4K、遥控或物理电视验收。
+按用户要求没有生成或安装新APK，Waydroid仍为上一版。未执行旧字号矩阵或全功能实机回归。
+保留版本v0.1.3/10300与四ABI配置，不push。

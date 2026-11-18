@@ -9,9 +9,9 @@ def install(g):
     g['estimated_text_width']=text_width
     INK,MUTED=g['INK'],g['MUTED']; secondary='#d7dcec'
 
-    def header(title,subtitle='',fs=1):
-        s=text(96,107 if fs==1 else 121,title,42*fs,weight=650)+text(1628 if fs==1 else 1540,105,'JellyLive',32*fs,'#b9b0ef',600)
-        return s+(text(96,155 if fs==1 else 184,subtitle,24*fs,MUTED) if subtitle else '')
+    def header(title,subtitle=''):
+        s=text(96,107,title,42,weight=650)+text(1628,105,'JellyLive',32,'#b9b0ef',600)
+        return s+(text(96,155,subtitle,24,MUTED) if subtitle else '')
 
     def player_bar():
         # Overall glass remains 35% transparent; a continuous lower scrim protects small labels.
@@ -83,64 +83,47 @@ def install(g):
         if focus:s+=rect(x,y,w,h,'none',14,'#fff',4)
         return s
 
-    def portrait(x,y,title,year,score,kind=0,focus=False,w=260,fs=1):
-        h=w*1.5;caption=64*fs
+    def portrait(x,y,title,year,score,kind=0,focus=False,w=260):
+        h=w*1.5;caption=64
         s=scene(x,y,w,h,kind)
-        s+=rect(x+14,y+14,82*fs,42*fs,'#101629dd',12)+text(x+28,y+44*fs,score,26*fs,'#f7d68d',600)
+        s+=rect(x+14,y+14,82,42,'#101629dd',12)+text(x+28,y+44,score,26,'#f7d68d',600)
         s+=rect(x,y+h-caption,w,caption,'#101629eb',0)
         full=title;max_width=w-36;shown=title
-        while g['estimated_text_width'](shown,28*fs)>max_width:shown=shown[:-2]+'…'
+        while g['estimated_text_width'](shown,28)>max_width:shown=shown[:-2]+'…'
         # The full text is available in SVG metadata; focus scrolls in the native design contract.
         s+=f'<g data-role="poster-title" data-full-text="{escape(full)}">'
         if shown!=full and focus:
-            clip=f'poster-name-{kind}-{int(fs*10)}';travel=g['estimated_text_width'](full,28*fs)-max_width
+            clip=f'poster-name-{kind}-{int(10)}';travel=g['estimated_text_width'](full,28)-max_width
             s+=f'<defs><clipPath id="{clip}"><rect x="{x+18}" y="{y+h-caption}" width="{max_width}" height="{caption}"/></clipPath></defs>'
-            s+=f'<g clip-path="url(#{clip})"><g class="static-label">'+centered(x+w/2,y+h-22*fs,shown,28*fs,INK,600)+'<set attributeName="visibility" to="hidden" begin="1.2s"/></g>'
-            s+=f'<g class="motion-label" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;{-travel} 0;{-travel} 0;0 0" keyTimes="0;.16;.65;.8;1" begin="1.2s" dur="12s" repeatCount="indefinite"/>'+text(x+18,y+h-22*fs,full,28*fs,INK,600)+'</g></g><style>@media(prefers-reduced-motion:reduce){.motion-label{display:none!important}.static-label{visibility:visible!important}}</style>'
-        else:s+=centered(x+w/2,y+h-22*fs,shown,28*fs,INK,600)
+            s+=f'<g clip-path="url(#{clip})"><g class="static-label">'+centered(x+w/2,y+h-22,shown,28,INK,600)+'<set attributeName="visibility" to="hidden" begin="1.2s"/></g>'
+            s+=f'<g class="motion-label" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;{-travel} 0;{-travel} 0;0 0" keyTimes="0;.16;.65;.8;1" begin="1.2s" dur="12s" repeatCount="indefinite"/>'+text(x+18,y+h-22,full,28,INK,600)+'</g></g><style>@media(prefers-reduced-motion:reduce){.motion-label{display:none!important}.static-label{visibility:visible!important}}</style>'
+        else:s+=centered(x+w/2,y+h-22,shown,28,INK,600)
         s+='</g>'
-        s+=centered(x+w/2,y+h+34*fs,year,24*fs,MUTED)
+        s+=centered(x+w/2,y+h+34,year,24,MUTED)
         if focus:s+=rect(x,y,w,h,'none',14,'#fff',4)
         return s
 
-    def library_grid(filtered=False,focused=True,large=False,recent=False,empty=False):
-        fs=1.5 if large else 1;title='最近添加' if recent else '电影'
-        s=header(title,'按添加时间 · 98 项内容' if recent else '电影 · 0 部' if empty else '电影 · 18 部' if filtered else '全部电影 · 86 部',fs)
+    def library_grid(filtered=False,focused=True,recent=False,empty=False):
+        title='最近添加' if recent else '电影'
+        s=header(title,'按添加时间 · 98 项内容' if recent else '电影 · 0 部' if empty else '电影 · 18 部' if filtered else '全部电影 · 86 部')
         s+='<g data-role="library-toolbar">'+button(888,136,296,'搜索媒体',False,'search')+button(1208,136,296,'类型：剧情' if filtered else '类型：全部')+button(1528,136,296,'排序：最新添加' if recent else '排序：名称')+'</g>'
-        if large:
-            # The tool row keeps equal widths; its targets grow with the system text setting.
-            s=s[:s.index('<g data-role="library-toolbar">')]
-            for x,label,ico in [(888,'搜索媒体','search'),(1208,'类型：全部',None),(1528,'排序：名称',None)]:
-                s+=rect(x,150,296,100,'#242a46',14,'#363e5d')
-                if ico:s+=icon(ico,x+18,176,42)
-                s+=centered(x+166 if ico else x+148,215,label,42,INK,600)
         if empty:
             s+=icon('search',912,350,96,'#b4a0ff')+centered(960,536,'没有符合条件的媒体',44,INK,650)+centered(960,596,'调整筛选条件，或清除筛选查看全部电影。',28,MUTED)
             s+=center_button(700,660,520,'清除筛选',True,h=84)
             return s
-        cols=5 if large else 6;w=318 if large else 260;step=350 if large else 292;y=286 if large else 270
+        cols=6;w=260;step=292;y=270
         titles=g['TITLES']
         s+='<defs><clipPath id="library-scroll-viewport"><rect x="96" y="'+str(y-8)+'" width="1728" height="'+str(1026-y+8)+'"/></clipPath></defs><g data-role="focus-following-grid" clip-path="url(#library-scroll-viewport)">'
         for row in range(2):
             for i in range(cols):
                 t=titles[(row*cols+i)%len(titles)]
-                if large and i==0 and row==0:t='山河之间：归途与远方'
-                s+=portrait(100+i*step,y+row*(576 if large else 476),t,'2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],row*cols+i,i==0 and row==0 and focused,w,fs)
+                s+=portrait(100+i*step,y+row*(476),t,'2025 · 剧情',['8.6','8.1','7.9','8.3','7.8','8.5'][i],row*cols+i,i==0 and row==0 and focused,w)
         s+='</g>'
         return s
 
-    def movie_details(large=False):
-        s=scene(0,0,1920,1080)+rect(0,0,1920,1080,'#101326',0,fill_opacity=.92)+header('电影详情',fs=1.5 if large else 1)
+    def movie_details():
+        s=scene(0,0,1920,1080)+rect(0,0,1920,1080,'#101326',0,fill_opacity=.92)+header('电影详情')
         px,pw=96,280;s+=scene(px,214,pw,pw*1.5)+rect(px,214,pw,pw*1.5,'none',14,'#424862')
-        if large:
-            s+=text(424,282,'山河之间',96,weight=700)+text(424,346,'一段穿越山河的归途',42,'#c4b7e8')
-            s+=text(424,418,'评分 8.6 · 2025 · 中国大陆',42,MUTED)+text(424,480,'01:48:00 · 4K · 剧情 / 旅行',39,MUTED)
-            s+=text(424,556,'一封迟到的来信，开启了一段穿越山河的旅程。',45)+text(424,610,'沿途的相遇，让归乡有了新的意义。',45)
-            for i,label in enumerate(['继续播放 00:36:20','从头播放','标为已看']):
-                x=424+(i%2)*708;y=660+(i//2)*126
-                s+=rect(x,y,684,100,'url(#purple)' if i==0 else '#242a46',14,'#fff' if i==0 else '#363e5d',4 if i==0 else 1)+centered(x+342,y+65,label,42,weight=600)
-            s+=text(96,966,'演职人员',48,weight=600)
-            return s
         s+=text(424,280,'山河之间',64,weight=700)+text(424,332,'一段穿越山河的归途',28,'#c4b7e8')
         s+=icon('star',424,367,28,'#f2cf83')+text(466,392,'8.6',28,'#f2cf83',600)+text(550,392,'2025 · 中国大陆 · 01:48:00',28,MUTED)
         s+=g['pill'](424,419,'4K',w=86)+g['pill'](526,419,'HDR',w=102)+text(660,449,'剧情 / 旅行',26,MUTED)
@@ -169,31 +152,31 @@ def install(g):
         if seeking:s+=rect(868,822,220,44,'#24233c',12,'#5a536e')+centered(978,853,'00:24:30',26)
         return s
 
-    def track_popover(kind,options,selected,anchor_right,background,large=False):
-        fs=1.5 if large else 1;font=26*fs;step=58*fs;heading=64*fs
-        width=max(280,min(620 if large else 520,math.ceil(max(g['estimated_text_width'](a,font)+g['estimated_text_width'](b,24*fs)+118*fs for a,b in options)/8)*8))
+    def track_popover(kind,options,selected,anchor_right,background):
+        font=26;step=58;heading=64
+        width=max(280,min(520,math.ceil(max(g['estimated_text_width'](a,font)+g['estimated_text_width'](b,24)+118 for a,b in options)/8)*8))
         height=heading+len(options)*step+18;x=min(anchor_right,1820)-width;y=852-height
         s=g['frosted_backdrop'](background,x,y,width,height)+rect(x,y,width,height,'#191f34',18,'#59627d',1,fill_opacity=.65)
-        s+=rect(x+8,y+heading,width-16,height-heading-8,'#080d1c',10,fill_opacity=.22)+text(x+26,y+46*fs,kind,30*fs,INK,650)
+        s+=rect(x+8,y+heading,width-16,height-heading-8,'#080d1c',10,fill_opacity=.22)+text(x+26,y+46,kind,30,INK,650)
         for i,(name,detail) in enumerate(options):
             ry=y+heading+i*step;selected_row=i==selected
             s+=rect(x+12,ry,width-24,step-6,'url(#purple)' if selected_row else 'none',10,'#fff' if selected_row else 'none',3 if selected_row else 1)
-            if selected_row:s+=icon('check',x+24,ry+16*fs,22*fs,'#e0d2ff')
-            detail_w=g['estimated_text_width'](detail,24*fs);name_inset=58*fs;name_w=width-name_inset-28-detail_w-24*fs;clip=f'track-{kind}-{i}-{int(width)}'
+            if selected_row:s+=icon('check',x+24,ry+16,22,'#e0d2ff')
+            detail_w=g['estimated_text_width'](detail,24);name_inset=58;name_w=width-name_inset-28-detail_w-24;clip=f'track-{kind}-{i}-{int(width)}'
             s+=f'<defs><clipPath id="{clip}"><rect x="{x+name_inset}" y="{ry}" width="{max(60,name_w)}" height="{step}"/></clipPath></defs>'
             overflowing=g['estimated_text_width'](name,font)>name_w
             if overflowing:
                 short=name
                 while g['estimated_text_width'](short+'…',font)>name_w:short=short[:-1]
-                s+=f'<g clip-path="url(#{clip})"><g class="static-label">'+text(x+name_inset,ry+35*fs,short+'…',font,INK,600 if selected_row else 400)
+                s+=f'<g clip-path="url(#{clip})"><g class="static-label">'+text(x+name_inset,ry+35,short+'…',font,INK,600 if selected_row else 400)
                 if selected_row:s+='<set attributeName="visibility" to="hidden" begin="1.2s"/>'
                 s+='</g>'
                 if selected_row:
                     travel=g['estimated_text_width'](name,font)-name_w
-                    s+=f'<g class="motion-label" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;{-travel} 0;{-travel} 0;0 0" keyTimes="0;.16;.65;.8;1" begin="1.2s" dur="12s" repeatCount="indefinite"/>'+text(x+name_inset,ry+35*fs,name,font,INK,600)+'</g>'
+                    s+=f'<g class="motion-label" visibility="hidden"><set attributeName="visibility" to="visible" begin="1.2s"/><animateTransform attributeName="transform" type="translate" values="0 0;0 0;{-travel} 0;{-travel} 0;0 0" keyTimes="0;.16;.65;.8;1" begin="1.2s" dur="12s" repeatCount="indefinite"/>'+text(x+name_inset,ry+35,name,font,INK,600)+'</g>'
                 s+='</g><style>@media(prefers-reduced-motion:reduce){.motion-label{display:none!important}.static-label{visibility:visible!important}}</style>'
-            else:s+=text(x+name_inset,ry+35*fs,name,font,INK,600 if selected_row else 400)
-            s+=f'<text x="{x+width-28}" y="{ry+35*fs}" text-anchor="end" fill="{INK}" font-size="{24*fs}">{escape(detail)}</text>'
+            else:s+=text(x+name_inset,ry+35,name,font,INK,600 if selected_row else 400)
+            s+=f'<text x="{x+width-28}" y="{ry+35}" text-anchor="end" fill="{INK}" font-size="{24}">{escape(detail)}</text>'
         return s
 
     def sources_page(populated=False,add_menu=False,configured=True):
@@ -209,7 +192,7 @@ def install(g):
         names=['播放设置','显示与操作','Jellyfin 连接','内置源配置','关于 JellyLive'];s=header('设置')
         for i,name in enumerate(names):s+=button(100,218+i*112,384,name,i==selected and focus_menu)
         s+=rect(530,218,1294,682)+text(574,283,names[selected],36,weight=650)
-        rows=[('启动行为','主页自动续播'),('画面比例','保持原始比例'),('默认音轨','跟随媒体'),('默认字幕','关闭'),('解码方式','自动'),('侧栏透明度','35%'),('剧集自动播放下一集','开启')] if selected==0 else [('字号','跟随系统'),('电视安全区','标准 · 5%'),('焦点样式','白色描边 · 紫色背景'),('首页频道','上下移动即切换预览'),('收藏操作','点击打开操作菜单')]
+        rows=[('启动行为','主页自动续播'),('画面比例','保持原始比例'),('默认音轨','跟随媒体'),('默认字幕','关闭'),('解码方式','自动'),('侧栏透明度','35%'),('剧集自动播放下一集','开启')] if selected==0 else [('电视安全区','标准 · 5%'),('焦点样式','白色描边 · 紫色背景'),('首页频道','上下移动即切换预览'),('收藏操作','点击打开操作菜单')]
         for i,(a,b) in enumerate(rows):
             y=344+i*80 if selected==0 else 354+i*100
             s+=text(574,y,a,28)+text(1190,y,b,28,'#c5b8ff')+icon('forward',1764,y-26,28,MUTED)
@@ -294,13 +277,13 @@ def install(g):
           ('24-library-item-missing','媒体详情：内容已移除',state('媒体详情','这部媒体已不在库中',['服务器中的文件可能已移除或重新整理。'],['刷新列表','返回媒体库'])),
           ('12-library-loading','媒体目录：加载与取消',loading()),
           ('15-media-buffering','媒体播放：缓冲恢复',buffering()),
-          ('12-library-large-text','媒体列表：系统大字号 1.5×',library_grid(large=True)),
+          ('12-library-large-text','图位已停用',None),
           ('18-jellyfin-ime','连接媒体库：电视输入法',ime()),
           ('05-live-bright','亮色视频：信息栏可读性',bright_live()),
           ('15-media-unknown-duration','媒体播放：时长未知与不可拖动',media_player(seekable=False)),
-          ('13-movie-large-text','电影详情：系统大字号 1.5×',movie_details(large=True)),
+          ('13-movie-large-text','图位已停用',None),
           ('12-library-recent','媒体库：最近添加',library_grid(recent=True)),
-          ('15-media-long-tracks','媒体音轨：长名称与大字号',media_player(active='音轨')+track_popover('音轨',[('普通话 · 视听辅助解说','AAC · 5.1'),('English','AAC · 2.0')],0,1624,media_player(active='音轨'),large=True)),
+          ('15-media-long-tracks','媒体音轨：长名称',media_player(active='音轨')+track_popover('音轨',[('普通话 · 视听辅助解说','AAC · 5.1'),('English','AAC · 2.0')],0,1624,media_player(active='音轨'))),
         ]
         for slug,title,body in cases:g['emit'](slug,title,body);g['SCREENS'][-1]['kind']='state'
     return additional

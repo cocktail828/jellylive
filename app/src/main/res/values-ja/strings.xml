@@ -208,7 +208,6 @@
     <string name="lbl_subtitle_track">字幕トラックを選択</string>
     <string name="lbl_audio_track">オーディオトラックを選択</string>
     <string name="desc_automatic_fav_songs">お気に入り曲の自動プレイリスト</string>
-    <string name="pref_subtitles_size">テキストの大きさ</string>
     <string name="pref_subtitles_background_summary">字幕の後ろに黒い背景を表示する</string>
     <string name="pref_subtitles_background_title">背景を有効化</string>
     <string name="searchable_settings_description">メディア</string>

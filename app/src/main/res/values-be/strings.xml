@@ -516,7 +516,6 @@
     <string name="color_white">Белы</string>
     <string name="color_darkgrey">Цёмна-шэры</string>
     <string name="color_red">Чырвоны</string>
-    <string name="pref_subtitles_size">Памер тэксту</string>
     <string name="pref_accounts">Уліковыя запісы</string>
     <string name="pref_behavior">Паводзіны</string>
     <string name="pref_login_description">Серверы, уліковыя запісы, аўтаматычны ўваход</string>

@@ -283,7 +283,6 @@
     <string name="server_issue_missing_version">No es pot determinar la versió del servidor</string>
     <string name="server_issue_invalid_product">El programari del servidor és incompatible</string>
     <string name="server_issue_unable_to_connect">No s\'ha pogut connectar</string>
-    <string name="pref_subtitles_size">Mida del text</string>
     <string name="pref_subtitles_background_summary">Mostra un fons negre darrere els subtítols</string>
     <string name="pref_subtitles_background_title">Activa el fons</string>
     <string name="searchable_settings_description">Continguts</string>

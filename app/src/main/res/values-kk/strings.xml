@@ -373,7 +373,6 @@
     <string name="home_prefs">Basqy</string>
     <string name="searchable_hint">Jellyfin ızdeuı</string>
     <string name="searchable_settings_description">Tasyğyşderekter</string>
-    <string name="pref_subtitles_size">Mätın ölşemı</string>
     <string name="pref_subtitles_background_summary">Subtitrlerdıñ artynda qara öñ körsetu</string>
     <string name="pref_subtitles_background_title">Öñdı qosu</string>
     <string name="pref_next_up_timeout_disabled">∞</string>

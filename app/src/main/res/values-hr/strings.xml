@@ -445,7 +445,6 @@
     <string name="action_use_password">Koristi lozinku</string>
     <string name="license_version">Verzija</string>
     <string name="license_repository">Repozitorij</string>
-    <string name="pref_subtitles_size">Veličina teksta</string>
     <string name="license_website">Web stranica</string>
     <string name="license_license">Licensa</string>
     <string name="image_size_smallest">Najmanje</string>

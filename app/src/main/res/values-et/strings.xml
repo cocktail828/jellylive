@@ -319,7 +319,6 @@
     <string name="color_green">Roheline</string>
     <string name="pref_subtitles_background_summary">Kuva subtiitrite taga must taust</string>
     <string name="color_blue">Sinine</string>
-    <string name="pref_subtitles_size">Teksti suurus</string>
     <string name="server_issue_outdated_version">Server kasutab toetamata versiooni %1$s. Värskendage versioonile %2$s või uuemale</string>
     <string name="pref_customization">Kohandamine</string>
     <string name="pref_behavior">Käitumine</string>

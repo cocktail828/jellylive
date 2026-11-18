@@ -358,7 +358,6 @@
     <string name="server_issue_missing_version">Nu s-a putut determina versiunea serverului</string>
     <string name="server_issue_invalid_product">Software-ul serverului este incompatibil</string>
     <string name="server_issue_unable_to_connect">Nu se poate conecta</string>
-    <string name="pref_subtitles_size">Mărimea textului</string>
     <string name="pref_subtitles_background_summary">Afișați un fundal negru în spatele subtitrărilor</string>
     <string name="pref_subtitles_background_title">Activează fundal</string>
     <string name="searchable_settings_description">Media</string>

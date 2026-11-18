@@ -53,9 +53,9 @@ public final class BoxConfigActivity extends Activity {
         linkColumn();if(!actions.isEmpty()){View target=actions.get(Math.min(route.equals("menu")?menuIndex:0,actions.size()-1));target.setFocusableInTouchMode(true);FrameLayout current=root;current.post(()->{if(root==current&&!isFinishing())target.requestFocus();});}
     }
     private void header(String title,String subtitle){ui.heading(page,title,23,48,46,740,42);ui.text(page,"JellyLive",15,0xffb9b0ef,810,46,102,40);ui.text(page,subtitle,14,TvUi.MUTED,50,92,840,38);}
-    private Button action(FrameLayout host,String title,float x,float y,float w,Runnable click){Button b=ui.button(host,title,x,y,w,Math.max(44,32*ui.fontScale),()->{if(!busy)click.run();});actions.add(b);return b;}
+    private Button action(FrameLayout host,String title,float x,float y,float w,Runnable click){Button b=ui.button(host,title,x,y,w,44,()->{if(!busy)click.run();});actions.add(b);return b;}
     private Button listRow(LinearLayout rows,String title,String desc,Runnable click){
-        float h=Math.max(48,40*ui.fontScale),w=rows.getTag()!=null?512:844;boolean fieldValue=route.equals("group")&&!title.startsWith("按安徽版");
+        float h=48,w=rows.getTag()!=null?512:844;boolean fieldValue=route.equals("group")&&!title.startsWith("按安徽版");
         FrameLayout row=new FrameLayout(this);rows.addView(row,new LinearLayout.LayoutParams(-1,ui.px(h+8)));Button b=ui.button(row,"",0,0,w,h,()->{if(!busy)click.run();});actions.add(b);
         TextView name=ui.heading(row,title,16,16,0,fieldValue?230:w-65,h);name.setSingleLine();name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         if(fieldValue){TextView value=ui.text(row,desc,14,0xffc5b8ff,260,0,w-310,h);value.setGravity(Gravity.CENTER_VERTICAL|Gravity.END);value.setSingleLine();value.setEllipsize(android.text.TextUtils.TruncateAt.END);}
@@ -64,8 +64,8 @@ public final class BoxConfigActivity extends Activity {
     private LinearLayout scrollRows(FrameLayout host,float x,float y,float w,float h){ScrollView scroll=new ScrollView(this);scroll.setFocusable(false);LinearLayout rows=new LinearLayout(this);rows.setOrientation(LinearLayout.VERTICAL);scroll.addView(rows);ui.at(host,scroll,x,y,w,h);return rows;}
     private void menu(){
         FrameLayout panel=new FrameLayout(this);panel.setBackground(ui.surface(TvUi.PANEL,false));ui.at(page,panel,200,70,560,400);ui.heading(panel,"机顶盒配置",20,24,14,510,40);
-        ui.text(panel,notice.isEmpty()?(draft.optString("user_id").isEmpty()?"尚未配置，导入或填写设备资料。":"已保存配置，无需重复填写。"):notice,14,TvUi.MUTED,24,55,512,ui.largeText()?48:30);
-        float top=ui.largeText()?98:92;LinearLayout rows=scrollRows(panel,24,top,524,370-top);rows.setTag("menu");
+        ui.text(panel,notice.isEmpty()?(draft.optString("user_id").isEmpty()?"尚未配置，导入或填写设备资料。":"已保存配置，无需重复填写。"):notice,14,TvUi.MUTED,24,55,512,30);
+        float top=92;LinearLayout rows=scrollRows(panel,24,top,524,370-top);rows.setTag("menu");
         String[] names={"从机顶盒导入","导入配置文件","手动修改","导出配置文件"};String[] desc={"读取设备资料，核对后再保存。","选择已有的 JSON 配置文件。","常用信息与高级参数分步查看。","文件包含账号资料，请妥善保存。"};
         for(int i=0;i<names.length;i++){final int n=i;Button b=listRow(rows,names[i],desc[i],()->{menuIndex=n;notice="";if(n==0)show("import");else if(n==1)importFile();else if(n==2)show("edit");else exportConfig();});b.setOnFocusChangeListener((v,focused)->{if(focused)menuIndex=n;});}
         ui.text(panel,"导出文件包含账号资料，请妥善保存。",13,TvUi.MUTED,24,374,512,26);
@@ -102,7 +102,7 @@ public final class BoxConfigActivity extends Activity {
     private void importPage(){
         header("从机顶盒导入","机顶盒配置");TextView ipLabel=ui.heading(page,"机顶盒 IP",15,50,131,540,30);ip=new TvFormField(this,ui,"输入原机顶盒的 IP",ipValue,false);ui.at(page,ip,50,160,540,48);actions.add(ip);
         TextView portLabel=ui.heading(page,"ADB 端口",15,50,232,540,30);port=new TvFormField(this,ui,"5555",portValue,false);ui.at(page,port,50,261,540,48);port.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);actions.add(port);
-        ui.heading(page,"读取前准备",17,640,131,260,35);ui.text(page,"与电视连接同一局域网。\n机顶盒保持开机。\n\n开启网络 ADB，并允许读取配置。\n\n仅适配安徽移动百视通。\n需要 root shell 读取权限。",14,TvUi.MUTED,640,175,260,Math.max(180,180*ui.fontScale));
+        ui.heading(page,"读取前准备",17,640,131,260,35);ui.text(page,"与电视连接同一局域网。\n机顶盒保持开机。\n\n开启网络 ADB，并允许读取配置。\n\n仅适配安徽移动百视通。\n需要 root shell 读取权限。",14,TvUi.MUTED,640,175,260,180);
         status=ui.text(page,notice,14,0xfff2b4bb,50,211,540,24);
         Button read=action(page,"读取配置",50,395,250,this::readBox);Button cancel=ui.button(page,"取消",314,395,130,44,()->{cancelRequest();returnToEntry();});actions.add(cancel);cancel.setTag("cancel");read.setNextFocusRightId(cancel.getId());cancel.setNextFocusLeftId(read.getId());
         // Reuse the IME layout contract, with the same system keyboard as the connection form.

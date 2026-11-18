@@ -357,7 +357,6 @@
     <string name="image_type_thumbnail">صورة مصغرة</string>
     <string name="login_authenticating">تتم المصادقة…</string>
     <string name="server_connecting">يتم الاتصال ب %1$s</string>
-    <string name="pref_subtitles_size">حجم النص</string>
     <string name="pref_subtitles_background_summary">إظهار خلفية سوداء خلف الترجمة</string>
     <string name="pref_subtitles_background_title">تفعيل الترجمة في الخلفية</string>
     <string name="searchable_settings_description">وسائط</string>

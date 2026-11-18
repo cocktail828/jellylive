@@ -520,7 +520,6 @@
     <string name="license_version">버전</string>
     <string name="license_license">라이선스</string>
     <string name="license_artifact">아티팩트</string>
-    <string name="pref_subtitles_size">글자 크기</string>
     <string name="server_issue_invalid_product">서버 소프트웨어가 호환되지 않습니다</string>
     <string name="server_issue_timeout">연결 시간 초과</string>
     <string name="pref_telemetry_description">로그를 포함한 충돌 보고서 전송</string>

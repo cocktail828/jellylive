@@ -387,7 +387,6 @@
     <string name="server_issue_missing_version">Não foi possível apurar a versão do servidor</string>
     <string name="server_issue_invalid_product">O software do servidor é incompatível</string>
     <string name="server_issue_unable_to_connect">Não é possível ligar</string>
-    <string name="pref_subtitles_size">Tamanho do texto</string>
     <string name="pref_subtitles_background_summary">Mostrar fundo negro sob as legendas</string>
     <string name="pref_subtitles_background_title">Ativar fundo</string>
     <string name="searchable_settings_description">Multimédia</string>

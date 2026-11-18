@@ -273,7 +273,6 @@
     <string name="server_issue_missing_version">Δεν μπορεί να καθοριστεί η έκδοση του διακομιστή</string>
     <string name="server_issue_invalid_product">Το λογισμικό του διακομιστή δεν είναι συμβατό</string>
     <string name="server_issue_unable_to_connect">Αδυναμία σύνδεσης</string>
-    <string name="pref_subtitles_size">Μέγεθος υποτίτλων</string>
     <string name="pref_subtitles_background_summary">Προβολή μαύρου φόντου πίσω από τους υπότιτλους</string>
     <string name="pref_subtitles_background_title">Ενεργοποίηση φόντου</string>
     <string name="searchable_settings_description">Πολυμέσα</string>

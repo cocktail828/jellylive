@@ -312,7 +312,6 @@
     <string name="server_issue_missing_version">Не вийшло визначити версію серверу</string>
     <string name="server_issue_invalid_product">Програмне забезпечення сервера не є сумісним</string>
     <string name="server_issue_unable_to_connect">Не вийшло підʼєднатись</string>
-    <string name="pref_subtitles_size">Розмір тексту</string>
     <string name="pref_subtitles_background_summary">Відображає чорне тло за субтитрами</string>
     <string name="pref_subtitles_background_title">Увімкнути тло</string>
     <string name="searchable_settings_description">Медіа</string>
