@@ -1053,6 +1053,10 @@ class JellyLibraryActivity : FragmentActivity() {
             override fun onStartTrackingTouch(bar: SeekBar?){beginSeek()}
             override fun onStopTrackingTouch(bar: SeekBar?){commitSeek()}
         })
+        progress.setOnFocusChangeListener {_,focused->
+            val size=ui.px(if(focused)12f else 8f)
+            progress.thumb=android.graphics.drawable.GradientDrawable().apply {shape=android.graphics.drawable.GradientDrawable.OVAL;setColor(TvUi.INK);setSize(size,size)}
+        }
         progress.setOnTouchListener {_,event->if(event.action==MotionEvent.ACTION_CANCEL)cancelSeek();false}
         pause=ui.quietButton("Ⅱ","暂停或继续播放"){togglePlayback()};ui.at(panel,pause!!,16f,32f,32f,30f)
         val rewind=ui.quietButton("≪","快退"){lastPlayerAction=currentFocus;stepSeek(false,false)};rewindAction=rewind;ui.at(panel,rewind,48f,32f,32f,30f)
@@ -1095,22 +1099,22 @@ class JellyLibraryActivity : FragmentActivity() {
         if(!available&&lastPlayerAction?.isEnabled==false)lastPlayerAction=pause
     }
     private fun canSeek()=player?.let {it.duration>0&&it.isCurrentMediaItemSeekable}==true
-    private fun beginSeek(){
+    private fun beginSeek(resumePlayback: Boolean?=null){
         val p=player ?: return;if(!canSeek())return
-        overlay.begin(p.currentPosition,p.playWhenReady);p.pause();applyControlsVisibility();armPlayerIdle()
+        overlay.begin(p.currentPosition,resumePlayback ?: p.playWhenReady);p.pause();applyControlsVisibility();armPlayerIdle()
     }
-    private fun stepSeek(forward: Boolean,longPress: Boolean){
+    private fun stepSeek(forward: Boolean,longPress: Boolean,resumePlayback: Boolean?=null){
         val p=player ?: return;if(!canSeek()){showControls();return}
-        beginSeek();overlay.preview((overlay.target ?: p.currentPosition)+(if(forward)1 else -1)*(if(longPress)30_000L else 10_000L),p.duration)
+        beginSeek(resumePlayback);overlay.preview((overlay.target ?: p.currentPosition)+(if(forward)1 else -1)*(if(longPress)30_000L else 10_000L),p.duration)
         seek?.requestFocus();updateSeekClock()
     }
-    private fun updateSeekClock(){val p=player ?: return;val target=overlay.target ?: return;seek?.progress=if(p.duration>0)(target*10000/p.duration).toInt()else 0;clock?.text="${time(target)} / ${time(p.duration)}";seekPreview?.apply {text=time(target);visibility=View.VISIBLE;layoutParams=(layoutParams as FrameLayout.LayoutParams).apply {leftMargin=ui.px((48f+864f*target/p.duration-55f).coerceIn(32f,818f))}}}
-    private fun commitSeek(){val result=overlay.commit() ?: return;player?.let {manualEnd=result.position>=it.duration-500;it.seekTo(result.position);it.playWhenReady=result.resume};overlay.paused=!result.resume;seekPreview?.visibility=View.GONE;showControls(false);seek?.requestFocus()}
-    private fun cancelSeek(){val resume=overlay.cancel() ?: return;player?.playWhenReady=resume;overlay.paused=!resume;seekPreview?.visibility=View.GONE;showControls(false);seek?.requestFocus()}
+    private fun updateSeekClock(){val p=player ?: return;val target=overlay.target ?: return;seek?.progress=if(p.duration>0)(target*10000/p.duration).toInt()else 0;clock?.text="${time(target)} / ${time(p.duration)}";seekPreview?.apply {text=time(target);visibility=if(this@JellyLibraryActivity.overlay.progressOnly)View.GONE else View.VISIBLE;layoutParams=(layoutParams as FrameLayout.LayoutParams).apply {leftMargin=ui.px((48f+864f*target/p.duration-55f).coerceIn(32f,818f))}}}
+    private fun commitSeek(){val result=overlay.commit() ?: return;player?.let {manualEnd=result.position>=it.duration-500;it.seekTo(result.position);it.playWhenReady=result.resume};overlay.paused=!result.resume;seekPreview?.visibility=View.GONE;showControls(false,overlay.progressOnly);seek?.requestFocus()}
+    private fun cancelSeek(){val resume=overlay.cancel() ?: return;player?.playWhenReady=resume;overlay.paused=!resume;seekPreview?.visibility=View.GONE;showControls(false,overlay.progressOnly);seek?.requestFocus()}
     private fun playRequested(){player?.let {if(it.playbackState==Player.STATE_ENDED){cancelAutoNext();manualEnd=false;it.seekTo(0);overlay.blocked=false};it.play()}}
-    private fun togglePlayback(){player?.let {p->
+    private fun togglePlayback(focusButton: Boolean=true){player?.let {p->
         if(p.playbackState==Player.STATE_ENDED)playRequested()else if(p.playWhenReady)p.pause()else p.play()
-        overlay.paused=!p.playWhenReady;showControls()
+        overlay.paused=!p.playWhenReady;showControls(focusButton)
     }}
     private fun armPlayerIdle(){
         handler.removeCallbacks(hideControls);overlay.idleMillis=ui.timeout(5000).toLong();overlay.interact(android.os.SystemClock.uptimeMillis())
@@ -1120,12 +1124,18 @@ class JellyLibraryActivity : FragmentActivity() {
         val appearing=overlay.visible&&controls?.visibility!=View.VISIBLE
         controls?.visibility=if(overlay.visible)View.VISIBLE else View.GONE
         if(appearing)controls?.let {panel->panel.post {if(panel.isShown)TvGlass.apply(this,ui,panel,32f,436f,896f,72f)}}
-        playerHeading?.visibility=if(overlay.visible)View.VISIBLE else View.GONE
+        val compact=overlay.progressOnly
+        listOfNotNull(pause,rewindAction,forwardAction,aspectAction,speedAction,audioAction,subtitleAction).forEach {it.visibility=if(compact)View.GONE else View.VISIBLE}
+        clock?.let {value->
+            value.gravity=Gravity.CENTER_VERTICAL or if(compact)Gravity.END else Gravity.START
+            value.layoutParams=(value.layoutParams as FrameLayout.LayoutParams).apply {leftMargin=ui.px(if(compact)PlaybackLayout.PROGRESS_X+PlaybackLayout.PROGRESS_WIDTH-310f else 124f)}
+        }
+        playerHeading?.visibility=if(overlay.visible&&!compact)View.VISIBLE else View.GONE
         pause?.let {TvIcons.text(it,if(player?.playWhenReady==true&&player?.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
         videoSurface?.subtitleView?.setBottomPaddingFraction(if(overlay.visible)0.18f else 0.08f)
         if(!overlay.visible)page.requestFocus()
     }
-    private fun hidePlayerControls(){overlay.hide();handler.removeCallbacks(hideControls);applyControlsVisibility()}
+    private fun hidePlayerControls(){if(overlay.seeking)cancelSeek();overlay.hide();handler.removeCallbacks(hideControls);applyControlsVisibility()}
     private fun optionPopup(title: String,names: List<String>,details: List<String>,selected: Int,chosen: (Int)->Unit){
         val anchor=currentFocus;handler.removeCallbacks(hideControls);overlay.dialog=true;applyControlsVisibility()
         val popup=TvOptions.show(this,ui,anchor,title,names.toTypedArray(),details.toTypedArray(),selected,false,if(title=="倍速")168f else 140f,260f,if(title=="倍速")30f else 29f){chosen(it)}
@@ -1152,7 +1162,11 @@ class JellyLibraryActivity : FragmentActivity() {
             updateTrackLabels();(if(text)subtitleAction else audioAction)?.let {it.announceForAccessibility(it.contentDescription)}
         }
     }
-    private fun showControls(focusButton: Boolean=true) {if(playbackFailure||player==null)return;overlay.show(android.os.SystemClock.uptimeMillis());applyControlsVisibility();if(focusButton&&!overlay.seeking)pause?.requestFocus();armPlayerIdle()}
+    private fun showPausedControls(){
+        val p=player ?: return;p.pause();overlay.paused=true;showControls(false)
+        (if(canSeek())seek else pause)?.requestFocus()
+    }
+    private fun showControls(focusButton: Boolean=true,progressOnly: Boolean=false) {if(playbackFailure||player==null)return;overlay.show(android.os.SystemClock.uptimeMillis(),progressOnly);applyControlsVisibility();if(focusButton&&!overlay.seeking)pause?.requestFocus();armPlayerIdle()}
     private fun stopPlayer() {
         waiting(false);handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);buffering=null;handler.removeCallbacks(nextTick);nextCard?.let {TvUi.detach(it)};nextCard=null;nextClock=null
         val p=player
@@ -1188,7 +1202,7 @@ class JellyLibraryActivity : FragmentActivity() {
             return
         }
         if(pageName=="connection"){val field=currentFocus as? TvFormField;if(field?.isEditing==true){field.finishEditing();return};if(connectionCancel?.invoke()==true)return}
-        if(pageName=="player") {if(playbackFailure){stopPlayer();backToSaved();return};if(nextCard!=null){cancelAutoNext();return};if(overlay.seeking){cancelSeek();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
+        if(pageName=="player") {if(playbackFailure){stopPlayer();backToSaved();return};if(nextCard!=null){cancelAutoNext();return};if(overlay.seeking){hidePlayerControls();return};if(overlay.visible){hidePlayerControls();return};stopPlayer();backToSaved();return}
         if(history.isEmpty())finish()else backToSaved()
     }
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {if(event.actionMasked==MotionEvent.ACTION_DOWN)interaction++;return super.dispatchTouchEvent(event)}
@@ -1200,15 +1214,26 @@ class JellyLibraryActivity : FragmentActivity() {
             if(confirm&&event.action==KeyEvent.ACTION_UP&&consumedPlayerConfirm){consumedPlayerConfirm=false;return true}
             if(event.action==KeyEvent.ACTION_DOWN){
                 armPlayerIdle()
-                if(confirm&&(overlay.seeking||!overlay.visible||currentFocus===pause)){
-                    consumedPlayerConfirm=true;if(event.repeatCount==0){if(overlay.seeking)commitSeek()else togglePlayback()};return true
+                if(confirm&&(overlay.seeking||!overlay.visible||currentFocus===pause||currentFocus===seek)){
+                    consumedPlayerConfirm=true
+                    if(event.repeatCount==0)when {
+                        overlay.seeking->commitSeek()
+                        !overlay.visible->showPausedControls()
+                        currentFocus===seek->{togglePlayback(false);seek?.requestFocus()}
+                        else->togglePlayback()
+                    }
+                    return true
                 }
                 when(key){
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,KeyEvent.KEYCODE_MEDIA_PAUSE,KeyEvent.KEYCODE_MEDIA_PLAY->{if(event.repeatCount==0){when(key){KeyEvent.KEYCODE_MEDIA_PLAY->playRequested();KeyEvent.KEYCODE_MEDIA_PAUSE->player?.pause();else->togglePlayback()};overlay.paused=player?.playWhenReady!=true;showControls()};return true}
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,KeyEvent.KEYCODE_MEDIA_REWIND->{stepSeek(key==KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,event.repeatCount>0);return true}
-                    KeyEvent.KEYCODE_DPAD_LEFT,KeyEvent.KEYCODE_DPAD_RIGHT->if(!overlay.visible){showControls();return true}else if(currentFocus===seek){stepSeek(key==KeyEvent.KEYCODE_DPAD_RIGHT,event.repeatCount>0);return true}
+                    KeyEvent.KEYCODE_DPAD_LEFT,KeyEvent.KEYCODE_DPAD_RIGHT->if(!overlay.visible){
+                        if(canSeek()){showControls(false,true);stepSeek(key==KeyEvent.KEYCODE_DPAD_RIGHT,event.repeatCount>0,true)}else showControls()
+                        return true
+                    }else if(currentFocus===seek){stepSeek(key==KeyEvent.KEYCODE_DPAD_RIGHT,event.repeatCount>0,true);return true}
                     KeyEvent.KEYCODE_DPAD_UP,KeyEvent.KEYCODE_DPAD_DOWN->{
                         if(!overlay.visible){showControls();return true}
+                        if(overlay.progressOnly)return true
                         if(currentFocus===seek){if(key==KeyEvent.KEYCODE_DPAD_DOWN){if(overlay.seeking)cancelSeek();lastPlayerAction?.requestFocus()};return true}
                         if(currentFocus===lastPlayerAction&&key==KeyEvent.KEYCODE_DPAD_UP&&!canSeek()){pause?.requestFocus();return true}
                         if(key==KeyEvent.KEYCODE_DPAD_UP&&controls?.hasFocus()==true){if(canSeek())seek?.requestFocus();return true}

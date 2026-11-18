@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+<title id="title">媒体播放器：精简进度预览</title><desc id="desc">隐藏时左右键直接显示精简底栏并预览10秒步进，长按30秒；仅进度条和其右下时间，没有标题、操作按钮或浮动时间。预览暂停，等待确认期间不自动隐藏。图示进度为设计示例。</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101326"/><stop offset="1" stop-color="#080c18"/></linearGradient>
+<linearGradient id="purple" x2="1" y2="1"><stop stop-color="#6652d5"/><stop offset="1" stop-color="#3a327d"/></linearGradient></defs>
+<g font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif"><rect width="1920" height="1080" fill="url(#bg)"/><svg x="0" y="0" width="1920" height="1080" viewBox="0 0 1100 620" preserveAspectRatio="xMidYMid slice">
+      <rect width="1100" height="620" fill="#153c42"/>
+      <ellipse cx="760" cy="190" rx="290" ry="170" fill="#c5b390" opacity=".15"/>
+      <circle cx="760" cy="190" r="62" fill="#c5b390"/>
+      <path d="M0 365 L160 205 L230 270 L420 90 L680 360 L810 245 L1100 350 V620 H0Z" fill="#2b605e"/>
+      <path d="M277 244 L420 90 L546 220 L455 186 L423 146 L375 207 L345 190Z" fill="#c4d4dd" opacity=".7"/>
+      <path d="M0 450 L220 315 L435 455 L660 275 L885 437 L1100 330 V620 H0Z" fill="#112d38"/>
+      <path d="M620 401 Q500 455 650 480 Q820 530 500 620 H850 Q970 530 745 477 Q580 448 660 421Z" fill="#93b3bb" opacity=".6"/>
+      <path d="M0 570 L180 460 L400 620 H0Z M850 620 L1000 470 L1100 520 V620Z" fill="#091624"/>
+      <path d="M125 142 l12 -5 l11 5 M160 125 l9 -4 l9 4" fill="none" stroke="#dae1e7" stroke-width="2" opacity=".6"/>
+    </svg><g data-role="player-info" data-base-opacity="0.65" data-label-protection="0.36"><rect x="64" y="872" width="1792" height="144" rx="20" fill="#101629" fill-opacity="0.65" stroke="none" stroke-width="1"/><rect x="80" y="932" width="1760" height="68" rx="12" fill="#080d1c" fill-opacity="0.36" stroke="none" stroke-width="1"/></g><g data-role="media-progress-only" data-seeking="true"><rect x="96" y="902" width="1728" height="6" rx="3" fill="#646b80" stroke="none" stroke-width="1"/><rect x="96" y="902" width="948.0" height="6" rx="3" fill="#b9a6ff" stroke="none" stroke-width="1"/><circle cx="1044.0" cy="905" r="12" fill="#f6f5ff"/><text x="1824" y="980" text-anchor="end" fill="#d7dcec" font-size="26">00:26:20 / 00:48:00</text></g></g></svg>

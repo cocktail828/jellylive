@@ -590,7 +590,7 @@ def make():
     emit('12-library-grid','媒体分类与海报列表',library_grid())
     emit('13-movie','电影详情',movie_details())
     emit('14-series','剧集详情',series_details())
-    emit('15-media-player','媒体播放器',media_player())
+    emit('15-media-player','媒体播放器：暂停与完整信息栏',media_player(paused=True,active='progress'))
     s=header('媒体搜索','仅搜索当前媒体库的电影和剧集')+rect(96,200,700,86,'#20263e',14,'#585078',2)+text(124,254,'海',36)+icon('search',730,222)
     keys=['A B C D E F','G H I J K L','M N O P Q R','S T U V W X','Y Z 0 1 2 3','4 5 6 7 8 9']
     for i,rs in enumerate(keys):
@@ -700,6 +700,10 @@ if __name__=='__main__':
     emit('13-movie-cast-next','电影详情：演职人员焦点翻页',movie_details(cast_page=1,cast_focus=0))
     SCREENS[-1]['kind']='state'
     emit('14-series-episodes-next','剧集详情：分集焦点翻页',series_details(episode_page=1,episode_focus=0))
+    SCREENS[-1]['kind']='state'
+    emit('15-media-progress-preview','媒体播放器：精简进度预览',media_progress_only())
+    SCREENS[-1]['kind']='state'
+    emit('15-media-progress-playing','媒体播放器：提交后继续播放',media_progress_only(seeking=False))
     SCREENS[-1]['kind']='state'
     # Cancelled slots keep their original numbers but no obsolete images ship.
     for screen in SCREENS:

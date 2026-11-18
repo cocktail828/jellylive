@@ -4,6 +4,7 @@ package org.jellyfin.androidtv.bestv
 class MediaOverlay {
     var idleMillis=5000L
     var visible=false; private set
+    var progressOnly=false; private set
     var paused=false
     var dialog=false
     var blocked=false
@@ -11,8 +12,8 @@ class MediaOverlay {
     private var resumeAfterSeek=false
     private var deadline: Long?=null
     val seeking get()=target!=null
-    fun show(now: Long){visible=true;interact(now)}
-    fun hide(){visible=false;deadline=null}
+    fun show(now: Long,progressOnly: Boolean=false){visible=true;this.progressOnly=progressOnly;interact(now)}
+    fun hide(){visible=false;progressOnly=false;deadline=null}
     fun interact(now: Long){deadline=if(visible&&!paused&&!dialog&&!seeking&&!blocked)now+idleMillis else null}
     fun remaining(now: Long): Long?=deadline?.let {(it-now).coerceAtLeast(0)}
     fun expire(now: Long): Boolean {

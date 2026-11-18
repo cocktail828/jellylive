@@ -167,7 +167,7 @@ def install(g):
         s+='<defs><linearGradient id="player-top" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#101326" stop-opacity=".94"/><stop offset=".65" stop-color="#101326" stop-opacity=".92"/><stop offset="1" stop-color="#101326" stop-opacity="0"/></linearGradient></defs>'+rect(0,0,1920,270,'url(#player-top)',0)
         s+=text(96,105,'海岸日记',40,weight=650)+text(96,152,'第 1 季 · 第 3 集  远方灯塔',26,secondary)+text(1696,105,'20:30:00',28,secondary)+player_bar()
         progress=1728 if ended else 588;s+=rect(96,902,1728,6,'#646b80',3)+rect(96,902,progress,6,'#b9a6ff',3)
-        if seekable:s+=f'<circle cx="{978 if seeking else 96+progress}" cy="905" r="10" fill="{INK}"/>'
+        if seekable:s+=f'<circle cx="{978 if seeking else 96+progress}" cy="905" r="{12 if active=='progress' else 10}" fill="{INK}"/>'
         for i,action in enumerate(['play' if paused or ended else 'pause','rewind','fast-forward']):
             x=96+i*64;available=seekable or i==0
             s+=f'<g opacity="{1 if available else .35}">'+icon(action,x+16,950,32,INK if i==0 else secondary)+'</g>'
@@ -177,6 +177,15 @@ def install(g):
         for label,x,w in g['MEDIA_ACTIONS']:s+=quiet(x,936,w,g['option_label'](label,values[label]),focus=active==label,name=label)
         if seeking:s+=rect(868,822,220,44,'#24233c',12,'#5a536e')+centered(978,853,'00:24:30',26)
         return s
+
+    def media_progress_only(seeking=True):
+        s=scene(0,0,1920,1080,1)+player_bar()
+        position=1580 if seeking else 1582;duration=2880;progress=1728*position/duration
+        s+=f'<g data-role="media-progress-only" data-seeking="{str(seeking).lower()}">'
+        s+=rect(96,902,1728,6,'#646b80',3)+rect(96,902,progress,6,'#b9a6ff',3)
+        s+=f'<circle cx="{96+progress}" cy="905" r="12" fill="{INK}"/>'
+        s+=f'<text x="1824" y="980" text-anchor="end" fill="{secondary}" font-size="26">00:26:{"20" if seeking else "22"} / 00:48:00</text>'
+        return s+'</g>'
 
     def track_popover(kind,options,selected,anchor_right,background):
         font=26;step=58;heading=64
@@ -291,7 +300,7 @@ def install(g):
         for old,new in [('#152c49','#f8f7f3'),('#b18684','#dbd8d3'),('#25394b','#e9e8e4'),('#121f32','#f1f0ed'),('#091624','#ffffff')]:s=s.replace(old,new)
         return s
 
-    overrides=dict(header=header,player_bar=player_bar,quiet_action=quiet,homepage=homepage,favorites_grid=favorites_grid,drawer_scene=drawer_scene,library_home=library_home,portrait_media_card=portrait,poster=poster,library_grid=library_grid,movie_details=movie_details,series_details=series_details,media_player=media_player,track_popover=track_popover,settings_page=settings_page,library_browse_panel=library_browse_panel,next_episode=next_episode)
+    overrides=dict(header=header,player_bar=player_bar,quiet_action=quiet,homepage=homepage,favorites_grid=favorites_grid,drawer_scene=drawer_scene,library_home=library_home,portrait_media_card=portrait,poster=poster,library_grid=library_grid,movie_details=movie_details,series_details=series_details,media_player=media_player,media_progress_only=media_progress_only,track_popover=track_popover,settings_page=settings_page,library_browse_panel=library_browse_panel,next_episode=next_episode)
     g['_original_sources']=g['sources_page'];overrides['sources_page']=sources_page;g.update(overrides)
 
     def additional():

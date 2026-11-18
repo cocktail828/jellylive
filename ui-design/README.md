@@ -4,7 +4,7 @@
 
 打开 [设计总览](designs/index.html)，或分别查看 [启动](designs/startup.html)、[直播](designs/live.html)、[影视](designs/media.html)、[设置](designs/settings.html)。各分区按入口、操作、子菜单和异常状态排列；[阅读顺序](designs/DESIGN_READING_ORDER.txt)提供图号索引。
 
-当前为 107 个保留编号、91 张有效稿。02、05、24、32、42、58、62、65、66、67、68、80、81、88、93、100 是停用编号，没有对应图像；原图号保持。
+当前为 109 个保留编号、93 张有效稿。02、05、24、32、42、58、62、65、66、67、68、80、81、88、93、100 是停用编号，没有对应图像；原图号保持。
 
 - `designs/previews/`：当前有效页面的 1920×1080 PNG。
 - `designs/svg/`：对应可编辑 SVG；另含页面关系和收藏操作示意。
