@@ -45,3 +45,9 @@
 - 图19/108/109导出4K并通过受影响文字/焦点几何检查，精简预览已看图；图号总计109槽/93有效。
 - 证据.local-build/library-followup/player-{red,compile-unit-final,checks,geometry,design}.*。首轮编译的View.overlay名称遮蔽已显式限定Activity字段并重跑成功。
 - 按用户要求未打包、未安装，实际设备按键、真实seek及4K原生渲染尚未验收；未push或升级版本。
+
+首页收藏范围补丁（独立提交）
+- 只有未收藏Video时三个入口数量可能均为0，但目录仍有可搜索内容；空库判断同时检查完整目录是否包含可展示媒体。
+- 保留真正空库和不支持类型的旧处理，避免把收藏空集合当整库为空；仅修改该条件。
+- 最终源码编译成功，git diff --check通过；未追加无关回归或打包安装。
+- 证据.local-build/library-followup/home-empty-compile.log。

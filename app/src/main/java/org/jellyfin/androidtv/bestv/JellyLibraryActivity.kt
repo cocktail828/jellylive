@@ -470,7 +470,7 @@ class JellyLibraryActivity : FragmentActivity() {
             if(page!==host||session!=repo.sessionKey)return@launch
             val counts=withContext(Dispatchers.Default){LibraryPageLayout.Entry.entries.map {LibraryBrowse.select(catalog,it.query()).size}}
             if(page!==host||session!=repo.sessionKey)return@launch
-            if(counts.sum()==0){if(page===host)empty(retry={home(false,true)});return@launch}
+            if(counts.sum()==0&&catalog.none {LibraryBrowse.top(it)}){if(page===host)empty(retry={home(false,true)});return@launch}
             LibraryPageLayout.Entry.entries.forEachIndexed {index,_->
                 val count=counts[index]
                 entries[index].findViewWithTag<TextView>("entry-subtitle")?.text=count.toString()
