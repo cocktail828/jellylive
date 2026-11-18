@@ -1,136 +1,423 @@
 {
-  "scope": "Player overlays SVG/Pango geometry; 4K design, not Android runtime verification",
+  "scope": "Series status actions SVG/Pango geometry; 4K design only, not native runtime",
   "slots": 109,
   "active": 93,
-  "textCount": 10,
+  "textCount": 34,
   "textIssues": [],
   "focusIssues": [],
   "measurements": [
     {
-      "figure": 19,
-      "text": "海岸日记",
-      "size": 40.0,
+      "figure": 18,
+      "text": "剧集详情",
+      "size": 42.0,
       "bounds": [
-        97.0,
+        96.0,
         70.0,
-        255.0,
-        110.0
+        263.0,
+        112.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "第 1 季 · 第 3 集  远方灯塔",
-      "size": 26.0,
+      "figure": 18,
+      "text": "JellyLive",
+      "size": 32.0,
       "bounds": [
-        97.0,
-        129.0,
-        406.0,
-        155.0
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "20:30:00",
+      "figure": 18,
+      "text": "海岸日记",
+      "size": 58.0,
+      "bounds": [
+        98.0,
+        210.0,
+        327.0,
+        266.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "2025 · 旅行纪实 · 共 9 集",
       "size": 28.0,
       "bounds": [
-        1697.0,
-        84.0,
-        1807.0,
-        105.0
+        97.0,
+        298.0,
+        436.0,
+        326.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "00:16:20 / 00:48:00",
-      "size": 26.0,
+      "figure": 18,
+      "text": "沿着海岸线，记录城市的生活与风景。",
+      "size": 28.0,
       "bounds": [
-        313.0,
-        955.0,
-        530.0,
-        981.0
+        97.0,
+        365.0,
+        554.0,
+        394.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "原始",
-      "size": 26.0,
+      "figure": 18,
+      "text": "一次次相遇，让平凡日常成为值得珍藏的记忆...",
+      "size": 28.0,
       "bounds": [
-        1106.0,
-        953.0,
-        1158.0,
-        979.0
+        97.0,
+        407.0,
+        678.0,
+        436.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "1.25x",
-      "size": 26.0,
+      "figure": 18,
+      "text": "继续播放 第 3 集",
+      "size": 28.0,
       "bounds": [
-        1303.0,
-        957.0,
-        1363.0,
-        976.0
+        170.0,
+        501.0,
+        373.0,
+        529.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "普通话",
-      "size": 26.0,
+      "figure": 18,
+      "text": "第 1 季",
+      "size": 28.0,
       "bounds": [
-        1494.0,
-        953.0,
-        1570.0,
-        979.0
+        122.0,
+        611.0,
+        207.0,
+        639.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 19,
-      "text": "字幕",
-      "size": 26.0,
+      "figure": 18,
+      "text": "1 / 3",
+      "size": 24.0,
       "bounds": [
-        1707.0,
-        953.0,
-        1758.0,
-        979.0
+        1751.5,
+        621.0,
+        1793.5,
+        645.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 108,
-      "text": "00:26:20 / 00:48:00",
-      "size": 26.0,
+      "figure": 18,
+      "text": "第 1 集",
+      "size": 30.0,
       "bounds": [
-        1607.0,
-        959.0,
-        1824.0,
-        985.0
+        121.0,
+        846.0,
+        212.0,
+        876.0
       ],
       "clippedIntentionally": false
     },
     {
-      "figure": 109,
-      "text": "00:26:22 / 00:48:00",
-      "size": 26.0,
+      "figure": 18,
+      "text": "初见海岸",
+      "size": 24.0,
       "bounds": [
-        1607.0,
-        959.0,
-        1824.0,
-        985.0
+        120.0,
+        891.0,
+        215.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "第 2 集",
+      "size": 30.0,
+      "bounds": [
+        561.0,
+        846.0,
+        652.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "潮起潮落",
+      "size": 24.0,
+      "bounds": [
+        560.0,
+        891.0,
+        656.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "第 3 集",
+      "size": 30.0,
+      "bounds": [
+        1001.0,
+        846.0,
+        1092.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "远方灯塔",
+      "size": 24.0,
+      "bounds": [
+        1000.0,
+        891.0,
+        1096.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "第 4 集",
+      "size": 30.0,
+      "bounds": [
+        1441.0,
+        846.0,
+        1532.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 18,
+      "text": "海边来信",
+      "size": 24.0,
+      "bounds": [
+        1441.0,
+        891.0,
+        1535.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "剧集详情",
+      "size": 42.0,
+      "bounds": [
+        96.0,
+        70.0,
+        263.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "JellyLive",
+      "size": 32.0,
+      "bounds": [
+        1628.0,
+        79.0,
+        1767.0,
+        112.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "海岸日记",
+      "size": 58.0,
+      "bounds": [
+        98.0,
+        210.0,
+        327.0,
+        266.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "2025 · 旅行纪实 · 共 9 集",
+      "size": 28.0,
+      "bounds": [
+        97.0,
+        298.0,
+        436.0,
+        326.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "沿着海岸线，记录城市的生活与风景。",
+      "size": 28.0,
+      "bounds": [
+        97.0,
+        365.0,
+        554.0,
+        394.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "一次次相遇，让平凡日常成为值得珍藏的记忆...",
+      "size": 28.0,
+      "bounds": [
+        97.0,
+        407.0,
+        678.0,
+        436.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "继续播放 第 3 集",
+      "size": 28.0,
+      "bounds": [
+        170.0,
+        501.0,
+        373.0,
+        529.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "第 1 季",
+      "size": 28.0,
+      "bounds": [
+        122.0,
+        611.0,
+        207.0,
+        639.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "2 / 3",
+      "size": 24.0,
+      "bounds": [
+        1749.5,
+        621.0,
+        1793.5,
+        645.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "第 5 集",
+      "size": 30.0,
+      "bounds": [
+        121.0,
+        846.0,
+        212.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "城市清晨",
+      "size": 24.0,
+      "bounds": [
+        120.0,
+        891.0,
+        216.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "第 6 集",
+      "size": 30.0,
+      "bounds": [
+        561.0,
+        846.0,
+        652.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "灯火人家",
+      "size": 24.0,
+      "bounds": [
+        561.0,
+        891.0,
+        656.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "第 7 集",
+      "size": 30.0,
+      "bounds": [
+        1001.0,
+        846.0,
+        1092.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "岸边故事",
+      "size": 24.0,
+      "bounds": [
+        1000.0,
+        891.0,
+        1095.0,
+        915.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "第 8 集",
+      "size": 30.0,
+      "bounds": [
+        1441.0,
+        846.0,
+        1532.0,
+        876.0
+      ],
+      "clippedIntentionally": false
+    },
+    {
+      "figure": 107,
+      "text": "向海而行",
+      "size": 24.0,
+      "bounds": [
+        1442.0,
+        891.0,
+        1535.0,
+        915.0
       ],
       "clippedIntentionally": false
     }
   ],
   "checkedFigures": [
-    19,
-    108,
-    109
+    18,
+    107
   ],
   "renderResolution": [
     3840,

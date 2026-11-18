@@ -744,8 +744,14 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         val first=textAction("继续播放"){play(item,position)}
         val restart=textAction("从头播放"){play(item,0)}
-        val watched=ui.button(page,"◉",actionX,311f,64f,44f){}.apply {tag="detail-watched"}
-        val favorite=ui.button(page,"♡",actionX+76f,311f,64f,44f){}.apply {tag="detail-favorite"}
+        val actions=listOf(first,restart)+detailStatusActions(item,actionX,311f)
+        actions.forEachIndexed {i,button->button.nextFocusLeftId=actions[maxOf(0,i-1)].id;button.nextFocusRightId=actions[minOf(actions.lastIndex,i+1)].id;button.nextFocusUpId=button.id;button.nextFocusDownId=button.id}
+        castRail(item,actions)
+        focus(first)
+    }
+    private fun detailStatusActions(item: BaseItemDto,x: Float,y: Float,changed: (UserItemDataDto)->Unit={}): List<Button> {
+        val watched=ui.button(page,"◉",x,y,64f,44f){}.apply {tag="detail-watched"}
+        val favorite=ui.button(page,"♡",x+76f,y,64f,44f){}.apply {tag="detail-favorite"}
         var isPlayed=item.userData?.played==true;var isFavorite=item.userData?.isFavorite==true
         fun updateStates(){
             watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);TvIcons.text(watched,"◉")
@@ -757,7 +763,7 @@ class JellyLibraryActivity : FragmentActivity() {
         watched.setOnClickListener {
             watched.isEnabled=false;val session=repo.sessionKey;val host=page
             lifecycleScope.launch {
-                try {repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=!isPlayed;updateStates();local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
+                try {val result=repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=result.played;updateStates();changed(result.copy(played=isPlayed,isFavorite=isFavorite));local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
                 catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"观看状态未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)watched.isEnabled=true}
             }
@@ -768,17 +774,14 @@ class JellyLibraryActivity : FragmentActivity() {
                 try {
                     val result=repo.setFavorite(item.id,desired,session)
                     if(session==repo.sessionKey&&page===host){
-                        isFavorite=result.isFavorite;updateStates()
+                        isFavorite=result.isFavorite;updateStates();changed(result.copy(played=isPlayed,isFavorite=isFavorite))
                         if(isFavorite!=desired)Toast.makeText(this@JellyLibraryActivity,"服务器未更新收藏状态，请重试",Toast.LENGTH_SHORT).show()
                     }
                 }catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"收藏未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)favorite.isEnabled=true}
             }
         }
-        val actions=listOf(first,restart,watched,favorite)
-        actions.forEachIndexed {i,button->button.nextFocusLeftId=actions[maxOf(0,i-1)].id;button.nextFocusRightId=actions[minOf(actions.lastIndex,i+1)].id;button.nextFocusUpId=button.id;button.nextFocusDownId=button.id}
-        castRail(item,actions)
-        focus(first)
+        return listOf(watched,favorite)
     }
     private fun detailOverview(item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,size: Int): TextView {
         val full=item.overview?.replace(Regex("<[^>]+>"),"")?.trim()?.takeIf {it.isNotEmpty()} ?: "暂无简介"
@@ -861,12 +864,15 @@ class JellyLibraryActivity : FragmentActivity() {
             label("${meta(item)} · ${episodes.size} 集",48f,148f,560f,26f,14,true)
             detailOverview(item,48f,179f,540f,42f,14)
             art(page,item,609f,91f,303f,160f,true)
+            var seriesItem=item
             val toPlay=next ?: episodes.firstOrNull {it.userData?.played!=true} ?: episodes.firstOrNull()
-            val first=ui.button(page,if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集",48f,225f,165f,38f) {toPlay?.let {play(it,resumeMs(it))}}
-            first.isEnabled=toPlay!=null
+            val first=ui.button(if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集") {toPlay?.let {play(it,resumeMs(it))}}
+            val firstWidth=maxOf(80f,first.paint.measureText(first.text.toString())/ui.scale+32f)
+            ui.at(page,first,48f,236f,firstWidth,44f);first.isEnabled=toPlay!=null
+            val actions=listOf(first)+detailStatusActions(item,48f+firstWidth+12f,236f){data->seriesItem=seriesItem.copy(userData=data)}
             val chosen=seasons.firstOrNull {it.id==selected} ?: seasons.firstOrNull()
             val seasonChoice=ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",48f,294f,130f,38f) {
-                if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(item,false,seasons[it].id)}
+                if(seasons.isNotEmpty())choose("选择季",seasons.map {it.name ?: "未命名季"},seasons.indexOf(chosen)) {series(seriesItem,false,seasons[it].id)}
             }
             val pages=LibraryDetails.pageCount(episodes.size,4)
             val indicator=label(if(pages>1)"1 / $pages" else "",816f,294f,96f,38f,12,true).apply {gravity=Gravity.END or Gravity.CENTER_VERTICAL}
@@ -880,8 +886,13 @@ class JellyLibraryActivity : FragmentActivity() {
                 ui.text(card,status,12,TvUi.MUTED,10f,94f,180f,18f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
                 place(row,card,LibraryDetails.episode(index));card.tag="episode-${episode.id}";card
             }
-            first.nextFocusDownId=seasonChoice.id;first.nextFocusUpId=first.id;first.nextFocusLeftId=first.id;first.nextFocusRightId=first.id
-            seasonChoice.nextFocusUpId=first.takeIf {it.isEnabled}?.id ?: seasonChoice.id;seasonChoice.nextFocusDownId=seasonChoice.id;seasonChoice.nextFocusLeftId=seasonChoice.id;seasonChoice.nextFocusRightId=seasonChoice.id
+            val enabledActions=actions.filter {it.isEnabled}
+            enabledActions.forEachIndexed {index,button->
+                button.nextFocusLeftId=enabledActions[maxOf(0,index-1)].id;button.nextFocusRightId=enabledActions[minOf(enabledActions.lastIndex,index+1)].id
+                button.nextFocusDownId=seasonChoice.id;button.nextFocusUpId=button.id
+                button.setOnFocusChangeListener {_,focused->if(focused)seasonChoice.nextFocusUpId=button.id}
+            }
+            seasonChoice.nextFocusUpId=enabledActions.first().id;seasonChoice.nextFocusDownId=seasonChoice.id;seasonChoice.nextFocusLeftId=seasonChoice.id;seasonChoice.nextFocusRightId=seasonChoice.id
             wireDetailRail(scroll,cards,4,listOf(seasonChoice)){index->indicator.text=if(pages>1)"${index+1} / $pages" else ""}
             if(episodes.isEmpty())label("本季暂无可播放剧集",270f,297f,500f,30f,14,true)
             focus(if(first.isEnabled)first else seasonChoice)

@@ -149,7 +149,12 @@ def install(g):
     def series_details(episode_page=0,episode_focus=None):
         s=header('剧集详情')+scene(1218,182,606,320,1)+text(96,260,'海岸日记',58,weight=650)+text(96,323,'2025 · 旅行纪实 · 共 9 集',28,MUTED)
         s+='<g data-role="overview" data-max-lines="2">'+text(96,390,'沿着海岸线，记录城市的生活与风景。',28)+text(96,432,'一次次相遇，让平凡日常成为值得珍藏的记忆...',28)+'</g>'
-        s+=button(100,450,330,'继续播放 第 3 集',episode_focus is None,'play')+button(96,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
+        action_width=max(160,math.ceil(text_width('▷ 继续播放 第 3 集',28)+64))
+        s+=f'<g data-role="series-actions" data-y="472" data-overview-bottom="442" data-gap="30">'
+        s+=button(100,472,action_width,'继续播放 第 3 集',episode_focus is None,'play',h=88)
+        for x,name,label in [(100+action_width+24,'eye','标记剧集已看'),(100+action_width+176,'heart','收藏剧集')]:
+            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,472,128,88,'#242a46',14,'#363e5d')+icon(name,x+44,496,40)+'</g>'
+        s+='</g>'+button(96,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
         s+=centered(1772,640,f'{episode_page+1} / 3',24,MUTED)
         titles=['初见海岸','潮起潮落','远方灯塔','海边来信','城市清晨','灯火人家','岸边故事','向海而行','归途']
         s+=f'<g data-role="episode-page" data-page="{episode_page+1}" data-pages="3">'

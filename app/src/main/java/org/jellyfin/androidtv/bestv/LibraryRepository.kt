@@ -151,8 +151,9 @@ class LibraryRepository : KoinComponent {
         if(legacyProvider) legacyRead<BaseItemDto>("${userPath()}/Items/$id") else api.userLibraryApi.getItem(id).content
     }
     suspend fun setPlayed(id: UUID, played: Boolean) = withContext(Dispatchers.IO) {
-        if(played) api.playStateApi.markPlayedItem(itemId=id) else api.playStateApi.markUnplayedItem(itemId=id)
+        val result=if(played) api.playStateApi.markPlayedItem(itemId=id).content else api.playStateApi.markUnplayedItem(itemId=id).content
         catalogCache.invalidate()
+        result
     }
     suspend fun setFavorite(id: UUID, favorite: Boolean, session: String=sessionKey) = withContext(Dispatchers.IO) {
         check(session==sessionKey){"媒体库已切换，请重新打开"}
