@@ -755,13 +755,18 @@ class JellyLibraryActivity : FragmentActivity() {
         android.util.Log.w("JellyLiveStatus","$action failed: ${causes.joinToString(" > "){it.javaClass.simpleName}}; HTTP=${status?.toString() ?: "n/a"}")
     }
     private fun detailStatusActions(item: BaseItemDto,x: Float,y: Float,changed: (UserItemDataDto)->Unit={}): List<Button> {
-        val watched=ui.button(page,"◉",x,y,64f,34f){}.apply {tag="detail-watched";setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,24*ui.scale);includeFontPadding=false;setSingleLine()}
-        val favorite=ui.button(page,"♡",x+76f,y,64f,34f){}.apply {tag="detail-favorite";setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,24*ui.scale);includeFontPadding=false;setSingleLine()}
+        val watched=ui.button("标记已看"){}.apply {tag="detail-watched";includeFontPadding=false;setSingleLine()}
+        val favorite=ui.button("收藏"){}.apply {tag="detail-favorite";includeFontPadding=false;setSingleLine()}
+        // Reserve the longer label so changing state keeps the row and focus in place.
+        val watchedWidth=maxOf(80f,watched.paint.measureText("标记未看")/ui.scale+32f)
+        val favoriteWidth=maxOf(80f,favorite.paint.measureText("取消收藏")/ui.scale+32f)
+        ui.at(page,watched,x,y,watchedWidth,34f)
+        ui.at(page,favorite,x+watchedWidth+12f,y,favoriteWidth,34f)
         var isPlayed=item.userData?.played==true;var isFavorite=item.userData?.isFavorite==true
         fun updateStates(){
-            watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);TvIcons.text(watched,"◉")
-            watched.contentDescription=if(isPlayed)"标为未看，当前已观看" else "标为已看，当前未观看"
-            favorite.isActivated=isFavorite;TvIcons.text(favorite,if(isFavorite)"♥" else "♡")
+            watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);watched.text=if(isPlayed)"标记未看" else "标记已看"
+            watched.contentDescription=if(isPlayed)"标记未看，当前已观看" else "标记已看，当前未观看"
+            favorite.isActivated=isFavorite;favorite.text=if(isFavorite)"取消收藏" else "收藏"
             favorite.contentDescription=if(isFavorite)"取消收藏，当前已收藏" else "收藏，当前未收藏"
         }
         updateStates()
