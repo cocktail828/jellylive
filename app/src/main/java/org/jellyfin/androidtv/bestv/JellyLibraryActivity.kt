@@ -749,6 +749,11 @@ class JellyLibraryActivity : FragmentActivity() {
         castRail(item,actions)
         focus(first)
     }
+    private fun logStatusFailure(action: String,error: Exception) {
+        val causes=generateSequence<Throwable>(error){it.cause}.take(12).toList()
+        val status=causes.filterIsInstance<org.jellyfin.sdk.api.client.exception.InvalidStatusException>().firstOrNull()?.status
+        android.util.Log.w("JellyLiveStatus","$action failed: ${causes.joinToString(" > "){it.javaClass.simpleName}}; HTTP=${status?.toString() ?: "n/a"}")
+    }
     private fun detailStatusActions(item: BaseItemDto,x: Float,y: Float,changed: (UserItemDataDto)->Unit={}): List<Button> {
         val watched=ui.button(page,"◉",x,y,64f,44f){}.apply {tag="detail-watched"}
         val favorite=ui.button(page,"♡",x+76f,y,64f,44f){}.apply {tag="detail-favorite"}
@@ -763,8 +768,8 @@ class JellyLibraryActivity : FragmentActivity() {
         watched.setOnClickListener {
             watched.isEnabled=false;val session=repo.sessionKey;val host=page
             lifecycleScope.launch {
-                try {val result=repo.setPlayed(item.id,!isPlayed);if(session==repo.sessionKey&&page===host){isPlayed=result.played;updateStates();changed(result.copy(played=isPlayed,isFavorite=isFavorite));local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
-                catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"观看状态未保存，请重试",Toast.LENGTH_SHORT).show()}
+                try {val result=repo.setPlayed(item.id,!isPlayed,session);if(session==repo.sessionKey&&page===host){isPlayed=result.played;updateStates();changed(result.copy(played=isPlayed,isFavorite=isFavorite));local.edit().remove(positionKey(item)).remove("seen_${positionKey(item)}").apply()}}
+                catch(error:Exception){logStatusFailure("watched",error);if(page===host)Toast.makeText(this@JellyLibraryActivity,"观看状态未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)watched.isEnabled=true}
             }
         }
@@ -777,7 +782,7 @@ class JellyLibraryActivity : FragmentActivity() {
                         isFavorite=result.isFavorite;updateStates();changed(result.copy(played=isPlayed,isFavorite=isFavorite))
                         if(isFavorite!=desired)Toast.makeText(this@JellyLibraryActivity,"服务器未更新收藏状态，请重试",Toast.LENGTH_SHORT).show()
                     }
-                }catch(_:Exception){if(page===host)Toast.makeText(this@JellyLibraryActivity,"收藏未保存，请重试",Toast.LENGTH_SHORT).show()}
+                }catch(error:Exception){logStatusFailure("favorite",error);if(page===host)Toast.makeText(this@JellyLibraryActivity,"收藏未保存，请重试",Toast.LENGTH_SHORT).show()}
                 finally {if(page===host)favorite.isEnabled=true}
             }
         }

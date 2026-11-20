@@ -150,14 +150,32 @@ class LibraryRepository : KoinComponent {
     suspend fun detail(id: UUID) = withContext(Dispatchers.IO) {
         if(legacyProvider) legacyRead<BaseItemDto>("${userPath()}/Items/$id") else api.userLibraryApi.getItem(id).content
     }
-    suspend fun setPlayed(id: UUID, played: Boolean) = withContext(Dispatchers.IO) {
-        val result=if(played) api.playStateApi.markPlayedItem(itemId=id).content else api.playStateApi.markUnplayedItem(itemId=id).content
+    /** Legacy writes can acknowledge without a UserItemDataDto. Verify against fresh user data. */
+    private suspend fun legacyStatus(id: UUID, favorite: Boolean?, played: Boolean?, session: String): UserItemDataDto {
+        check(session==sessionKey){"媒体库已切换，请重新打开"}
+        val user=userPath()
+        val route=if(favorite!=null) "FavoriteItems" else "PlayedItems"
+        val enabled=favorite ?: requireNotNull(played)
+        val response=api.request(if(enabled)HttpMethod.POST else HttpMethod.DELETE,"$user/$route/$id")
+        if(response.status !in 200..299)throw InvalidStatusException(response.status)
+        catalogCache.invalidate()
+        check(session==sessionKey){"媒体库已切换，请重新打开"}
+        val actual=requireNotNull(legacyRead<BaseItemDto>("$user/Items/$id").userData){"服务器未返回媒体状态"}
+        check(session==sessionKey){"媒体库已切换，请重新打开"}
+        check((favorite==null || actual.isFavorite==favorite) && (played==null || actual.played==played)){"服务器未更新媒体状态，请重试"}
+        return actual
+    }
+    suspend fun setPlayed(id: UUID, played: Boolean, session: String=sessionKey) = withContext(Dispatchers.IO) {
+        check(session==sessionKey){"媒体库已切换，请重新打开"}
+        val result=if(legacyProvider)legacyStatus(id,null,played,session)
+            else if(played) api.playStateApi.markPlayedItem(itemId=id).content else api.playStateApi.markUnplayedItem(itemId=id).content
         catalogCache.invalidate()
         result
     }
     suspend fun setFavorite(id: UUID, favorite: Boolean, session: String=sessionKey) = withContext(Dispatchers.IO) {
         check(session==sessionKey){"媒体库已切换，请重新打开"}
-        val result=if(favorite)api.userLibraryApi.markFavoriteItem(itemId=id).content else api.userLibraryApi.unmarkFavoriteItem(itemId=id).content
+        val result=if(legacyProvider)legacyStatus(id,favorite,null,session)
+            else if(favorite)api.userLibraryApi.markFavoriteItem(itemId=id).content else api.userLibraryApi.unmarkFavoriteItem(itemId=id).content
         catalogCache.invalidate()
         result
     }

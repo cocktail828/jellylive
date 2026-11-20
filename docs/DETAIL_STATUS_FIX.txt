@@ -1,0 +1,19 @@
+详情页收藏 / 已看兼容修复 · 2026-11-20
+
+故障证据
+- Waydroid已有脱敏日志：收藏和已看均为InvalidContentException > JsonDecodingException。
+- 当前SDK写接口使用/UserFavoriteItems/{itemId}和/UserPlayedItems/{itemId}，并强制解析UserItemDataDto。
+- 飞牛目录/详情已有按用户的兼容路径；原先状态写入没有相应兼容分支。
+
+本次修改
+- 仅已识别fnmedia/飞牛影视使用/Users/{userId}/FavoriteItems/{itemId}和PlayedItems/{itemId}，POST启用、DELETE取消。
+- 通过原SDK共享鉴权/UUID兼容栈发送请求。2xx后不强制解析应答，而是重新读取该用户的媒体详情，验证对应状态与请求一致。
+- 未保存、未返回UserData、非2xx均保留失败；不伪造本地成功。写后清目录缓存，读回前后检查会话；已看操作也传递原会话标识。
+- 普通Jellyfin继续原SDK路径。保留脱敏异常类型日志，不输出接口地址、响应正文或凭据。
+
+验证与边界
+- 新增scripts/checks/LibraryUserStatusCheck.kt，以测试HTTP边界运行真实LibraryRepository：双向切换、204空应答、200非JSON应答、服务器未改变状态、401/403/500、会话变更及标准SDK分支。
+- 运行：DOCKER_CONFIG=<既有Docker配置目录> sh scripts/check-library-status-container.sh；需先编译debug类。
+- 原实现首先复现了响应解析失败；修复后13项接口检查通过。Gradle现有13项单测0失败，源码编译通过。
+- 本轮ADB无可用设备，没有重新连接/恢复模拟器。兼容路径仍待真实飞牛服务验证，不能将测试服务器结果写成实机修复通过。
+- 待设备可用后验证电影/剧集：收藏→取消、已看→未看，重入详情及收藏页核对；继续/从头播放；恢复此前样本原状态（私有记录：已看true、收藏false）。当前未更新Waydroid或正式交付APK。
