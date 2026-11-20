@@ -29,7 +29,7 @@ def install(g):
         s=rect(100,64,1052,716,'#04070d',20,'#fff' if focus=='preview' else '#414866',4 if focus=='preview' else 1)
         s+=scene(104,126,1044,588,selected%3)+rect(1184,64,640,716,'#14192e')
         s+=g['source_tabs'](1192,80,616)+g['channel_list'](1192,163,616,selected if focus=='list' else -1,no_epg=no_epg,playing=selected)
-        for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+        for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
             x=100+i*438;w=406;active=focus==name
             s+=rect(x,826,w,176,'url(#purple)' if active else '#242a46',18,'#fff' if active else '#363e5d',4 if active else 1)
             start=x+(w-(64+len(name)*36))/2

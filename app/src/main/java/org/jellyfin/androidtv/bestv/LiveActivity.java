@@ -260,8 +260,8 @@ public final class LiveActivity extends Activity {
         FrameLayout panel=new FrameLayout(this);panel.setBackground(ui.surface(0xff14192e,false));ui.at(page,panel,592,32,320,358);
         groupButton=makeGroupButton(page,596,40,308,31);tag(groupButton,"group");groupButton.setOnFocusChangeListener((v,f)->{if(f)lastHomeFocus="group";});groupButton.setGravity(Gravity.CENTER_VERTICAL|Gravity.START);groupButton.setBackground(ui.focusBackground(0xff14192e));
         filteredChannels(false);list=makeChannelList(596,81.5f,308,303,false);tag(list,"channel-list");
-        tiles=new Button[4];String[] names={"☆  收藏","◇  纪录片","▣  媒体库","⚙  设置"};
-        Runnable[] clicks={()->navigate("favorites"),()->{},()->openLibrary(false),()->navigate("settings")};
+        tiles=new Button[4];String[] names={"☆  收藏","◇  央视频","▣  媒体库","⚙  设置"};
+        Runnable[] clicks={()->navigate("favorites"),()->openCctv(),()->openLibrary(false),()->navigate("settings")};
         for(int i=0;i<4;i++){final int index=i;tiles[i]=ui.button(page,names[i],50+i*219,413,203,88,clicks[i]);tiles[i].setTextSize(TypedValue.COMPLEX_UNIT_PX,18*ui.scale);tag(tiles[i],"tile-"+i);tiles[i].setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_UP){if("channel-list".equals(lastHomeFocus))focusList(false);else if("group".equals(lastHomeFocus))groupButton.requestFocus();else focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT&&index==0||key==KeyEvent.KEYCODE_DPAD_RIGHT&&index==3||key==KeyEvent.KEYCODE_DPAD_DOWN)return true;return false;});}
         previewButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_RIGHT){lastHomeFocus="channel-list";focusList(true);return true;}if(key==KeyEvent.KEYCODE_DPAD_DOWN){lastHomeFocus="preview";tiles[0].requestFocus();return true;}if(key==KeyEvent.KEYCODE_DPAD_UP||key==KeyEvent.KEYCODE_DPAD_LEFT)return true;return false;});
         groupButton.setOnKeyListener((v,key,e)->{if(e.getAction()!=KeyEvent.ACTION_DOWN)return false;if(key==KeyEvent.KEYCODE_DPAD_DOWN){focusList(false);return true;}if(key==KeyEvent.KEYCODE_DPAD_LEFT){focusPreview();return true;}if(key==KeyEvent.KEYCODE_DPAD_RIGHT)return true;if(key==KeyEvent.KEYCODE_DPAD_UP)return true;return false;});
@@ -728,6 +728,7 @@ public final class LiveActivity extends Activity {
     }
     private void openBoxConfig(){openBoxConfig("");}
     private void openBoxConfig(String action){rememberFocus();suspendPlayback();startActivity(new Intent(this,BoxConfigActivity.class).putExtra("origin",route.equals("settings")?"settings":"sources").putExtra("action",action));}
+    private void openCctv(){libraryConnections.stopStartup();rememberFocus();releaseLivePlayerForLibrary();try{startActivity(new Intent().setClassName(this,"org.jellyfin.androidtv.bestv.CctvActivity"));}catch(Exception e){toast("央视频暂时无法打开");if(playerReleasedForLibrary)createLivePlayer();if(isLiveRoute())restoreLastChannel();}}
     private void openLibrary(boolean connect){openLibrary(connect,null,null);}
     private void openLibrary(boolean connect,String itemId,String query){libraryConnections.stopStartup();rememberFocus();releaseLivePlayerForLibrary();try{Intent i=new Intent().setClassName(this,"org.jellyfin.androidtv.bestv.JellyLibraryActivity");i.putExtra("connect",connect);if(connect&&inLibrarySettings()){i.putExtra("settings_origin",true);i.putExtra("add_library",true);}if(itemId!=null)i.putExtra("item_id",itemId);if(query!=null)i.putExtra("search_query",query);startActivity(i);}catch(Exception e){toast("媒体库暂时无法打开");if(playerReleasedForLibrary)createLivePlayer();if(isLiveRoute())restoreLastChannel();}}
     private void startLibraryAfterHome(){

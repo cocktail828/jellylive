@@ -361,7 +361,7 @@ def homepage(focus='list',no_epg=False,selected=0):
     s+=rect(1192,64,664,716,'#14192e')
     s+=source_tabs(1208,80,632)
     s+=line(1216,145,1832,145)+channel_list(1208,163,632,selected if focus=='list' else -1,no_epg=no_epg,playing=selected)
-    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+    for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
         x=64+i*456
         active=focus==name
         s+=rect(x,826,424,176,'url(#purple)' if active else '#242a46',18,'#fff' if active else '#363e5d',4 if active else 1)
@@ -469,7 +469,7 @@ def home_unconfigured():
     s+='<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,232,80,'#bba8ff')
     s+=centered_text(626,390,'未配置直播源',42,weight=650)+centered_text(626,452,'完成机顶盒配置，或添加其他直播源。',26,MUTED)
     s+=centered_button(296,510,320,'机顶盒配置',True,h=84)+centered_button(646,510,310,'检查直播源',h=84)+'</g>'
-    for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
+    for i,(name,ico) in enumerate([('收藏','star'),('央视频','source'),('媒体库','media'),('设置','gear')]):
         x=100+i*438
         s+=rect(x,826,406,176,'#242a46',18,'#363e5d')
         start=x+(406-(44+20+len(name)*36))/2
@@ -710,5 +710,7 @@ if __name__=='__main__':
         if screen.get('retired'):
             for folder,suffix in [('svg','svg'),('previews','png')]:
                 (OUT/folder/f"{screen['id']}.{suffix}").unlink(missing_ok=True)
+    from cctv_dev_designs import additional as cctv_dev_screens
+    cctv_dev_screens(globals())
     (OUT/'manifest.json').write_text(json.dumps(SCREENS,ensure_ascii=False,indent=2))
     print(f'Built {len(SCREENS)} SVG designs.')

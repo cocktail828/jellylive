@@ -11,6 +11,7 @@ OUT=ROOT/'designs'
 screens=[dict(item,number=i+1) for i,item in enumerate(json.loads((OUT/'manifest.json').read_text())) if not item.get('retired',False)]
 PARTS=[('startup','启动','启动动画与主页就绪'),('live','直播','主页、全屏、频道、收藏与节目单'),('media','影视','媒体库、筛选排序、电影详情与播放器'),('settings','设置','全局设置、直播源、媒体库连接与机顶盒配置')]
 def part_for(screen):
+    if screen['id'].startswith('26-cctv-'): return 'media'
     if screen['id'].startswith('17-settings') or screen['id'].startswith('09-sources') or screen['id'].startswith('09-box-config') or screen['id']=='10-source-editor': return 'settings'
     number=screen['number']
     if number in (1,2,24): return 'startup'

@@ -38,6 +38,18 @@ import java.util.UUID
 /** Optional library: backing out always leaves independent live available. */
 class JellyLibraryActivity : FragmentActivity() {
     private val repo = LibraryRepository()
+    private var cctvMode=false
+    private var cctvAlbum:CctvAlbum?=null
+    private var cctvEpisodes=emptyList<CctvEpisode>()
+    private var cctvEpisode:CctvEpisode?=null
+    private var cctvDuration=0L
+    private val cctvRepo by lazy {CctvRepository()}
+    private val cctvStore by lazy {CctvStore(this)}
+    private var cctvWrites:java.util.concurrent.ExecutorService?=null
+    private var cctvSaveErrorShown=false
+    private var playerForeground=false
+    private fun activeSessionKey()=if(cctvMode)"cctv"else repo.sessionKey
+
     private val connections = LibraryConnections()
     private var switchBusy=false
     private var switchTarget=""
@@ -131,7 +143,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private val updatePlayer = object : Runnable {
         override fun run() {
             val p = player ?: return
-            val duration = p.duration.takeIf { it > 0 } ?: ((stream?.runTimeTicks ?: 0) / 10000)
+            val duration = p.duration.takeIf { it > 0 } ?: if(cctvMode)cctvDuration else ((stream?.runTimeTicks ?: 0) / 10000)
             val shownPosition=overlay.target ?: p.currentPosition
             updateSeekAvailability()
             seek?.progress=if(duration>0)(shownPosition*10000/duration).toInt() else 0
@@ -140,7 +152,7 @@ class JellyLibraryActivity : FragmentActivity() {
             pause?.let {TvIcons.text(it,if(p.playWhenReady&&p.playbackState!=Player.STATE_ENDED)"Ⅱ" else "▷")}
             playingItem?.let { item ->
                 if(System.currentTimeMillis()-lastPersist>=5000){rememberPosition(item,p.currentPosition);lastPersist=System.currentTimeMillis()}
-                if (reportStarted && playingSessionKey==repo.sessionKey && System.currentTimeMillis() - lastReport > 15000) {
+                if (!cctvMode && reportStarted && playingSessionKey==activeSessionKey() && System.currentTimeMillis() - lastReport > 15000) {
                     stream?.let { reporting.reportProgress(this@JellyLibraryActivity, null, item, it, p.currentPosition * 10000, !p.isPlaying) }
                     lastReport = System.currentTimeMillis()
                 }
@@ -154,8 +166,10 @@ class JellyLibraryActivity : FragmentActivity() {
         super.onCreate(state)
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         ui = TvUi(this)
-        connections.prepare(this)
+        cctvMode=intent.hasExtra("cctv_album")
+        if(!cctvMode)connections.prepare(this)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() { back() } })
+        if(cctvMode){openCctvPlayback();return}
         if (intent.getBooleanExtra("add_library", false)) {
             connection(false)
             return
@@ -278,7 +292,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun fresh(name: String, push: Boolean=true): FrameLayout {
         task?.cancel(); searchJob?.cancel();gridRenderJob?.cancel(); generation++
         if (push && ::page.isInitialized) history.addLast(SavedPage(page,pageName,currentFocus?.id ?: View.NO_ID,pageSessionKey))
-        pageName = name;pageSessionKey=repo.sessionKey; page = ui.canvas(); setContentView(page)
+        pageName = name;pageSessionKey=activeSessionKey(); page = ui.canvas(); setContentView(page)
         return page
     }
     private fun header(title: String, subtitle: String="") { ui.header(page, title, subtitle) { back() }; ui.footer(page, "方向键移动  OK 确认  返回上一级") }
@@ -430,12 +444,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun <T: View> place(parent: FrameLayout,view: T,box: LibraryPageLayout.Box): T =
         ui.at(parent,view,box.x,box.y,box.width,box.height)
     private fun pageText(parent: FrameLayout,text: String,size: Int,color: Int,box: LibraryPageLayout.Box)=place(parent,ui.text(text,size,color),box)
-    private fun focusCard(box: FrameLayout,action: ()->Unit): FrameLayout {
-        box.id=View.generateViewId();box.isFocusable=true;box.isFocusableInTouchMode=true;box.isClickable=true
-        box.background=ui.surface(TvUi.PANEL,false);box.clipToOutline=true
-        box.setOnFocusChangeListener {_,focused->box.foreground=if(focused)android.graphics.drawable.GradientDrawable().apply {setColor(Color.TRANSPARENT);cornerRadius=ui.px(8f).toFloat();setStroke(ui.px(2f),Color.WHITE)}else null}
-        box.setOnClickListener {action()};return box
-    }
+    private fun focusCard(box:FrameLayout,action:()->Unit)=TvMediaCard.focus(ui,box,action)
     /** Gallery 15: navigation cards and resume playback, with no category poster grid. */
     private fun home(push: Boolean=true,refresh: Boolean=false) {
         if(!repo.connected){disconnected(push);return}
@@ -563,21 +572,13 @@ class JellyLibraryActivity : FragmentActivity() {
         load({repo.catalog(parent,refresh)}) {catalog->
             if(session!=repo.sessionKey){home(false);return@load}
             fresh("grid",false);val host=page
-            ui.header(host,title,"",{back()})
-            val subtitle=ui.text(host,"正在加载媒体…",12,TvUi.MUTED,48f,65f,690f,23f)
+            val browser=TvMediaGrid(ui,host,title)
+            val subtitle=browser.subtitle
             var query=initialQuery;val updates=LibraryGridUpdates()
-            val posterHost=FrameLayout(this);posterHost.isFocusable=false
-            val scroller=ScrollView(this).apply {
-                isVerticalScrollBarEnabled=false;isFocusable=false;isSmoothScrollingEnabled=false
-                descendantFocusability=ViewGroup.FOCUS_AFTER_DESCENDANTS
-                addView(posterHost,ViewGroup.LayoutParams(ui.px(864f),ui.px(1f)))
-                place(host,this,LibraryPageLayout.scrollViewport())
-            }
-            val search=place(host,ui.button("⌕ 搜索媒体"){search(parent=parent,kind=query.kind)},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SEARCH)).apply {tag="grid-search"}
-            val filter=place(host,ui.button("类型：全部"){browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_FILTER)).apply {tag="grid-filter"}
-            val sort=place(host,ui.button("排序：名称正序"){browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;(host.tag as? Runnable)?.run()}}},LibraryPageLayout.toolbar(LibraryPageLayout.GRID_SORT)).apply {tag="grid-sort"}
-            search.nextFocusRightId=filter.id;filter.nextFocusLeftId=search.id;filter.nextFocusRightId=sort.id;sort.nextFocusLeftId=filter.id;sort.nextFocusRightId=sort.id;search.nextFocusLeftId=search.id
-            listOf(search,filter,sort).forEach {it.setSingleLine();it.ellipsize=android.text.TextUtils.TruncateAt.END}
+            val search=browser.search;val filter=browser.filter;val sort=browser.sort
+            search.setOnClickListener {search(parent=parent,kind=query.kind)}
+            filter.setOnClickListener {browseDialog {LibraryBrowseDialogs.filters(this,ui,catalog,query){changed->query=changed;(host.tag as? Runnable)?.run()}}}
+            sort.setOnClickListener {browseDialog {LibraryBrowseDialogs.sort(this,ui,query){changed->query=changed;(host.tag as? Runnable)?.run()}}}
             fun update(){
                 if(page!==host||session!=repo.sessionKey)return
                 gridRenderJob?.cancel();val request=updates.begin(query,0) ?: return
@@ -586,88 +587,25 @@ class JellyLibraryActivity : FragmentActivity() {
                     val result=withContext(Dispatchers.Default){LibraryBrowse.page(LibraryBrowse.select(catalog,requestedQuery),0,maxOf(1,catalog.size))}
                     if(page!==host||session!=repo.sessionKey)return@launch
                     val firstRender=!updates.hasResult;if(!updates.accept(request,result.start))return@launch
-                    val previousFocus=currentFocus;posterHost.removeAllViews();scroller.scrollTo(0,0)
+                    val previousFocus=currentFocus
                     val count=filterCount(requestedQuery)
                     subtitle.text="${if(requestedQuery.kind==BaseItemKind.MOVIE)"全部电影" else if(requestedQuery.kind==BaseItemKind.SERIES)"全部剧集" else "全部媒体"} · ${result.total} ${if(requestedQuery.kind==BaseItemKind.MOVIE)"部" else "项"}${if(count>0)" · 已筛选" else ""}"
                     TvIcons.text(filter,if(count==0)"类型：全部" else if(count==1&&requestedQuery.genre!=null)"类型：${requestedQuery.genre}" else "筛选：${count}项")
                     val order=when(requestedQuery.sort){LibraryBrowse.Sort.ADDED->if(requestedQuery.ascending)"最早添加" else "最近添加";LibraryBrowse.Sort.WATCHED->if(requestedQuery.ascending)"最早观看" else "最近观看";LibraryBrowse.Sort.YEAR->if(requestedQuery.ascending)"发布时间升序" else "发布时间降序";LibraryBrowse.Sort.RATING->if(requestedQuery.ascending)"评分升序" else "评分降序";LibraryBrowse.Sort.NAME->if(requestedQuery.ascending)"名称正序" else "名称倒序";LibraryBrowse.Sort.DURATION->if(requestedQuery.ascending)"时长升序" else "时长降序"}
                     TvIcons.text(sort,"排序：$order")
-                    val cards=mutableListOf<FrameLayout>()
-                    var onCardFocus: (Int)->Unit={}
-                    fun wireCards(){
-                        val cols=LibraryPageLayout.columns()
-                        cards.forEachIndexed {i,card->
-                            card.nextFocusLeftId=if(i%cols>0)cards[i-1].id else card.id
-                            card.nextFocusRightId=if(i%cols<cols-1)cards.getOrNull(i+1)?.id ?: card.id else card.id
-                            card.nextFocusUpId=if(i>=cols)cards[i-cols].id else listOf(search,filter,sort)[(i%cols*3/cols).coerceAtMost(2)].id
-                            card.nextFocusDownId=if(i/cols<(cards.size-1)/cols)cards[minOf(i+cols,cards.lastIndex)].id else card.id
-                        }
-                    }
-                    fun append(focused: Int){
-                        if(page!==host||session!=repo.sessionKey)return
-                        val limit=LibraryPageLayout.appendLimit(cards.size,result.items.size,focused)
-                        if(limit==cards.size)return
-                        for(index in cards.size until limit){
-                            val item=result.items[index]
-                            val card=posterCard(item){detail(item)};card.tag="grid-item-${item.id}";val existing=card.onFocusChangeListener
-                            card.setOnFocusChangeListener {view,hasFocus->
-                                existing?.onFocusChange(view,hasFocus)
-                                if(hasFocus){
-                                    host.post {
-                                        if(page===host&&view.isAttachedToWindow&&view.hasFocus())onCardFocus(index)
-                                    }
-                                }
-                            }
-                            cards+=card
-                            place(posterHost,card,LibraryPageLayout.scrollPoster(index))
-                        }
-                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(cards.lastOrNull()?.let {LibraryPageLayout.scrollPoster(cards.lastIndex).bottom+4f} ?: 1f)}
-                        wireCards()
-                    }
-                    onCardFocus={index: Int->
-                        append(index)
-                        scroller.smoothScrollTo(0,ui.px(LibraryPageLayout.scrollPoster(index).y-4f))
-                    }
-                    append(0)
-                    var recovery: Button?=null
-                    if(cards.isEmpty()){
-                        posterHost.layoutParams=posterHost.layoutParams.apply {height=ui.px(380f)}
-                        ui.text(posterHost,"⌕",48,0xffb7a2ff.toInt(),408f,40f,48f,48f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",22,TvUi.INK,0f,110f,864f,36f).gravity=Gravity.CENTER
-                        ui.text(posterHost,if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",14,TvUi.MUTED,0f,147f,864f,28f).gravity=Gravity.CENTER
-                        recovery=ui.button(posterHost,if(count>0)"清除筛选" else "刷新分类",302f,195f,260f,42f){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);update()}else renderGrid(title,parent,query,0,false,true)}
-                    }
-                    val target=cards.firstOrNull() ?: recovery ?: filter
-                    recovery?.apply {nextFocusUpId=filter.id;nextFocusLeftId=id;nextFocusRightId=id;nextFocusDownId=id}
-                    listOf(search,filter,sort).forEach {it.nextFocusDownId=target.id}
-                    if(dialog?.isShowing!=true){
-                        when {firstRender->focus(target);previousFocus?.isAttachedToWindow==true->Unit;else->focus(target)}
-                    }
+                    browser.show(result.items.map(::posterData)){data->result.items.firstOrNull {it.id.toString()==data.id}?.let(::detail)}
+                    if(result.items.isEmpty())browser.state(if(count>0)"没有符合条件的内容" else "这个分类暂时没有媒体内容",
+                        if(count>0)"试试清除筛选，或更改类型与条件。" else "可刷新分类，或返回媒体库选择其他内容。",
+                        TvMediaGrid.Action(if(count>0)"清除筛选" else "刷新分类"){if(count>0){query=query.copy(state=LibraryBrowse.State.ALL,genre=null,year=null,resolution=null,region=null);update()}else renderGrid(title,parent,query,0,false,true)})
+                    if(dialog?.isShowing!=true&&(firstRender||previousFocus?.isAttachedToWindow!=true))browser.focusFirst()
                 }
             }
             gridReloads[host]={renderGrid(title,parent,query,0,false,true)}
             host.tag=Runnable {update()};update()
         }
     }
-    private fun posterCard(item: BaseItemDto,click: ()->Unit): FrameLayout {
-        val card=focusCard(FrameLayout(this),click);val bounds=LibraryPageLayout.poster(0)
-        card.background=ColorDrawable(Color.TRANSPARENT);card.clipToOutline=false
-        val imageHost=FrameLayout(this).apply {background=ui.surface(TvUi.PANEL,false);clipToOutline=true};ui.at(card,imageHost,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight())
-        art(imageHost,item,0f,0f,bounds.width,LibraryPageLayout.posterImageHeight())
-        val imageHeight=LibraryPageLayout.posterImageHeight()
-        ui.at(card,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0x0010182a,0xee10182a.toInt()))},0f,imageHeight-48f,bounds.width,48f)
-        val caption=pageText(card,cardTitle(item),14,TvUi.INK,LibraryPageLayout.posterTitle()).apply {
-            setTypeface(null,Typeface.BOLD);setSingleLine();gravity=Gravity.CENTER;ellipsize=android.text.TextUtils.TruncateAt.END;marqueeRepeatLimit=-1
-        }
-        val original=card.onFocusChangeListener
-        card.setOnFocusChangeListener {v,focused->original?.onFocusChange(v,focused);if(focused)card.foreground=android.graphics.drawable.InsetDrawable(ui.surface(Color.TRANSPARENT,false).apply {setColor(Color.TRANSPARENT);setStroke(ui.px(2f),Color.WHITE)},0,0,0,ui.px(bounds.height-imageHeight));caption.ellipsize=if(focused&&!ui.reduceMotion())android.text.TextUtils.TruncateAt.MARQUEE else android.text.TextUtils.TruncateAt.END;caption.isSelected=focused&&!ui.reduceMotion()}
-        pageText(card,cardMeta(item),12,TvUi.MUTED,LibraryPageLayout.posterMetadata()).apply {gravity=Gravity.TOP or Gravity.CENTER_HORIZONTAL;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        LibraryMetadata.rating(item)?.let {rating->ui.text(card,rating,13,0xfff7d68d.toInt(),7f,7f,41f,21f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL)}}
-        if(item.userData?.played==true)ui.text(card,"已看",10,TvUi.INK,bounds.width-43f,7f,36f,18f).apply {gravity=Gravity.CENTER;background=ui.surface(0xcc171c32.toInt(),false)}
-        else if(resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null){val progress=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.max=1000;progress.progress=(LibraryMetadata.progress(item,resumeMs(item))*1000).toInt();ui.at(card,progress,4f,LibraryPageLayout.posterImageHeight()-4f,bounds.width-8f,3f)}
-        card.contentDescription=listOfNotNull(cardTitle(item),LibraryMetadata.rating(item)?.let {"评分 $it"},cardMeta(item).takeIf {it.isNotBlank()},if(item.userData?.played==true)"已看" else null).joinToString("，")
-        return card
-    }
+    private fun posterData(item:BaseItemDto)=TvMediaCard.Data(item.id.toString(),cardTitle(item),cardMeta(item),repo.image(item),LibraryMetadata.rating(item),item.userData?.played==true,
+        if(resumeMs(item)>0&&LibraryMetadata.durationTicks(item)!=null)LibraryMetadata.progress(item,resumeMs(item))else null)
     private fun cardTitle(item: BaseItemDto)=if(item.type==BaseItemKind.EPISODE)item.seriesName ?: item.name ?: "未命名剧集" else item.name ?: "未命名媒体"
     private fun cardMeta(item: BaseItemDto)=listOfNotNull(LibraryMetadata.year(item)?.toString(),item.genres?.firstOrNull()).joinToString(" · ")
     private fun section(body: LinearLayout, title: String) { body.addView(ui.text(title,17,TvUi.INK),LinearLayout.LayoutParams(-1,ui.px(35f)).apply {topMargin=ui.px(7f);bottomMargin=ui.px(6f)}) }
@@ -725,26 +663,13 @@ class JellyLibraryActivity : FragmentActivity() {
     }
     private fun movie(item: BaseItemDto,push: Boolean=false) {
         fresh("movie",push)
-        art(page,item,0f,0f,960f,540f,true)
-        ui.at(page,View(this).apply {background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(0xfa101326.toInt(),0xeb101326.toInt(),0x7a101326))},0f,0f,960f,540f)
-        header(if(item.type==BaseItemKind.EPISODE)"剧集详情" else "电影详情")
-        art(page,item,48f,107f,140f,210f)
-        label(item.name ?: "未命名媒体",212f,109f,700f,43f,32).apply {setTypeface(null,Typeface.BOLD);maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
-        item.taglines?.firstOrNull()?.let {label(it,212f,153f,700f,24f,14,true).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}}
-        label(listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),212f,180f,700f,25f,14,true)
-        label(listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),212f,209f,700f,25f,13,true)
-        detailOverview(item,212f,246f,700f,50f,15)
+        val detail=TvMediaDetail(ui,page,if(item.type==BaseItemKind.EPISODE)"剧集详情" else "电影详情",item.name ?: "未命名媒体",item.taglines?.firstOrNull(),
+            listOfNotNull(LibraryMetadata.rating(item)?.let {"★ $it"},LibraryMetadata.year(item)?.toString(),item.productionLocations?.firstOrNull(),item.runTimeTicks?.takeIf {it>0}?.let {time(it/10000)}).joinToString(" · "),
+            listOfNotNull(LibraryBrowse.resolution(item)?.let {if(it==2160)"4K" else "${it}p"},item.genres?.take(3)?.joinToString(" / ")?.takeIf {it.isNotEmpty()}).joinToString(" · "),item.overview.orEmpty(),repo.image(item),repo.image(item,true))
         val position=resumeMs(item)
-        var actionX=212f
-        fun textAction(title: String,action: ()->Unit): Button {
-            val button=ui.button(title,action)
-            val width=maxOf(80f,button.paint.measureText(title)/ui.scale+32f)
-            ui.at(page,button,actionX,311f,width,34f);actionX+=width+12f
-            return button
-        }
-        val first=textAction("继续播放"){play(item,position)}
-        val restart=textAction("从头播放"){play(item,0)}
-        val actions=listOf(first,restart)+detailStatusActions(item,actionX,311f)
+        val first=detail.action("继续播放"){play(item,position)}
+        val restart=detail.action("从头播放"){play(item,0)}
+        val actions=listOf(first,restart)+detailStatusActions(item,detail.nextActionX,311f)
         actions.forEachIndexed {i,button->button.nextFocusLeftId=actions[maxOf(0,i-1)].id;button.nextFocusRightId=actions[minOf(actions.lastIndex,i+1)].id;button.nextFocusUpId=button.id;button.nextFocusDownId=button.id}
         castRail(item,actions)
         focus(first)
@@ -793,44 +718,10 @@ class JellyLibraryActivity : FragmentActivity() {
         }
         return listOf(watched,favorite)
     }
-    private fun detailOverview(item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,size: Int): TextView {
-        val full=item.overview?.replace(Regex("<[^>]+>"),"")?.trim()?.takeIf {it.isNotEmpty()} ?: "暂无简介"
-        return label(full,x,y,w,h,size).apply {
-            maxLines=2;gravity=Gravity.TOP;setLineSpacing(ui.px(7f).toFloat(),1f);contentDescription=full
-            post {
-                val available=width-paddingLeft-paddingRight
-                if(available>0&&height>0)text=LibraryDetails.ellipsize(full){candidate->
-                    android.text.StaticLayout.Builder.obtain(candidate,0,candidate.length,paint,available)
-                        .setIncludePad(false).setLineSpacing(lineSpacingExtra,lineSpacingMultiplier).build().let {it.lineCount<=2&&it.height<=height-paddingTop-paddingBottom}
-                }
-            }
-        }
-    }
-    private fun wireDetailRail(scroll: HorizontalScrollView,cards: List<View>,perPage: Int,above: List<View>,onPage: (Int)->Unit={}) {
-        scroll.isFocusable=false;scroll.isSmoothScrollingEnabled=false;scroll.descendantFocusability=ViewGroup.FOCUS_AFTER_DESCENDANTS
-        fun follow(index: Int){
-            val offset=ui.px(LibraryDetails.pageOffset(index,perPage))
-            scroll.scrollTo(offset,0);scroll.post {if(cards[index].hasFocus())scroll.scrollTo(offset,0)};onPage(index/perPage)
-            val start=index/perPage*perPage
-            above.forEachIndexed {i,button->button.nextFocusDownId=cards[minOf(start+i*perPage/above.size,cards.lastIndex)].id}
-        }
-        cards.forEachIndexed {i,card->
-            card.nextFocusLeftId=cards[maxOf(0,i-1)].id;card.nextFocusRightId=cards[minOf(cards.lastIndex,i+1)].id
-            card.nextFocusUpId=above[minOf(i%perPage*above.size/perPage,above.lastIndex)].id;card.nextFocusDownId=card.id
-            val previous=card.onFocusChangeListener
-            card.setOnFocusChangeListener {view,focused->previous?.onFocusChange(view,focused);if(focused)follow(i)}
-            card.setOnKeyListener {_,key,event->
-                if(event.action!=KeyEvent.ACTION_DOWN)false else when(key){
-                    KeyEvent.KEYCODE_DPAD_LEFT->{cards[maxOf(0,i-1)].requestFocus();true}
-                    KeyEvent.KEYCODE_DPAD_RIGHT->{cards[minOf(cards.lastIndex,i+1)].requestFocus();true}
-                    KeyEvent.KEYCODE_DPAD_UP->{page.findViewById<View>(card.nextFocusUpId)?.requestFocus();true}
-                    KeyEvent.KEYCODE_DPAD_DOWN->true
-                    else->false
-                }
-            }
-        }
-        if(cards.isNotEmpty())follow(0)
-    }
+    private fun detailOverview(item: BaseItemDto,x: Float,y: Float,w: Float,h: Float,size: Int): TextView =
+        TvMediaDetail.overview(ui,page,item.overview,x,y,w,h,size)
+    private fun wireDetailRail(scroll: HorizontalScrollView,cards: List<View>,perPage: Int,above: List<View>,onPage: (Int)->Unit={}) =
+        TvMediaRail.bind(ui,page,scroll,cards,perPage,above,onPage)
     private fun castRail(item: BaseItemDto,actions: List<View>) {
         val people=LibraryDetails.people(item.people.orEmpty());if(people.isEmpty())return
         label("演职人员",48f,362f,700f,24f,16)
@@ -977,11 +868,11 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun play(item: BaseItemDto,position: Long,keepOptions: Boolean=false) {
         if(!keepOptions){mediaSpeed=1f;val display=getSharedPreferences("bestv_live",MODE_PRIVATE);audioLanguage=display.getString("preferred_audio","auto")?.takeUnless {it=="auto"};subtitleLanguage=display.getString("preferred_subtitle","off")?.takeUnless {it=="off"};subtitleOff=subtitleLanguage==null}
         nextCancelled=false;manualEnd=false;handler.removeCallbacks(nextTick)
-        fresh("player");playbackFailure=false;retryPosition=position;overlay=MediaOverlay();consumedPlayerConfirm=false;playingItem=item;playingSessionKey=repo.sessionKey;playingPositionPrefix=currentPositionPrefix();stream=null;reportStarted=false;lastPersist=0
+        fresh("player",!cctvMode);playbackFailure=false;retryPosition=position;overlay=MediaOverlay();consumedPlayerConfirm=false;playingItem=item;playingSessionKey=activeSessionKey();playingPositionPrefix=if(cctvMode)"" else currentPositionPrefix();stream=null;reportStarted=false;lastPersist=0
         val video=PlayerView(this);video.useController=false;video.isFocusable=false;videoSurface=video;ui.at(page,video,0f,0f,960f,540f)
         makeControls(item)
         buffering=FrameLayout(this).also {panel->
-            val h=64f;val w=200f
+            val h=maxOf(64f,42f);val w=maxOf(200f,180f)
             panel.visibility=View.GONE;panel.background=ui.surface(0xf0101629.toInt(),false);ui.at(page,panel,(960-w)/2,(540-h)/2,w,h)
             val indicator=ProgressBar(this);indicator.isFocusable=false;indicator.indeterminateTintList=android.content.res.ColorStateList.valueOf(0xffc5b4ff.toInt())
             ui.at(panel,indicator,26f,(h-24f)/2,24f,24f)
@@ -992,6 +883,20 @@ class JellyLibraryActivity : FragmentActivity() {
         page.isFocusableInTouchMode=true;page.requestFocus()
         video.setOnClickListener {if(overlay.visible)hidePlayerControls()else showControls()}
         val stamp=generation
+        if(cctvMode){
+            val album=cctvAlbum ?: return
+            val episode=CctvPlayback.episode(item.id,cctvEpisodes) ?: return
+            cctvEpisode=episode;cctvDuration=0
+            lifecycleScope.launch {
+                try {val info=cctvRepo.stream(episode.guid)
+                    if(stamp!=generation)return@launch
+                    cctvDuration=info.duration
+                    startResolvedPlayer(item,position,info.url,cctvRepo.client,null,emptyList())
+                }catch(error:CancellationException){throw error}
+                catch(_:Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+            }
+            return
+        }
         if(item.type==BaseItemKind.EPISODE&&item.seriesId!=null)lifecycleScope.launch {
             try {val episodes=repo.episodes(item.seriesId!!);if(stamp==generation){seriesEpisodes=episodes;if(player?.playbackState==Player.STATE_ENDED)showAutoNext(item)}}catch(_:CancellationException){}catch(_:Exception){}
         }
@@ -1006,37 +911,115 @@ class JellyLibraryActivity : FragmentActivity() {
                         val url=response.mediaUrl
                         if(url.isNullOrBlank()) {overlay.blocked=true;showPlaybackRetry(item);return}
                         stream=response
-                        val render=DefaultRenderersFactory(this@JellyLibraryActivity).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
-                        val exo=ExoPlayer.Builder(this@JellyLibraryActivity,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(LibraryMediaHttp.client(repo.api,mediaHttpFactory)))).build()
-                        player=exo;video.player=exo
-                        val display=getSharedPreferences("bestv_live",MODE_PRIVATE)
-                        applyMediaAspect()
-                        exo.setPlaybackSpeed(mediaSpeed)
-                        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).build()
-                        exo.addListener(object: Player.Listener {
-                            override fun onPlayerError(error: PlaybackException) {cancelAutoNext();overlay.blocked=true;showPlaybackRetry(item)}
-                            override fun onTracksChanged(tracks: Tracks){updateTrackLabels()}
-                            override fun onPlayWhenReadyChanged(playWhenReady: Boolean,reason: Int){overlay.paused=!playWhenReady;armPlayerIdle()}
-                            override fun onTimelineChanged(timeline: Timeline,reason: Int){updateSeekAvailability()}
-                            override fun onPlaybackStateChanged(state: Int) {
-                                if(state==Player.STATE_BUFFERING&&!playbackFailure)waiting(true)
-                                else if(state==Player.STATE_READY||state==Player.STATE_ENDED||state==Player.STATE_IDLE)waiting(false)
-                                if(state==Player.STATE_READY){if(!reportStarted&&playingSessionKey==repo.sessionKey){reportStarted=true;reporting.reportStart(this@JellyLibraryActivity,null,item,response,exo.currentPosition*10000,!exo.playWhenReady);lastReport=System.currentTimeMillis()}}
-                                if(state==Player.STATE_ENDED){overlay.blocked=true;showControls();if(!manualEnd){lifecycleScope.launch {try {repo.setPlayed(item.id,true)}catch(_:Exception){}};showAutoNext(item)}}
-                            }
-                        })
-                        val subtitles=response.mediaSource?.mediaStreams.orEmpty().filter { it.type==MediaStreamType.SUBTITLE && it.isExternal==true && !it.deliveryUrl.isNullOrBlank() }.mapNotNull { media ->
+                        val subtitles=response.mediaSource?.mediaStreams.orEmpty().filter {it.type==MediaStreamType.SUBTITLE && it.isExternal==true && !it.deliveryUrl.isNullOrBlank()}.mapNotNull {media->
                             val mime=when(media.codec?.lowercase()) {"srt","subrip"->MimeTypes.APPLICATION_SUBRIP;"vtt","webvtt"->MimeTypes.TEXT_VTT;"ass","ssa"->MimeTypes.TEXT_SSA;"ttml"->MimeTypes.APPLICATION_TTML;else->null} ?: return@mapNotNull null
-                            val subtitleUrl=repo.api.createUrl(media.deliveryUrl!!,ignorePathParameters=true)
-                            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(subtitleUrl)).setMimeType(mime).setLanguage(media.language).setLabel(media.displayTitle ?: media.language ?: "字幕").build()
+                            val url=repo.api.createUrl(media.deliveryUrl!!,ignorePathParameters=true)
+                            MediaItem.SubtitleConfiguration.Builder(android.net.Uri.parse(url)).setMimeType(mime).setLanguage(media.language).setLabel(media.displayTitle ?: media.language ?: "字幕").build()
                         }
-                        exo.setMediaItem(MediaItem.Builder().setUri(url).setSubtitleConfigurations(subtitles).build());exo.seekTo(position);exo.prepare();exo.playWhenReady=true
-                        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-                        handler.post(updatePlayer)
+                        startResolvedPlayer(item,position,url,LibraryMediaHttp.client(repo.api,mediaHttpFactory),response,subtitles)
                     }
-                    override fun onError(exception: Exception) {if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+                    override fun onError(exception: Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
                 })
-            } catch(e: CancellationException){throw e} catch(_: Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+            }catch(error:CancellationException){throw error}
+            catch(_:Exception){if(stamp==generation){overlay.blocked=true;showPlaybackRetry(item)}}
+        }
+    }
+    /** Both sources use this ExoPlayer, its controls and the same remote state machine. */
+    private fun startResolvedPlayer(item: BaseItemDto,position: Long,url: String,http: okhttp3.OkHttpClient,
+        response: StreamInfo?,subtitles: List<MediaItem.SubtitleConfiguration>){
+        val render=DefaultRenderersFactory(this).setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+        val exo=ExoPlayer.Builder(this,render).setMediaSourceFactory(DefaultMediaSourceFactory(androidx.media3.datasource.okhttp.OkHttpDataSource.Factory(http))).build()
+        player=exo;videoSurface?.player=exo
+        applyMediaAspect();exo.setPlaybackSpeed(mediaSpeed)
+        exo.trackSelectionParameters=exo.trackSelectionParameters.buildUpon().setPreferredAudioLanguage(audioLanguage).setPreferredTextLanguage(subtitleLanguage).setTrackTypeDisabled(C.TRACK_TYPE_TEXT,subtitleOff).setForceHighestSupportedBitrate(cctvMode).build()
+        var highestApplied=!cctvMode
+        exo.addListener(object:Player.Listener {
+            override fun onPlayerError(error:PlaybackException){cancelAutoNext();overlay.blocked=true;showPlaybackRetry(item)}
+            override fun onTracksChanged(tracks:Tracks){
+                if(cctvMode)android.util.Log.d("JellyLiveCctv","tracks="+tracks.groups.joinToString {"${it.type}:${it.length}:${it.isSelected}"})
+                if(!highestApplied){
+                    val choices=MediaTracks.choices(exo,C.TRACK_TYPE_VIDEO)
+                    val index=CctvPlayback.highestQuality(choices.map {choice->val format=choice.group.getTrackFormat(choice.index);Triple(format.height,format.width,format.bitrate)})
+                    if(index>=0){highestApplied=true;if(!MediaTracks.select(exo,C.TRACK_TYPE_VIDEO,choices[index]))highestApplied=false}
+                }
+                updateTrackLabels()
+            }
+            override fun onPlayWhenReadyChanged(playWhenReady:Boolean,reason:Int){overlay.paused=!playWhenReady;armPlayerIdle()}
+            override fun onTimelineChanged(timeline:Timeline,reason:Int){updateSeekAvailability()}
+            override fun onPlaybackStateChanged(state:Int){
+                if(cctvMode)android.util.Log.d("JellyLiveCctv","state=$state; requested=${exo.playWhenReady}; buffered=${exo.bufferedPosition}; foreground=$playerForeground")
+                if(state==Player.STATE_BUFFERING&&!playbackFailure)waiting(true)
+                else if(state==Player.STATE_READY||state==Player.STATE_ENDED||state==Player.STATE_IDLE)waiting(false)
+                if(state==Player.STATE_READY&&!reportStarted&&playingSessionKey==activeSessionKey()){
+                    reportStarted=true
+                    if(cctvMode)rememberPosition(item,exo.currentPosition)
+                    else if(response!=null)reporting.reportStart(this@JellyLibraryActivity,null,item,response,exo.currentPosition*10000,!exo.playWhenReady)
+                    lastReport=System.currentTimeMillis()
+                }
+                if(state==Player.STATE_ENDED){overlay.blocked=true;showControls();if(!manualEnd){
+                    if(cctvMode)rememberPosition(item,exo.currentPosition)
+                    else lifecycleScope.launch {try {repo.setPlayed(item.id,true)}catch(_:Exception){}}
+                    showAutoNext(item)
+                }}
+            }
+        })
+        if(cctvMode)exo.addAnalyticsListener(object:androidx.media3.exoplayer.analytics.AnalyticsListener {
+            override fun onLoadStarted(eventTime:androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,info:androidx.media3.exoplayer.source.LoadEventInfo,data:androidx.media3.exoplayer.source.MediaLoadData){
+                android.util.Log.d("JellyLiveCctv","load start type=${data.dataType}")
+            }
+            override fun onLoadCanceled(eventTime:androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,info:androidx.media3.exoplayer.source.LoadEventInfo,data:androidx.media3.exoplayer.source.MediaLoadData){
+                android.util.Log.d("JellyLiveCctv","load cancel type=${data.dataType}; bytes=${info.bytesLoaded}")
+            }
+            override fun onLoadCompleted(eventTime:androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,info:androidx.media3.exoplayer.source.LoadEventInfo,data:androidx.media3.exoplayer.source.MediaLoadData){
+                android.util.Log.d("JellyLiveCctv","loaded type=${data.dataType}; bytes=${info.bytesLoaded}; ms=${info.loadDurationMs}")
+            }
+            override fun onLoadError(eventTime:androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime,info:androidx.media3.exoplayer.source.LoadEventInfo,data:androidx.media3.exoplayer.source.MediaLoadData,error:java.io.IOException,wasCanceled:Boolean){
+                val causes=generateSequence<Throwable>(error){it.cause}.take(8).toList()
+                val status=causes.filterIsInstance<HttpDataSource.InvalidResponseCodeException>().firstOrNull()?.responseCode
+                android.util.Log.w("JellyLiveCctv","load failed type=${data.dataType}; bytes=${info.bytesLoaded}; ${causes.joinToString(" > "){it.javaClass.simpleName}}; HTTP=${status?.toString()?:"n/a"}")
+            }
+        })
+        exo.setMediaItem(MediaItem.Builder().setUri(url).setSubtitleConfigurations(subtitles).build())
+        exo.seekTo(position);exo.prepare();exo.playWhenReady=playerForeground&&!overlay.paused
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        handler.post(updatePlayer)
+    }
+    private fun openCctvPlayback(){
+        fresh("cctv-preparing",false)
+        ui.heading(page,"正在读取节目…",24,48f,170f,864f,60f).gravity=Gravity.CENTER
+        ui.button(page,"返回选集",350f,300f,260f,44f){finish()}.requestFocus()
+        task=lifecycleScope.launch {
+            try {
+                val raw=requireNotNull(intent.getStringExtra("cctv_album"));require(raw.length<=65536)
+                val album=CctvAlbum.decode(raw);cctvAlbum=album
+                val episodes=cctvRepo.episodes(album.id)
+                val episode=episodes.firstOrNull {it.guid==intent.getStringExtra("cctv_guid")} ?: error("节目已不在当前分集列表")
+                cctvEpisodes=episodes;cctvEpisode=episode
+                play(CctvPlayback.item(album,episode),intent.getLongExtra("cctv_position",0).coerceAtLeast(0))
+            }catch(error:CancellationException){throw error}
+            catch(_:Exception){
+                fresh("cctv-error",false)
+                ui.heading(page,"暂时无法读取节目",24,48f,180f,864f,50f).gravity=Gravity.CENTER
+                ui.text(page,"请检查网络，或返回选集重试。",15,TvUi.MUTED,48f,240f,864f,40f).gravity=Gravity.CENTER
+                ui.button(page,"重试",300f,310f,170f,44f){openCctvPlayback()}.requestFocus()
+                ui.button(page,"返回选集",490f,310f,170f,44f){finish()}
+            }
+        }
+    }
+    private fun cctvOptions(){
+        if(cctvEpisodes.isEmpty())return
+        optionPopup("选集",cctvEpisodes.map {it.title},emptyList(),cctvEpisodes.indexOfFirst {it.guid==cctvEpisode?.guid}){index->
+            cctvAlbum?.let {replacePlayback(CctvPlayback.item(it,cctvEpisodes[index]),0)}
+        }
+    }
+    private fun qualities(){
+        val p=player ?: return;val choices=MediaTracks.choices(p,C.TRACK_TYPE_VIDEO)
+        if(choices.isEmpty()){Toast.makeText(this,"片源没有可切换画质",Toast.LENGTH_SHORT).show();return}
+        val automatic=p.trackSelectionParameters.overrides.values.none {it.type==C.TRACK_TYPE_VIDEO}
+        optionPopup("画质",listOf("自动")+choices.map {it.name},listOf("按网络情况选择")+choices.map {it.detail},if(automatic)0 else choices.indexOfFirst {it.selected()}+1){index->
+            if(index==0)p.trackSelectionParameters=p.trackSelectionParameters.buildUpon().clearOverridesOfType(C.TRACK_TYPE_VIDEO).build()
+            else if(!MediaTracks.select(p,C.TRACK_TYPE_VIDEO,choices[index-1]))Toast.makeText(this,"画质已变化，请重试",Toast.LENGTH_SHORT).show()
+            updateTrackLabels()
         }
     }
     private fun showPlaybackRetry(item: BaseItemDto){
@@ -1048,10 +1031,10 @@ class JellyLibraryActivity : FragmentActivity() {
         val panel=FrameLayout(this);panel.setBackgroundColor(0xf0101629.toInt());ui.at(page,panel,0f,0f,960f,540f)
         ui.at(panel,ImageView(this).apply {setImageDrawable(TvIcons('△',0xffb7a2ff.toInt(),ui.px(48f)));importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},456f,175f,48f,48f)
         ui.heading(panel,"暂时无法播放",23,48f,246f,864f,32f).apply {gravity=Gravity.CENTER;maxLines=1}
-        ui.text(panel,"请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,293f,864f,40f).apply {gravity=Gravity.CENTER;maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        ui.text(panel,if(cctvMode)"片源暂不可用或当前无法访问，请稍后重试。"else "请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,293f,864f,40f).apply {gravity=Gravity.CENTER;maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
         val retry=ui.button(panel,"重试播放",313f,349f,160f,42f){replacePlayback(item,retryPosition)}
         val origin=history.lastOrNull()?.name
-        val leave=ui.button(panel,if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,349f,160f,42f){stopPlayer();backToSaved()}
+        val leave=ui.button(panel,if(cctvMode)"返回选集"else if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,349f,160f,42f){stopPlayer();backToSaved()}
         listOf(retry,leave).forEach {it.nextFocusUpId=it.id;it.nextFocusDownId=it.id}
         retry.nextFocusLeftId=retry.id;retry.nextFocusRightId=leave.id;leave.nextFocusLeftId=retry.id;leave.nextFocusRightId=leave.id
         retry.requestFocus()
@@ -1064,7 +1047,8 @@ class JellyLibraryActivity : FragmentActivity() {
             top.visibility=View.GONE;top.background=android.graphics.drawable.GradientDrawable(android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(0xf0101326.toInt(),0xeb101326.toInt(),0x00101326));ui.at(page,top,0f,0f,960f,135f)
             ui.title(top,item.seriesName ?: item.name ?: "媒体播放",48f,28f,700f,33f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
             playerWallClock=ui.text(top,android.text.format.DateFormat.format("HH:mm:ss",System.currentTimeMillis()).toString(),14,TvUi.MUTED,848f,28f,64f,33f).apply {gravity=Gravity.CENTER_VERTICAL or Gravity.END}
-            if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            if(cctvMode)ui.text(top,item.name.orEmpty(),13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+            else if(item.type==BaseItemKind.EPISODE)ui.text(top,"第 ${item.parentIndexNumber ?: "?"} 季 · 第 ${item.indexNumber ?: "?"} 集  ${item.name.orEmpty()}",13,TvUi.MUTED,48f,63f,800f,25f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         }
         ui.at(panel,View(this).apply {setBackgroundColor(0xff4b5268.toInt())},16f,15f,864f,3f)
         val progress=SeekBar(this);seek=progress;progress.id=View.generateViewId();progress.max=10000;progress.visibility=View.GONE;progress.setPadding(0,0,0,0)
@@ -1086,8 +1070,8 @@ class JellyLibraryActivity : FragmentActivity() {
         clock=ui.text(panel,"00:00:00 / --:--:--",13,TvUi.MUTED,124f,32f,310f,30f)
         aspectAction=ui.quietButton(mediaAspectLabel(),"画面比例，${mediaAspectLabel()}"){aspects()};ui.at(panel,aspectAction!!,PlaybackLayout.mediaActionX(0),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         speedAction=ui.quietButton(speedLabel(),"倍速，${speedLabel()}"){speeds()};ui.at(panel,speedAction!!,PlaybackLayout.mediaActionX(1),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
-        audioAction=ui.quietButton("音轨","音轨"){tracks(C.TRACK_TYPE_AUDIO)};ui.at(panel,audioAction!!,PlaybackLayout.mediaActionX(2),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
-        subtitleAction=ui.quietButton("字幕","字幕"){tracks(C.TRACK_TYPE_TEXT)};ui.at(panel,subtitleAction!!,PlaybackLayout.mediaActionX(3),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
+        audioAction=ui.quietButton(if(cctvMode)"画质"else "音轨",if(cctvMode)"画质"else "音轨"){if(cctvMode)qualities()else tracks(C.TRACK_TYPE_AUDIO)};ui.at(panel,audioAction!!,PlaybackLayout.mediaActionX(2),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
+        subtitleAction=ui.quietButton(if(cctvMode)"选集"else "字幕",if(cctvMode)"选集"else "字幕"){if(cctvMode)cctvOptions()else tracks(C.TRACK_TYPE_TEXT)};ui.at(panel,subtitleAction!!,PlaybackLayout.mediaActionX(3),32f,PlaybackLayout.MEDIA_ACTION_WIDTH,30f)
         listOf(pause!!,rewind,forward).forEach {it.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,16f*ui.scale)}
         val actions=listOf(pause!!,rewind,forward,aspectAction!!,speedAction!!,audioAction!!,subtitleAction!!)
         actions.forEachIndexed {index,button->button.nextFocusLeftId=actions.getOrNull(index-1)?.id ?: button.id;button.nextFocusRightId=actions.getOrNull(index+1)?.id ?: button.id;button.nextFocusUpId=progress.id;button.nextFocusDownId=button.id;button.setOnFocusChangeListener {_,focused->if(focused){lastPlayerAction=button;armPlayerIdle()}}}
@@ -1095,13 +1079,17 @@ class JellyLibraryActivity : FragmentActivity() {
         lastPlayerAction=pause;progress.nextFocusDownId=pause!!.id;progress.nextFocusUpId=progress.id
         seekPreview=ui.text(page,"",13,TvUi.INK,425f,411f,110f,22f).apply {gravity=Gravity.CENTER;background=ui.glass(TvUi.PANEL);visibility=View.GONE}
     }
-    private fun nextEpisodeItem(item: BaseItemDto)=EpisodeSequence.next(item,seriesEpisodes)
+    private fun nextEpisodeItem(item: BaseItemDto): BaseItemDto? {
+        if(!cctvMode)return EpisodeSequence.next(item,seriesEpisodes)
+        val album=cctvAlbum ?: return null
+        return CctvPlayback.episode(item.id,cctvEpisodes)?.let {CctvPlayback.next(it,cctvEpisodes)}?.let {CctvPlayback.item(album,it)}
+    }
     private fun showAutoNext(item: BaseItemDto){
         if(nextCancelled||nextCard!=null||manualEnd||!getSharedPreferences("bestv_live",MODE_PRIVATE).getBoolean("auto_next_episode",true))return
         val next=nextEpisodeItem(item) ?: return
         val card=FrameLayout(this);card.background=ui.glass(TvUi.PANEL);nextCard=card;ui.at(page,card,592f,312f,320f,114f)
         ui.at(card,View(this).apply {setBackgroundColor(OverlayContrast.OPTION_GUARD)},8f,33f,304f,77f)
-        ui.heading(card,"下一集 · 第 ${next.parentIndexNumber ?: "?"} 季 第 ${next.indexNumber ?: "?"} 集",15,16f,8f,288f,25f)
+        ui.heading(card,if(cctvMode)"即将播放下一集/期"else "下一集 · 第 ${next.parentIndexNumber ?: "?"} 季 第 ${next.indexNumber ?: "?"} 集",15,16f,8f,288f,25f)
         ui.text(card,next.name.orEmpty(),13,TvUi.MUTED,16f,34f,160f,26f).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
         nextClock=ui.text(card,"00:00:05 后播放",12,TvUi.MUTED,185f,34f,119f,26f)
         val now=ui.quietButton("立即播放","立即播放下一集"){replacePlayback(next,0)};ui.at(card,now,16f,65f,136f,30f)
@@ -1110,7 +1098,7 @@ class JellyLibraryActivity : FragmentActivity() {
         if(dialog?.isShowing!=true)now.requestFocus()
     }
     private fun cancelAutoNext(){nextCancelled=true;handler.removeCallbacks(nextTick);nextCard?.let {val focused=it.hasFocus();TvUi.detach(it);if(focused)pause?.requestFocus()};nextCard=null;nextClock=null}
-    private fun replacePlayback(item: BaseItemDto,position: Long){stopPlayer();backToSaved();play(item,position,true)}
+    private fun replacePlayback(item: BaseItemDto,position: Long){stopPlayer();if(!cctvMode)backToSaved();play(item,position,true)}
     private fun updateSeekAvailability(){
         val available=canSeek();seek?.apply {visibility=if(available)View.VISIBLE else View.GONE;isEnabled=available;isFocusable=available}
         val actions=listOfNotNull(pause,rewindAction,forwardAction,aspectAction,speedAction,audioAction,subtitleAction)
@@ -1169,7 +1157,7 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun aspects(){optionPopup("画面比例",listOf("原始","填充","拉伸"),emptyList(),listOf("fit","zoom","stretch").indexOf(mediaAspect())){index->getSharedPreferences("bestv_live",MODE_PRIVATE).edit().putString("media_video_aspect",listOf("fit","zoom","stretch")[index]).apply();applyMediaAspect();aspectAction?.let {ui.value(it,"画面比例",mediaAspectLabel());it.announceForAccessibility(it.contentDescription)}}}
     private fun speedLabel()=java.math.BigDecimal(mediaSpeed.toString()).stripTrailingZeros().toPlainString()+"x"
     private fun speeds(){val speeds=listOf(.5f,.75f,1f,1.25f,1.5f,1.75f,2f);optionPopup("倍速",speeds.map {java.math.BigDecimal(it.toString()).stripTrailingZeros().toPlainString()+"x"},emptyList(),speeds.indexOf(mediaSpeed)){index->player?.let {p->p.setPlaybackSpeed(speeds[index]);mediaSpeed=p.playbackParameters.speed;ui.value(speedAction!!,"倍速",speedLabel());speedAction?.announceForAccessibility(speedAction?.contentDescription)}}}
-    private fun updateTrackLabels(){player?.let {p->audioAction?.let {ui.value(it,"音轨",MediaTracks.value(p,C.TRACK_TYPE_AUDIO))};subtitleAction?.let {ui.value(it,"字幕",MediaTracks.value(p,C.TRACK_TYPE_TEXT))}}}
+    private fun updateTrackLabels(){player?.let {p->audioAction?.let {ui.value(it,if(cctvMode)"画质"else "音轨",MediaTracks.value(p,if(cctvMode)C.TRACK_TYPE_VIDEO else C.TRACK_TYPE_AUDIO))};subtitleAction?.let {ui.value(it,if(cctvMode)"选集"else "字幕",if(cctvMode)"选集"else MediaTracks.value(p,C.TRACK_TYPE_TEXT))}}}
     private fun tracks(type: Int) {
         val p=player ?: return;val choices=MediaTracks.choices(p,type);val text=type==C.TRACK_TYPE_TEXT
         if(choices.isEmpty()){Toast.makeText(this,"没有可切换的${if(text)"字幕" else "音轨"}",Toast.LENGTH_SHORT).show();return}
@@ -1192,16 +1180,15 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun stopPlayer() {
         waiting(false);handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);buffering=null;handler.removeCallbacks(nextTick);nextCard?.let {TvUi.detach(it)};nextCard=null;nextClock=null
         val p=player
-        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(reportStarted&&playingSessionKey==repo.sessionKey)stream?.let {reporting.reportProgress(this,null,item,it,p.currentPosition*10000,true);reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
+        if(p!=null){playingItem?.let {item ->rememberPosition(item,p.currentPosition);if(!cctvMode&&reportStarted&&playingSessionKey==activeSessionKey())stream?.let {reporting.reportProgress(this,null,item,it,p.currentPosition*10000,true);reporting.reportStopped(this,item,it,p.currentPosition*10000)}};videoSurface?.player=null;p.release()}
         player=null;stream=null;playingItem=null;controls=null;rewindAction=null;forwardAction=null;playbackFailure=false;seek=null;clock=null;pause=null;playerHeading=null;playerWallClock=null;aspectAction=null;speedAction=null;audioAction=null;subtitleAction=null;seekPreview=null;lastPlayerAction=null;overlay=MediaOverlay();reportStarted=false
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
     private fun choose(title: String,labels: List<String>,selected: Int,chosen: (Int)->Unit) {
         val previous=currentFocus
         handler.removeCallbacks(hideControls);if(pageName=="player"){overlay.dialog=true;applyControlsVisibility()}
-        val d=AlertDialog.Builder(this).setTitle(title).setSingleChoiceItems(labels.toTypedArray(),selected){dlg,index ->dlg.dismiss();chosen(index)}.setNegativeButton("取消",null).create()
-        dialog=d;d.setOnDismissListener {if(dialog===d){dialog=null;if(pageName=="player"){overlay.dialog=false;applyControlsVisibility();armPlayerIdle()};previous?.takeIf {it.isAttachedToWindow&&it.visibility==View.VISIBLE}?.requestFocus()}};d.show()
-        d.listView?.setSelector(ui.focusBackground(TvUi.TILE));d.window?.setBackgroundDrawable(ui.surface(TvUi.PANEL,false))
+        val d=TvMediaGrid.choices(ui,title,labels,selected,chosen)
+        dialog=d;d.setOnDismissListener {if(dialog===d){dialog=null;if(pageName=="player"){overlay.dialog=false;applyControlsVisibility();armPlayerIdle()};previous?.takeIf {it.isAttachedToWindow&&it.visibility==View.VISIBLE}?.requestFocus()}}
     }
     private fun backToSaved() {
         task?.cancel();searchJob?.cancel();gridRenderJob?.cancel();generation++
@@ -1266,20 +1253,32 @@ class JellyLibraryActivity : FragmentActivity() {
         return super.dispatchKeyEvent(event)
     }
     override fun onStart(){
-        super.onStart()
+        super.onStart();playerForeground=true
+        if(cctvMode){if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)};return}
         if(player!=null&&playingSessionKey!=repo.sessionKey)stopPlayer()
         if(pageName !in listOf("loading","connection")&&pageSessionKey!=repo.sessionKey){history.clear();home(false)}
         if(pageName=="home")(page.tag as? Runnable)?.run()
         if(player!=null){handler.removeCallbacks(updatePlayer);handler.post(updatePlayer)}
     }
     override fun onStop(){
+        playerForeground=false
         overlay.cancel();overlay.paused=true;player?.pause();handler.removeCallbacks(updatePlayer);handler.removeCallbacks(hideControls);cancelAutoNext()
         val p=player;val item=playingItem;val info=stream
-        if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(info!=null && reportStarted && playingSessionKey==repo.sessionKey)reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
+        if(p!=null && item!=null){rememberPosition(item,p.currentPosition);if(!cctvMode && info!=null && reportStarted && playingSessionKey==activeSessionKey())reporting.reportProgress(this,null,item,info,p.currentPosition*10000,true)}
         super.onStop()
     }
-    override fun onDestroy(){connections.close();repo.close();stopPlayer();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
-    private fun rememberPosition(item: BaseItemDto,position: Long){if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
+    override fun onDestroy(){connections.close();repo.close();stopPlayer();cctvWrites?.shutdown();task?.cancel();searchJob?.cancel();homeResumeJob?.cancel();gridRenderJob?.cancel();dialog?.dismiss();super.onDestroy()}
+    private fun rememberPosition(item: BaseItemDto,position: Long){
+        if(cctvMode){
+            if(!reportStarted)return
+            val album=cctvAlbum ?: return;val episode=CctvPlayback.episode(item.id,cctvEpisodes) ?: return
+            val duration=player?.duration?.takeIf {it>0} ?: cctvDuration
+            val completed=player?.playbackState==Player.STATE_ENDED&&!manualEnd
+            val executor=cctvWrites ?: java.util.concurrent.Executors.newSingleThreadExecutor().also {cctvWrites=it}
+            executor.execute {try {cctvStore.watch(album,episode,position.coerceAtLeast(0),duration.coerceAtLeast(0),completed)}catch(_:Exception){handler.post {if(!isDestroyed&&!cctvSaveErrorShown){cctvSaveErrorShown=true;Toast.makeText(this,"央视频观看记录未保存，请检查本机存储",Toast.LENGTH_LONG).show()}}}}
+            return
+        }
+        if(!reportStarted||position<=0)return;local.edit().putLong(positionKey(item),position).putLong("seen_${positionKey(item)}",System.currentTimeMillis()).apply()}
     private fun currentPositionPrefix()="pos_${repo.sessions.currentSession.value?.serverId}_${repo.sessions.currentSession.value?.userId}_"
     private fun positionKey(item: BaseItemDto)=(if(playingItem?.id==item.id&&playingPositionPrefix.isNotEmpty())playingPositionPrefix else currentPositionPrefix())+item.id
     private fun resumeMs(item: BaseItemDto): Long {

@@ -120,6 +120,7 @@
         <activity android:name=".bestv.JellyLibraryActivity" android:exported="false"
             android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar"
             android:enableOnBackInvokedCallback="false" />
+        <activity android:name=".bestv.CctvActivity" android:exported="false" android:screenOrientation="landscape" android:theme="@android:style/Theme.Material.NoActionBar" android:enableOnBackInvokedCallback="false" />
         <!-- Authentication -->
         <activity
             android:name=".ui.startup.StartupActivity"
