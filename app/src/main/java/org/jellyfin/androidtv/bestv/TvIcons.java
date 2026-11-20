@@ -18,7 +18,7 @@ public final class TvIcons extends Drawable {
     private static final String SYMBOLS="⌄‹›Ⅱ⌕▣▱△▷◇☆⚙✓≪≫★♡♥◉";
     private static final String[] LABELS={"展开","返回","下一项","暂停","搜索","媒体库","媒体图片","提示","播放","直播源","收藏","设置","已完成","快退","快进","评分","收藏","取消收藏","观看状态"};
 
-    private TvIcons(char icon,int color,int size){this.icon=icon;paint.setColor(color);paint.setStrokeWidth(1.8f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);setBounds(0,0,size,size);}
+    public TvIcons(char icon,int color,int size){this.icon=icon;paint.setColor(color);paint.setStrokeWidth(1.8f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);setBounds(0,0,size,size);}
     public static void text(TextView view,CharSequence value){
         String raw=value==null?"":value.toString();SpannableString text=new SpannableString(raw);
         StringBuilder description=new StringBuilder();

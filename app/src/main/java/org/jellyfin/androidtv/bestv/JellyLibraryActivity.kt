@@ -226,11 +226,11 @@ class JellyLibraryActivity : FragmentActivity() {
     private fun entryFailure(message: String="请确认媒体库已开启，或切换到其他媒体库。",focusKey: String="library-retry") {
         fresh("offline",false);centerEntryPage();history.clear();header("我的媒体库")
         connectionIcon(org.jellyfin.androidtv.R.drawable.library_connection_link,171f)
-        centered("${entryName()} · 未连接",215f,28f,15,TvUi.MUTED)
-        centered("暂时无法连接媒体库",247f,34f,23).setTypeface(null,Typeface.BOLD)
-        centered(message,281f,36f,14,TvUi.MUTED)
-        val retry=ui.button(page,"重试连接",313f,325f,160f,44f){restoreInitialConnection(true)}.apply {tag="library-retry"}
-        val change=ui.button(page,"切换媒体库",487f,325f,160f,44f){renderLibrarySwitch()}.apply {tag="library-switch"}
+        centered("${entryName()} · 未连接",215f,28f,15,TvUi.MUTED).apply {maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        centered("暂时无法连接媒体库",247f,34f,23).apply {maxLines=1;setTypeface(null,Typeface.BOLD)}
+        centered(message,289f,42f,14,TvUi.MUTED).apply {ellipsize=android.text.TextUtils.TruncateAt.END}
+        val retry=ui.button(page,"重试连接",313f,349f,160f,44f){restoreInitialConnection(true)}.apply {tag="library-retry"}
+        val change=ui.button(page,"切换媒体库",487f,349f,160f,44f){renderLibrarySwitch()}.apply {tag="library-switch"}
         listOf(retry,change).forEachIndexed {i,v->v.nextFocusLeftId=if(i==0)v.id else retry.id;v.nextFocusRightId=if(i==1)v.id else change.id;v.nextFocusUpId=v.id;v.nextFocusDownId=v.id}
         val target=if(focusKey=="library-switch")change else retry;target.isFocusableInTouchMode=true;focus(target)
     }
@@ -314,9 +314,9 @@ class JellyLibraryActivity : FragmentActivity() {
         ui.text(page, text, size, if(muted) TvUi.MUTED else TvUi.INK, x, y, w, h)
     private fun centerState(title: String, subtitle: String, buttons: List<Pair<String, () -> Unit>>) {
         val panel=FrameLayout(this); panel.background=ui.surface(TvUi.PANEL,false); ui.at(page,panel,48f,103f,864f,347f)
-        ui.text(panel,"▱",48,0xffb7a2ff.toInt(),408f,72f,48f,48f).gravity=Gravity.CENTER
-        ui.title(panel,title,24f,142f,816f,46f).apply {gravity=Gravity.CENTER;maxLines=1}
-        ui.text(panel,subtitle,14,TvUi.MUTED,24f,186f,816f,30f).gravity=Gravity.CENTER
+        ui.at(panel,ImageView(this).apply {setImageDrawable(TvIcons('▱',0xffb7a2ff.toInt(),ui.px(48f)));importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},408f,72f,48f,48f)
+        ui.title(panel,title,24f,142f,816f,32f).apply {gravity=Gravity.CENTER;maxLines=1;ellipsize=android.text.TextUtils.TruncateAt.END}
+        ui.text(panel,subtitle,14,TvUi.MUTED,24f,188f,816f,42f).apply {gravity=Gravity.CENTER;maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
         val width=160f
         val start=(864-(buttons.size*width+(buttons.size-1)*14))/2
         val actions=buttons.mapIndexed { i, (name, click) ->
@@ -1038,14 +1038,15 @@ class JellyLibraryActivity : FragmentActivity() {
         if(playbackFailure)return
         retryPosition=player?.currentPosition ?: retryPosition
         playbackFailure=true;waiting(false);player?.pause();handler.removeCallbacks(hideControls);handler.removeCallbacks(showBuffering);handler.removeCallbacks(updatePlayer)
+        dialog?.dismiss();dialog=null
         buffering?.visibility=View.GONE;controls?.visibility=View.GONE;playerHeading?.visibility=View.GONE;seekPreview?.visibility=View.GONE
         val panel=FrameLayout(this);panel.setBackgroundColor(0xf0101629.toInt());ui.at(page,panel,0f,0f,960f,540f)
-        ui.text(panel,"△",48,0xffb7a2ff.toInt(),456f,175f,48f,48f).gravity=Gravity.CENTER
-        ui.heading(panel,"暂时无法播放",23,48f,246f,864f,40f).gravity=Gravity.CENTER
-        ui.text(panel,"请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,285f,864f,28f).gravity=Gravity.CENTER
-        val retry=ui.button(panel,"重试播放",313f,319f,160f,42f){replacePlayback(item,retryPosition)}
+        ui.at(panel,ImageView(this).apply {setImageDrawable(TvIcons('△',0xffb7a2ff.toInt(),ui.px(48f)));importantForAccessibility=View.IMPORTANT_FOR_ACCESSIBILITY_NO},456f,175f,48f,48f)
+        ui.heading(panel,"暂时无法播放",23,48f,246f,864f,32f).apply {gravity=Gravity.CENTER;maxLines=1}
+        ui.text(panel,"请检查网络或服务器转码设置，然后重试。",14,TvUi.MUTED,48f,293f,864f,40f).apply {gravity=Gravity.CENTER;maxLines=2;ellipsize=android.text.TextUtils.TruncateAt.END}
+        val retry=ui.button(panel,"重试播放",313f,349f,160f,42f){replacePlayback(item,retryPosition)}
         val origin=history.lastOrNull()?.name
-        val leave=ui.button(panel,if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,319f,160f,42f){stopPlayer();backToSaved()}
+        val leave=ui.button(panel,if(origin in listOf("movie","series","detail"))"返回详情" else "返回媒体库",487f,349f,160f,42f){stopPlayer();backToSaved()}
         listOf(retry,leave).forEach {it.nextFocusUpId=it.id;it.nextFocusDownId=it.id}
         retry.nextFocusLeftId=retry.id;retry.nextFocusRightId=leave.id;leave.nextFocusLeftId=retry.id;leave.nextFocusRightId=leave.id
         retry.requestFocus()

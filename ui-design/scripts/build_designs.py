@@ -466,8 +466,8 @@ def home_unconfigured():
     s=rect(100,64,1052,716,'#101629',20,'#414866')
     s+=rect(1184,64,640,716,'#14192e',16,'#363e5d')+source_tabs(1192,80,616)
     s+=centered_text(1504,452,'暂无频道',32,INK,600)+centered_text(1504,496,'配置直播源后显示频道',26,MUTED)
-    s+='<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,256,80,'#bba8ff')
-    s+=centered_text(626,408,'未配置直播源',42,weight=650)+centered_text(626,462,'完成机顶盒配置，或添加其他直播源。',26,MUTED)
+    s+='<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,232,80,'#bba8ff')
+    s+=centered_text(626,390,'未配置直播源',42,weight=650)+centered_text(626,452,'完成机顶盒配置，或添加其他直播源。',26,MUTED)
     s+=centered_button(296,510,320,'机顶盒配置',True,h=84)+centered_button(646,510,310,'检查直播源',h=84)+'</g>'
     for i,(name,ico) in enumerate([('收藏','star'),('纪录片','source'),('媒体库','media'),('设置','gear')]):
         x=100+i*438
@@ -617,8 +617,8 @@ def make():
     SCREENS.append(dict(id='19-source-error',title='独立来源获取失败页（已取消）',note='来源未配置或获取失败均在主页预览区域提示，不再离开主页。',flow='图01 → 主页图25',kind='state',retired=True))
     s=homepage('none')
     for _,program in CHANNELS:s=s.replace(program,'暂时无法播放')
-    s+=rect(104,126,1044,588,'#101629',0)+'<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,256,80,'#bba8ff')
-    s+=centered_text(626,408,'当前来源的频道暂不可用',42,weight=650)+centered_text(626,462,'请重试，或切换到其他直播源。',28,MUTED)
+    s+=rect(104,126,1044,588,'#101629',0)+'<g data-role="channel-error-message" data-center-x="626">'+icon('alert',586,232,80,'#bba8ff')
+    s+=centered_text(626,390,'当前来源的频道暂不可用',42,weight=650)+centered_text(626,452,'请重试，或切换到其他直播源。',28,MUTED)
     s+=centered_button(326,510,260,'重试',True,h=76)+centered_button(616,510,310,'检查直播源',h=76)+'</g>'
     emit('20-channel-error','状态：全部频道不可用',s)
     emit('21-no-guide','状态：没有节目单',homepage('list',True))
@@ -627,10 +627,10 @@ def make():
       ('23-library-empty','状态：媒体库为空','连接成功，还没有媒体内容。','请在 Jellyfin 服务器添加媒体库，再回来刷新。',[('刷新媒体库','refresh'),('返回看直播','play')]),
       ('24-jellyfin-offline','状态：Jellyfin 断连','暂时联系不上你的 Jellyfin。','请检查服务器或网络；独立直播仍可使用。',[('重新连接','refresh'),('连接设置','gear'),('返回看直播','play')])]:
         s=header('我的媒体库')+rect(96,205,1728,695)+'<g data-role="library-state-message" data-center-x="960">'+icon('media' if 'offline' not in slug else 'link',912,368,96,'#b4a0ff')
-        s+=centered_text(960,542,head,46,weight=650)+centered_text(960,600,desc,28,MUTED)
+        s+=centered_text(960,542,head,46,weight=650)+centered_text(960,628,desc,28,MUTED)
         total=len(actions)*320+(len(actions)-1)*28
         start=960-total/2
-        for i,(a,b) in enumerate(actions):s+=button(start+i*348,662,320,a,i==0,b)
+        for i,(a,b) in enumerate(actions):s+=button(start+i*348,707,320,a,i==0,b)
         s+='</g>'
         s+=footer()
         emit(slug,title,s)

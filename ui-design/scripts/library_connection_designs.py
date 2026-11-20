@@ -24,9 +24,9 @@ def additional(g):
         s += icon('link', 928, 342, 64, value)
         s += tx(960, 466, '客厅媒体库 · 未连接', 30, muted)
         s += tx(960, 532, '暂时无法连接媒体库', 46, weight=650)
-        s += tx(960, 596, '请确认媒体库已开启，或切换到其他媒体库。', 28, muted)
-        s += g['centered_button'](626, 650, 320, '重试连接', True, h=88)
-        s += g['centered_button'](974, 650, 320, '切换媒体库', h=88)
+        s += tx(960, 632, '请确认媒体库已开启，或切换到其他媒体库。', 28, muted)
+        s += g['centered_button'](626, 698, 320, '重试连接', True, h=88)
+        s += g['centered_button'](974, 698, 320, '切换媒体库', h=88)
         return s + '</g>'
 
     def switch(state='ready'):

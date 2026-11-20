@@ -438,12 +438,13 @@ public final class LiveActivity extends Activity {
     private void showVideoError(String title,String detail){
         qualityPendingKey="";qualityPendingCode="";qualityRollback=null;
         if(!isLiveRoute())return;
+        hideControls();
         if(videoShell==null){liveErrorTitle=title;liveErrorDetail=detail;return;}removeVideoError();liveErrorTitle=title;liveErrorDetail=detail;if(videoMessage!=null)videoMessage.setVisibility(View.GONE);
         errorPanel=new FrameLayout(this);errorPanel.setBackgroundColor(0xf0101629);videoShell.addView(errorPanel,new FrameLayout.LayoutParams(-1,-1));
         float w=route.equals("full")?960:route.equals("favorites")?478:526;float h=route.equals("full")?540:route.equals("favorites")?269:358;
-        float mid=h/2;TextView warning=ui.text("△",40,0xffbba8ff);warning.setGravity(Gravity.CENTER);ui.at(errorPanel,warning,w/2-20,mid-83,40,40);
-        TextView heading=ui.text(title,23,TvUi.INK);heading.setGravity(Gravity.CENTER);heading.setMaxLines(2);ui.at(errorPanel,heading,20,mid-40,w-40,45);
-        TextView description=ui.text(detail,13,TvUi.MUTED);description.setGravity(Gravity.CENTER);description.setMaxLines(2);ui.at(errorPanel,description,22,mid-4,w-44,38);
+        float mid=h/2;ImageView warning=new ImageView(this);warning.setImageDrawable(new TvIcons('△',0xffbba8ff,ui.px(40)));warning.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);ui.at(errorPanel,warning,w/2-20,mid-95,40,40);
+        TextView heading=ui.text(title,23,TvUi.INK);heading.setGravity(Gravity.CENTER);heading.setMaxLines(1);heading.setEllipsize(android.text.TextUtils.TruncateAt.END);ui.at(errorPanel,heading,20,mid-47,w-40,30);
+        TextView description=ui.text(detail,13,TvUi.MUTED);description.setGravity(Gravity.CENTER);description.setMaxLines(2);description.setEllipsize(android.text.TextUtils.TruncateAt.END);ui.at(errorPanel,description,22,mid-7,w-44,40);
         boolean unconfigured=source.builtin()&&!canRefreshBuiltin();float retryWidth=unconfigured?160:130;float actionsLeft=(w-retryWidth-170)/2;
         recoveryRetry=ui.button(errorPanel,unconfigured?"机顶盒配置":"重试",actionsLeft,mid+44,retryWidth,42,()->retryLive());recoverySources=ui.button(errorPanel,"检查直播源",actionsLeft+retryWidth+15,mid+44,155,42,()->navigate("sources"));
         recoveryRetry.setNextFocusLeftId(recoveryRetry.getId());recoveryRetry.setNextFocusRightId(recoverySources.getId());recoverySources.setNextFocusLeftId(recoveryRetry.getId());recoverySources.setNextFocusRightId(recoverySources.getId());

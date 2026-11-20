@@ -248,8 +248,8 @@ def install(g):
     def playback_failure():
         # Deliberately no dormant bottom-control focus: retry owns initial focus.
         s=media_player(controls=False)+rect(0,0,1920,1080,'#080c18',0,fill_opacity=.88)
-        s+=text(96,105,'海岸日记',40,weight=650)+icon('alert',912,310,96,'#b4a0ff')+centered(960,490,'暂时无法播放',48,INK,650)+centered(960,554,'请检查网络后重试，或返回影片详情。',28,MUTED)
-        return s+center_button(626,638,320,'重试播放',True,h=84)+center_button(974,638,320,'返回详情',h=84)
+        s+=text(96,105,'海岸日记',40,weight=650)+icon('alert',912,350,96,'#b4a0ff')+centered(960,540,'暂时无法播放',46,INK,650)+centered(960,634,'请检查网络或服务器转码设置，然后重试。',28,MUTED)
+        return s+center_button(626,698,320,'重试播放',True,h=84)+center_button(974,698,320,'返回详情',h=84)
 
     def ime():
         s=header('连接 Jellyfin')+text(96,180,'客厅 Jellyfin · 客厅用户',28,MUTED)+text(96,244,'密码',32)
