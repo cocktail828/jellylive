@@ -132,10 +132,10 @@ def install(g):
         action_x=424
         for label in ['继续播放','从头播放']:
             width=max(160,math.ceil(text_width(label,28)+64))
-            s+=center_button(action_x,622,width,label,cast_focus is None and action_x==424,h=88)
+            s+=center_button(action_x,622,width,label,cast_focus is None and action_x==424,h=68)
             action_x+=width+24
         for x,name,label in [(action_x,'eye','标为已看'),(action_x+152,'heart','收藏')]:
-            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,622,128,88,'#242a46',14,'#363e5d')+icon(name,x+44,646,40)+'</g>'
+            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,622,128,68,'#242a46',14,'#363e5d')+icon(name,x+40,632,48)+'</g>'
         s+=text(96,756,'演职人员',32,weight=600)+centered(1772,756,f'{cast_page+1} / 2',24,MUTED)
         cast=[('林川','导演'),('陈远','饰 林野'),('许宁','饰 沈禾'),('沈平','饰 方远'),('李然','饰 江城'),('周安','饰 老周'),('方青','饰 林母'),('吴山','饰 船夫'),('王禾','饰 店主')]
         s+=f'<g data-role="cast-page" data-page="{cast_page+1}" data-pages="2">'
@@ -151,9 +151,9 @@ def install(g):
         s+='<g data-role="overview" data-max-lines="2">'+text(96,390,'沿着海岸线，记录城市的生活与风景。',28)+text(96,432,'一次次相遇，让平凡日常成为值得珍藏的记忆...',28)+'</g>'
         action_width=max(160,math.ceil(text_width('▷ 继续播放 第 3 集',28)+64))
         s+=f'<g data-role="series-actions" data-y="472" data-overview-bottom="442" data-gap="30">'
-        s+=button(100,472,action_width,'继续播放 第 3 集',episode_focus is None,'play',h=88)
+        s+=button(100,472,action_width,'继续播放 第 3 集',episode_focus is None,'play',h=68)
         for x,name,label in [(100+action_width+24,'eye','标记剧集已看'),(100+action_width+176,'heart','收藏剧集')]:
-            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,472,128,88,'#242a46',14,'#363e5d')+icon(name,x+44,496,40)+'</g>'
+            s+=f'<g data-role="detail-action" aria-label="{label}"><title>{label}</title>'+rect(x,472,128,68,'#242a46',14,'#363e5d')+icon(name,x+40,482,48)+'</g>'
         s+='</g>'+button(96,588,260,'第 1 季')+icon('down',310,612,28,MUTED)
         s+=centered(1772,640,f'{episode_page+1} / 3',24,MUTED)
         titles=['初见海岸','潮起潮落','远方灯塔','海边来信','城市清晨','灯火人家','岸边故事','向海而行','归途']

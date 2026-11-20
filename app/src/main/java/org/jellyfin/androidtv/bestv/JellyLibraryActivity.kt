@@ -739,7 +739,7 @@ class JellyLibraryActivity : FragmentActivity() {
         fun textAction(title: String,action: ()->Unit): Button {
             val button=ui.button(title,action)
             val width=maxOf(80f,button.paint.measureText(title)/ui.scale+32f)
-            ui.at(page,button,actionX,311f,width,44f);actionX+=width+12f
+            ui.at(page,button,actionX,311f,width,34f);actionX+=width+12f
             return button
         }
         val first=textAction("继续播放"){play(item,position)}
@@ -755,8 +755,8 @@ class JellyLibraryActivity : FragmentActivity() {
         android.util.Log.w("JellyLiveStatus","$action failed: ${causes.joinToString(" > "){it.javaClass.simpleName}}; HTTP=${status?.toString() ?: "n/a"}")
     }
     private fun detailStatusActions(item: BaseItemDto,x: Float,y: Float,changed: (UserItemDataDto)->Unit={}): List<Button> {
-        val watched=ui.button(page,"◉",x,y,64f,44f){}.apply {tag="detail-watched"}
-        val favorite=ui.button(page,"♡",x+76f,y,64f,44f){}.apply {tag="detail-favorite"}
+        val watched=ui.button(page,"◉",x,y,64f,34f){}.apply {tag="detail-watched";setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,24*ui.scale);includeFontPadding=false;setSingleLine()}
+        val favorite=ui.button(page,"♡",x+76f,y,64f,34f){}.apply {tag="detail-favorite";setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,24*ui.scale);includeFontPadding=false;setSingleLine()}
         var isPlayed=item.userData?.played==true;var isFavorite=item.userData?.isFavorite==true
         fun updateStates(){
             watched.isActivated=isPlayed;watched.setTextColor(if(isPlayed)0xffc5b8ff.toInt() else TvUi.INK);TvIcons.text(watched,"◉")
@@ -873,7 +873,7 @@ class JellyLibraryActivity : FragmentActivity() {
             val toPlay=next ?: episodes.firstOrNull {it.userData?.played!=true} ?: episodes.firstOrNull()
             val first=ui.button(if(toPlay==null) "暂无可播放剧集" else "▷ 继续播放 第 ${toPlay.indexNumber ?: 1} 集") {toPlay?.let {play(it,resumeMs(it))}}
             val firstWidth=maxOf(80f,first.paint.measureText(first.text.toString())/ui.scale+32f)
-            ui.at(page,first,48f,236f,firstWidth,44f);first.isEnabled=toPlay!=null
+            ui.at(page,first,48f,236f,firstWidth,34f);first.isEnabled=toPlay!=null
             val actions=listOf(first)+detailStatusActions(item,48f+firstWidth+12f,236f){data->seriesItem=seriesItem.copy(userData=data)}
             val chosen=seasons.firstOrNull {it.id==selected} ?: seasons.firstOrNull()
             val seasonChoice=ui.button(page,"${chosen?.name ?: "全部剧集"} ⌄",48f,294f,130f,38f) {
